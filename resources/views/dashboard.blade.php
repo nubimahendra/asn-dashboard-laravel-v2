@@ -57,8 +57,7 @@
             </div>
 
             <!-- Filter Content Wrapper (Collapsible) -->
-            <div id="sidebar-content"
-                class="p-4 flex-shrink-0 transition-opacity duration-300 overflow-hidden whitespace-nowrap">
+            <div id="sidebar-content" class="p-4 flex-shrink-0 transition-opacity duration-300 whitespace-nowrap">
                 <label
                     class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                     Filter Unit Kerja
@@ -504,76 +503,116 @@
         // Helper to get color palette
         const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1'];
 
+        // Initialize Common Options
+        const getChartColors = () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            return {
+                chart: {
+                    foreColor: isDark ? '#f3f4f6' : '#374151',
+                    background: 'transparent'
+                },
+                theme: {
+                    mode: isDark ? 'dark' : 'light'
+                }
+            };
+        };
+
+        const chartInstances = {};
+
         // 1. Chart Jenikel (Pie)
         var optionsJenikel = {
             series: @json($chartJenikel['series']),
             labels: @json($chartJenikel['labels']),
-            chart: { type: 'pie', height: 350 },
-            colors: ['#0EA5E9', '#EC4899'], // Blue for Male, Pink for Female assumed order, else default
+            chart: { type: 'pie', height: 350, ...getChartColors().chart },
+            theme: getChartColors().theme,
+            colors: ['#0EA5E9', '#EC4899'],
             legend: { position: 'bottom' }
         };
-        new ApexCharts(document.querySelector("#chart-jenikel"), optionsJenikel).render();
+        chartInstances.jenikel = new ApexCharts(document.querySelector("#chart-jenikel"), optionsJenikel);
+        chartInstances.jenikel.render();
 
         // Chart New: Jenis Pegawai (Pie)
         var optionsStsPeg = {
             series: @json($chartStsPeg['series']),
             labels: @json($chartStsPeg['labels']),
-            chart: { type: 'pie', height: 350 },
-            colors: ['#F59E0B', '#10B981', '#6366F1'], // Colors for CPNS, PNS, PPPK
+            chart: { type: 'pie', height: 350, ...getChartColors().chart },
+            theme: getChartColors().theme,
+            colors: ['#F59E0B', '#10B981', '#6366F1'],
             legend: { position: 'bottom' }
         };
-        new ApexCharts(document.querySelector("#chart-sts-peg"), optionsStsPeg).render();
+        chartInstances.stsPeg = new ApexCharts(document.querySelector("#chart-sts-peg"), optionsStsPeg);
+        chartInstances.stsPeg.render();
 
         // 2. Chart Golongan (Bar)
         var optionsGolongan = {
             series: [{ name: 'Jumlah', data: @json($chartGolongan['series']) }],
-            chart: { type: 'bar', height: 350 },
+            chart: { type: 'bar', height: 350, ...getChartColors().chart },
+            theme: getChartColors().theme,
             xaxis: { categories: @json($chartGolongan['categories']) },
             plotOptions: { bar: { borderRadius: 4, horizontal: false } },
             colors: ['#3B82F6']
         };
-        new ApexCharts(document.querySelector("#chart-golongan"), optionsGolongan).render();
+        chartInstances.golongan = new ApexCharts(document.querySelector("#chart-golongan"), optionsGolongan);
+        chartInstances.golongan.render();
 
         // 3. Chart Pendidikan (Bar)
         var optionsPendidikan = {
             series: [{ name: 'Jumlah', data: @json($chartPendidikan['series']) }],
-            chart: { type: 'bar', height: 350 },
+            chart: { type: 'bar', height: 350, ...getChartColors().chart },
+            theme: getChartColors().theme,
             xaxis: { categories: @json($chartPendidikan['categories']) },
-            plotOptions: { bar: { borderRadius: 4, horizontal: true } }, // Horizontal for long labels
+            plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             colors: ['#10B981']
         };
-        new ApexCharts(document.querySelector("#chart-pendidikan"), optionsPendidikan).render();
+        chartInstances.pendidikan = new ApexCharts(document.querySelector("#chart-pendidikan"), optionsPendidikan);
+        chartInstances.pendidikan.render();
 
         // 4. Chart Usia (Area)
         var optionsUsia = {
             series: [{ name: 'Jumlah', data: @json($chartUsia['series']) }],
-            chart: { type: 'area', height: 350 },
+            chart: { type: 'area', height: 350, ...getChartColors().chart },
+            theme: getChartColors().theme,
             xaxis: { categories: @json($chartUsia['categories']) },
             dataLabels: { enabled: false },
             stroke: { curve: 'smooth' },
             colors: ['#F59E0B']
         };
-        new ApexCharts(document.querySelector("#chart-usia"), optionsUsia).render();
+        chartInstances.usia = new ApexCharts(document.querySelector("#chart-usia"), optionsUsia);
+        chartInstances.usia.render();
 
         // 5. Chart Jenis Jabatan (Bar)
         var optionsJenisJbt = {
             series: [{ name: 'Jumlah', data: @json($chartJenisJbt['series']) }],
-            chart: { type: 'bar', height: 350 },
+            chart: { type: 'bar', height: 350, ...getChartColors().chart },
+            theme: getChartColors().theme,
             xaxis: { categories: @json($chartJenisJbt['categories']) },
             plotOptions: { bar: { borderRadius: 4, horizontal: false } },
             colors: ['#8B5CF6']
         };
-        new ApexCharts(document.querySelector("#chart-jenis-jbt"), optionsJenisJbt).render();
+        chartInstances.jenisJbt = new ApexCharts(document.querySelector("#chart-jenis-jbt"), optionsJenisJbt);
+        chartInstances.jenisJbt.render();
 
         // 6. Chart OPD (Bar Horizontal)
         var optionsOpd = {
             series: [{ name: 'Jumlah', data: @json($chartOpd['series']) }],
-            chart: { type: 'bar', height: 400 },
+            chart: { type: 'bar', height: 400, ...getChartColors().chart },
+            theme: getChartColors().theme,
             xaxis: { categories: @json($chartOpd['categories']) },
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             colors: ['#6366F1']
         };
-        new ApexCharts(document.querySelector("#chart-opd"), optionsOpd).render();
+        chartInstances.opd = new ApexCharts(document.querySelector("#chart-opd"), optionsOpd);
+        chartInstances.opd.render();
+
+        function updateChartTheme() {
+            const newColors = getChartColors();
+            Object.values(chartInstances).forEach(chart => {
+                chart.updateOptions({
+                    chart: newColors.chart,
+                    theme: newColors.theme
+                });
+            });
+        }
     </script>
 </body>
 
