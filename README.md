@@ -28,6 +28,43 @@
 *   **Sidebar Filter:** Custom searchable dropdown for filtering data by Unit Kerja (OPD).
 *   **Responsive:** optimized for desktop and mobile views.
 
+## Deployment with Docker
+
+This project is fully containerized using Docker, allowing it to be deployed easily on any environment.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Getting Started
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd asn-dashboard
+    ```
+
+2.  **Setup environment:**
+    ```bash
+    cp .env.example .env
+    ```
+
+3.  **Start the application:**
+    ```bash
+    docker-compose up -d --build
+    ```
+
+4.  **Install dependencies and run migrations:**
+    ```bash
+    docker-compose exec app composer install
+    docker-compose exec app php artisan key:generate
+    docker-compose exec app php artisan migrate
+    ```
+
+5.  **Access the application:**
+    Open [http://localhost:8080](http://localhost:8080) in your browser.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
