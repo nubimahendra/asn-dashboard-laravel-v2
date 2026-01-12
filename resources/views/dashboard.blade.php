@@ -78,6 +78,7 @@
                     </div>
                 </nav>
 
+                @if(auth()->user()->role === 'admin')
                 <hr class="my-2 border-dashed border-gray-200 dark:border-gray-700 mx-2">
 
                 <!-- Chatbot Menu -->
@@ -104,7 +105,9 @@
                         </div>
                     </div>
                 </nav>
+                @endif
             </div>
+            @if(auth()->user()->role === 'admin')
             <div class="p-4 border-t border-gray-100 dark:border-gray-700">
                 <form action="{{ route('sync.pegawai') }}" method="POST">
                     @csrf
@@ -114,6 +117,7 @@
                     </button>
                 </form>
             </div>
+            @endif
         </aside>
         <main id="main-content" class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 w-full">
             <div class="container mx-auto px-10 py-8">
@@ -138,6 +142,12 @@
                          @if($filterOpd)
                             <a href="/" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">Reset</a>
                         @endif
+                        <form action="{{ route('logout') }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors" title="Logout">
+                                <svg class="w-6 h-6 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            </button>
+                        </form>
                     </div>
                 </div>
 
