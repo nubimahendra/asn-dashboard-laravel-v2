@@ -14,6 +14,7 @@ class SnapshotPegawai extends Model
     protected $fillable = [
         'nip_baru',
         'nama_pegawai',
+        'tgl_lahir',
         'eselon',
         'jabatan',
         'pd',

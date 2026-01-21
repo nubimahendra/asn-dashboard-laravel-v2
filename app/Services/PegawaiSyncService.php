@@ -13,7 +13,7 @@ class PegawaiSyncService
     {
         try {
             $data = DB::connection('sidawai')->table('export_pegawai')
-                ->select('nip_baru', 'nama_pegawai', 'eselon', 'jabatan', 'pd', 'sub_pd', 'jenikel', 'sts_peg', 'tk_pend')
+                ->select('nip_baru', 'nama_pegawai', 'tgl_lahir', 'eselon', 'jabatan', 'pd', 'sub_pd', 'jenikel', 'sts_peg', 'tk_pend')
                 ->get();
 
             if ($data->isEmpty()) {
@@ -24,32 +24,36 @@ class PegawaiSyncService
             }
 
             DB::transaction(function () use ($data) {
-                SnapshotPegawai::query()->delete();
-
                 // Convert collection to array for chunking
                 $chunks = $data->chunk(100);
                 $timestamp = Carbon::now();
 
                 foreach ($chunks as $chunk) {
-                    $insertData = [];
                     foreach ($chunk as $row) {
-                        $insertData[] = [
-                            'nip_baru' => $row->nip_baru,
-                            'nama_pegawai' => $row->nama_pegawai,
-                            'eselon' => $row->eselon,
-                            'jabatan' => $row->jabatan,
-                            'pd' => $row->pd,
-                            'sub_pd' => $row->sub_pd,
-                            'jenikel' => $row->jenikel,
-                            'sts_peg' => $row->sts_peg,
-                            'tk_pend' => $row->tk_pend,
-                            'last_sync_at' => $timestamp,
-                            'created_at' => $timestamp,
-                            'updated_at' => $timestamp,
-                        ];
+                        SnapshotPegawai::updateOrCreate(
+                            ['nip_baru' => $row->nip_baru],
+                            [
+                                'nama_pegawai' => $row->nama_pegawai,
+                                'tgl_lahir' => $row->tgl_lahir,
+                                'eselon' => $row->eselon,
+                                'jabatan' => $row->jabatan,
+                                'pd' => $row->pd,
+                                'sub_pd' => $row->sub_pd,
+                                'jenikel' => $row->jenikel,
+                                'sts_peg' => $row->sts_peg,
+                                'tk_pend' => $row->tk_pend,
+                                'last_sync_at' => $timestamp,
+                            ]
+                        );
                     }
-                    SnapshotPegawai::insert($insertData);
                 }
+
+                // Delete records that are in local DB but not in the source data
+                // Collect all valid NIPs from the source data
+                $validNips = $data->pluck('nip_baru')->toArray();
+
+                // Delete rows where nip_baru is NOT in validNips
+                SnapshotPegawai::whereNotIn('nip_baru', $validNips)->delete();
             });
 
             return [

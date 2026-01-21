@@ -26,7 +26,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{phone}', [ChatAdminController::class, 'show'])->name('show');
             Route::post('/reply', [ChatAdminController::class, 'reply'])->name('reply');
         });
+
+        // Pengajuan Cerai Routes
+        Route::controller(\App\Http\Controllers\PengajuanCeraiController::class)
+            ->prefix('admin/pengajuan-cerai')
+            ->name('admin.pengajuan-cerai.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store');
+                Route::get('/search-pegawai', 'searchPegawai')->name('search');
+                Route::get('/print', 'print')->name('print');
+                Route::get('/export-excel', 'exportExcel')->name('export.excel');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
     });
 });
+
 
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'handleWebhook'])->name('webhook.whatsapp');

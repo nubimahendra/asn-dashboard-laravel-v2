@@ -28,6 +28,126 @@
 *   **Sidebar Filter:** Custom searchable dropdown for filtering data by Unit Kerja (OPD).
 *   **Responsive:** optimized for desktop and mobile views.
 
+## Running Locally
+
+To run this project on your local machine without Docker:
+
+### Prerequisites
+- PHP >= 8.2
+- Composer
+- Node.js & NPM
+- MySQL
+
+### Steps
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/nubimahendra/asn-dashboard-laravel.git
+    cd asn-dashboard-laravel
+    ```
+2.  **Install PHP Dependencies**
+    ```bash
+    composer install
+    ```
+3.  **Setup Environment**
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+    *Configure your database credentials in the `.env` file.*
+4.  **Run Migrations**
+    ```bash
+    php artisan migrate
+    ```
+5.  **Install & Build Frontend Assets**
+    ```bash
+    npm install
+    npm run dev
+    ```
+6.  **Serve the Application**
+    ```bash
+    php artisan serve
+    ```
+    Visit `http://localhost:8000`
+
+## Deployment on Ubuntu VPS
+
+This guide assumes a fresh Ubuntu 22.04/24.04 server with Nginx, MySQL, PHP 8.2, and Composer installed (LEMP Stack).
+
+1.  **Clone the Repository**
+    ```bash
+    cd /var/www
+    git clone https://github.com/nubimahendra/asn-dashboard-laravel.git
+    cd asn-dashboard-laravel
+    ```
+
+2.  **Set Permissions**
+    ```bash
+    sudo chown -R www-data:www-data /var/www/asn-dashboard-laravel
+    sudo chmod -R 775 storage bootstrap/cache
+    ```
+
+3.  **Install Dependencies**
+    ```bash
+    composer install --optimize-autoloader --no-dev
+    npm install
+    npm run build
+    ```
+
+4.  **Environment Setup**
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+    *Edit `.env` and set `APP_ENV=production`, `APP_DEBUG=false`, and database credentials.*
+
+5.  **Database Migration**
+    ```bash
+    php artisan migrate --force
+    ```
+
+6.  **Nginx Configuration**
+    Create a new config file: `/etc/nginx/sites-available/asn-dashboard`
+    ```nginx
+    server {
+        listen 80;
+        server_name your-domain.com;
+        root /var/www/asn-dashboard-laravel/public;
+
+        add_header X-Frame-Options "SAMEORIGIN";
+        add_header X-Content-Type-Options "nosniff";
+
+        index index.php;
+
+        charset utf-8;
+
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        location = /favicon.ico { access_log off; log_not_found off; }
+        location = /robots.txt  { access_log off; log_not_found off; }
+
+        error_page 404 /index.php;
+
+        location ~ \.php$ {
+            fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+
+        location ~ /\.(?!well-known).* {
+            deny all;
+        }
+    }
+    ```
+
+7.  **Enable Site & Restart Nginx**
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/asn-dashboard /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
+
 ## Deployment with Docker
 
 This project is fully containerized using Docker, allowing it to be deployed easily on any environment.

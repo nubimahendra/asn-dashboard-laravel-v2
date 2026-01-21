@@ -201,6 +201,42 @@
                         </div>
                     </nav>
 
+                    <!-- Laporan Menu -->
+                    <nav class="space-y-1 mt-2">
+                        <div>
+                            <button type="button" id="menu-laporan-toggle"
+                                class="w-full flex items-center justify-between px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors group">
+                                <div class="flex items-center">
+                                    <svg class="mr-3 h-6 w-6 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span class="sidebar-text truncate">Laporan</span>
+                                </div>
+                                <svg id="menu-laporan-icon"
+                                    class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div id="menu-laporan-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+                                <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                                    <a href="#"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Profil
+                                        Pegawai</a>
+                                    <a href="#"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Iuran
+                                        Korpri</a>
+                                    <a href="{{ route('admin.pengajuan-cerai.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Pengajuan
+                                        Cerai</a>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
                     <!-- Pengaturan Menu -->
                     <nav class="space-y-1 mt-2">
                         <div>
@@ -235,27 +271,70 @@
             </div>
             @if(auth()->user()->role === 'admin')
                 <div class="p-4 border-t border-gray-100 dark:border-gray-700">
-                    <form action="{{ route('sync.pegawai') }}" method="POST">
+                    <form action="{{ route('sync.pegawai') }}" method="POST" id="sync-form">
                         @csrf
                         <button type="submit"
-                            onclick="return confirm('Mulai sinkronisasi data dari server? Proses ini mungkin memakan waktu.')"
-                            class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 group"
-                            title="Sync Data">
-                            <svg class="w-5 h-5 flex-shrink-0 group-hover:animate-spin" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                            class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 group disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Sync Data" id="btn-sync">
+                            <svg class="w-5 h-5 flex-shrink-0 group-hover:animate-spin" id="icon-sync" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                                 </path>
                             </svg>
-                            <span class="sidebar-text">Sync Data</span>
+                            <svg class="w-5 h-5 flex-shrink-0 animate-spin hidden" id="icon-loading" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                                </circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <span class="sidebar-text" id="text-sync">Sync Data</span>
+                            <span class="sidebar-text hidden" id="text-loading">Memproses...</span>
                         </button>
                     </form>
+                    <script>
+                        document.getElementById('sync-form').addEventListener('submit', function (e) {
+                            if (!confirm('Mulai sinkronisasi data dari server? Proses ini mungkin memakan waktu.')) {
+                                e.preventDefault();
+                                return;
+                            }
+                            const btn = document.getElementById('btn-sync');
+                            const iconSync = document.getElementById('icon-sync');
+                            const iconLoading = document.getElementById('icon-loading');
+                            const textSync = document.getElementById('text-sync');
+                            const textLoading = document.getElementById('text-loading');
+
+                            btn.disabled = true;
+                            iconSync.classList.add('hidden');
+                            iconLoading.classList.remove('hidden');
+                            textSync.classList.add('hidden');
+                            textLoading.classList.remove('hidden');
+                        });
+                    </script>
                 </div>
             @endif
         </aside>
 
         <main id="main-content"
             class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 w-full">
+            <div class="px-6 py-4">
+                @if (session('success'))
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+                        role="alert">
+                        <strong class="font-bold">Berhasil!</strong>
+                        <span class="block sm:inline">{{ session('success') }}</span>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <strong class="font-bold">Error!</strong>
+                        <span class="block sm:inline">{{ session('error') }}</span>
+                    </div>
+                @endif
+            </div>
             @yield('content')
         </main>
 
@@ -313,6 +392,15 @@
                 if (isHidden) { menuPengaturanContent.classList.remove('hidden'); menuPengaturanIcon.classList.add('rotate-180'); } else { menuPengaturanContent.classList.add('hidden'); menuPengaturanIcon.classList.remove('rotate-180'); }
             });
         }
+        const menuLaporanToggle = document.getElementById('menu-laporan-toggle');
+        const menuLaporanContent = document.getElementById('menu-laporan-content');
+        const menuLaporanIcon = document.getElementById('menu-laporan-icon');
+        if (menuLaporanToggle && menuLaporanContent) {
+            menuLaporanToggle.addEventListener('click', () => {
+                const isHidden = menuLaporanContent.classList.contains('hidden');
+                if (isHidden) { menuLaporanContent.classList.remove('hidden'); menuLaporanIcon.classList.add('rotate-180'); } else { menuLaporanContent.classList.add('hidden'); menuLaporanIcon.classList.remove('rotate-180'); }
+            });
+        }
         function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
         const employeeSearchInput = document.getElementById('employee-search');
         if (employeeSearchInput) {
@@ -351,6 +439,17 @@
                 if (isCollapsed) { mainSidebar.classList.remove('w-20'); mainSidebar.classList.add('w-64'); sidebarTexts.forEach(el => el.classList.remove('hidden')); toggleIcon.classList.remove('rotate-180'); } else { mainSidebar.classList.remove('w-64'); mainSidebar.classList.add('w-20'); sidebarTexts.forEach(el => el.classList.add('hidden')); if (menuStatistikContent && !menuStatistikContent.classList.contains('hidden')) { menuStatistikContent.classList.add('hidden'); menuStatistikIcon.classList.remove('rotate-180'); } if (menuChatbotContent && !menuChatbotContent.classList.contains('hidden')) { menuChatbotContent.classList.add('hidden'); menuChatbotIcon.classList.remove('rotate-180'); } if (menuPengaturanContent && !menuPengaturanContent.classList.contains('hidden')) { menuPengaturanContent.classList.add('hidden'); menuPengaturanIcon.classList.remove('rotate-180'); } toggleIcon.classList.add('rotate-180'); }
             });
         }
+    </script>
+    <script>
+        // Auto-hide alerts after 3 seconds
+        setTimeout(function () {
+            let alerts = document.querySelectorAll('[role="alert"]');
+            alerts.forEach(function (alert) {
+                alert.style.transition = "opacity 0.5s ease";
+                alert.style.opacity = "0";
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 3000);
     </script>
     @yield('scripts')
 </body>
