@@ -14,16 +14,61 @@ class SyncController extends Controller
         $this->syncService = $syncService;
     }
 
-    public function sync(Request $request)
+    public function index()
     {
-        $result = $this->syncService->sync();
+        return view('admin.sync.index');
+    }
 
-        if ($result['status'] === 'success') {
-            return back()->with('success', $result['message'] . ' (' . $result['count'] . ' records)');
-        } elseif ($result['status'] === 'warning') {
-            return back()->with('warning', $result['message']);
-        } else {
-            return back()->with('error', $result['message']);
+    public function init()
+    {
+        try {
+            $total = $this->syncService->countSource();
+            return response()->json([
+                'status' => 'success',
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function batch(Request $request)
+    {
+        $request->validate([
+            'limit' => 'required|integer',
+            'offset' => 'required|integer',
+        ]);
+
+        try {
+            $count = $this->syncService->syncBatch($request->limit, $request->offset);
+            return response()->json([
+                'status' => 'success',
+                'processed' => $count
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function cleanup()
+    {
+        try {
+            $deleted = $this->syncService->cleanup();
+            return response()->json([
+                'status' => 'success',
+                'deleted' => $deleted
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

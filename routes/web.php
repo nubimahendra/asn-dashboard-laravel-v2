@@ -18,7 +18,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Only Routes
     Route::middleware([\App\Http\Middleware\IsAdmin::class])->group(function () {
-        Route::post('/sync-pegawai', [SyncController::class, 'sync'])->name('sync.pegawai');
+        // Route::post('/sync-pegawai', [SyncController::class, 'sync'])->name('sync.pegawai'); // Old route
+        Route::get('/sync', [SyncController::class, 'index'])->name('sync.index');
+        Route::get('/sync/init', [SyncController::class, 'init'])->name('sync.init');
+        Route::post('/sync/batch', [SyncController::class, 'batch'])->name('sync.batch');
+        Route::post('/sync/cleanup', [SyncController::class, 'cleanup'])->name('sync.cleanup');
         Route::resource('users', \App\Http\Controllers\UserController::class);
 
         Route::prefix('admin/chat')->name('admin.chat.')->group(function () {
@@ -39,6 +43,10 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/export-excel', 'exportExcel')->name('export.excel');
                 Route::delete('/{id}', 'destroy')->name('destroy');
             });
+
+        // Surat Masuk Routes
+        Route::get('/surat-masuk/print', [App\Http\Controllers\SuratMasukController::class, 'print'])->name('surat-masuk.print');
+        Route::resource('surat-masuk', App\Http\Controllers\SuratMasukController::class);
     });
 });
 

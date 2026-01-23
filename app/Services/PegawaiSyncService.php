@@ -9,64 +9,71 @@ use Exception;
 
 class PegawaiSyncService
 {
-    public function sync()
+    public function countSource()
+    {
+        return DB::connection('sidawai')->table('export_pegawai')->count();
+    }
+
+    public function syncBatch($limit, $offset)
     {
         try {
             $data = DB::connection('sidawai')->table('export_pegawai')
-                ->select('nip_baru', 'nama_pegawai', 'tgl_lahir', 'eselon', 'jabatan', 'pd', 'sub_pd', 'jenikel', 'sts_peg', 'tk_pend')
+                ->select('nip_baru', 'nama_pegawai', 'tgl_lahir', 'eselon', 'jabatan', 'pd', 'sub_pd', 'jenikel', 'sts_peg', 'tk_pend', 'golru')
+                ->orderBy('nip_baru')
+                ->offset($offset)
+                ->limit($limit)
                 ->get();
 
             if ($data->isEmpty()) {
-                return [
-                    'status' => 'warning',
-                    'message' => 'No data found in source database.'
-                ];
+                return 0; // No more data
             }
 
-            DB::transaction(function () use ($data) {
-                // Convert collection to array for chunking
-                $chunks = $data->chunk(100);
-                $timestamp = Carbon::now();
+            $timestamp = Carbon::now();
 
-                foreach ($chunks as $chunk) {
-                    foreach ($chunk as $row) {
-                        SnapshotPegawai::updateOrCreate(
-                            ['nip_baru' => $row->nip_baru],
-                            [
-                                'nama_pegawai' => $row->nama_pegawai,
-                                'tgl_lahir' => $row->tgl_lahir,
-                                'eselon' => $row->eselon,
-                                'jabatan' => $row->jabatan,
-                                'pd' => $row->pd,
-                                'sub_pd' => $row->sub_pd,
-                                'jenikel' => $row->jenikel,
-                                'sts_peg' => $row->sts_peg,
-                                'tk_pend' => $row->tk_pend,
-                                'last_sync_at' => $timestamp,
-                            ]
-                        );
-                    }
-                }
+            foreach ($data as $row) {
+                SnapshotPegawai::updateOrCreate(
+                    ['nip_baru' => $row->nip_baru],
+                    [
+                        'nama_pegawai' => $row->nama_pegawai,
+                        'tgl_lahir' => $row->tgl_lahir,
+                        'eselon' => $row->eselon,
+                        'jabatan' => $row->jabatan,
+                        'pd' => $row->pd,
+                        'sub_pd' => $row->sub_pd,
+                        'jenikel' => $row->jenikel,
+                        'sts_peg' => $row->sts_peg,
+                        'tk_pend' => $row->tk_pend,
+                        'golongan' => $row->golru,
+                        'last_sync_at' => $timestamp,
+                    ]
+                );
+            }
 
-                // Delete records that are in local DB but not in the source data
-                // Collect all valid NIPs from the source data
-                $validNips = $data->pluck('nip_baru')->toArray();
-
-                // Delete rows where nip_baru is NOT in validNips
-                SnapshotPegawai::whereNotIn('nip_baru', $validNips)->delete();
-            });
-
-            return [
-                'status' => 'success',
-                'count' => $data->count(),
-                'message' => 'Data successfully synced.'
-            ];
+            return $data->count();
 
         } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Sync failed: ' . $e->getMessage()
-            ];
+            throw $e;
+        }
+    }
+
+    public function cleanup()
+    {
+        try {
+            // Fetch ALL valid NIPs from source (lightweight query, just strings)
+            // Even 20k NIPs is small enough for memory (~2-3MB max)
+            $validNips = DB::connection('sidawai')->table('export_pegawai')
+                ->pluck('nip_baru')
+                ->toArray();
+
+            if (empty($validNips)) {
+                return 0;
+            }
+
+            // Delete rows where nip_baru is NOT in validNips
+            return SnapshotPegawai::whereNotIn('nip_baru', $validNips)->delete();
+
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 }

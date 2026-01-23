@@ -132,6 +132,60 @@ class DashboardController extends Controller
             'series' => $dataOpd->values()->toArray(),
         ];
 
+        // Chart 6: Golongan (Bar)
+        $dataGolongan = (clone $query)->select('golongan', DB::raw('count(*) as total'))
+            ->whereNotNull('golongan')
+            ->where('golongan', '!=', '')
+            ->groupBy('golongan')
+            ->orderBy('golongan')
+            ->pluck('total', 'golongan');
+
+        $chartGolongan = [
+            'categories' => $dataGolongan->keys()->toArray(),
+            'series' => $dataGolongan->values()->toArray(),
+        ];
+
+        // Chart 7: Generasi (Pie) - Based on tgl_lahir
+        // Gen Z: 1997 - 2012
+        // Gen Y: 1981 - 1996
+        // Gen X: 1965 - 1980
+        // Baby Boomer: 1946 - 1964 (Using < 1965 as Others/Boomers)
+        $rawTglLahir = (clone $query)->select('tgl_lahir')->whereNotNull('tgl_lahir')->get();
+
+        $statsGenerasi = [
+            'Gen Z (1997-2012)' => 0,
+            'Gen Y (1981-1996)' => 0,
+            'Gen X (1965-1980)' => 0,
+            'Lainnya' => 0
+        ];
+
+        foreach ($rawTglLahir as $item) {
+            if (!$item->tgl_lahir)
+                continue;
+
+            try {
+                $year = Carbon::parse($item->tgl_lahir)->year;
+
+                if ($year >= 1997 && $year <= 2012) {
+                    $statsGenerasi['Gen Z (1997-2012)']++;
+                } elseif ($year >= 1981 && $year <= 1996) {
+                    $statsGenerasi['Gen Y (1981-1996)']++;
+                } elseif ($year >= 1965 && $year <= 1980) {
+                    $statsGenerasi['Gen X (1965-1980)']++;
+                } else {
+                    $statsGenerasi['Lainnya']++;
+                }
+            } catch (\Exception $e) {
+                // Ignore invalid dates
+                continue;
+            }
+        }
+
+        $chartGenerasi = [
+            'labels' => array_keys($statsGenerasi),
+            'series' => array_values($statsGenerasi),
+        ];
+
         // 6. Paginated Table Data
         $pegawaiQuery = (clone $query)->select('nama_pegawai', 'jabatan', 'pd', 'sts_peg', 'tk_pend');
 
@@ -164,7 +218,10 @@ class DashboardController extends Controller
             'chartStsPeg',
             'chartPendidikan',
             'chartEselon',
+            'chartEselon',
             'chartOpd',
+            'chartGolongan',
+            'chartGenerasi',
             'pegawai',
             'lastSync'
         ));

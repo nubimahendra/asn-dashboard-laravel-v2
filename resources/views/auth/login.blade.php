@@ -39,8 +39,8 @@
             <div class="col-md-5 col-lg-4">
                 <div class="card card-login">
                     <div class="card-header-custom">
-                        <h4 class="mb-0">🔐 Dashboard-ASN</h4>
-                        <small>Silakan Log in untuk akses dashboard</small>
+                        <h4 class="mb-0">🔐 LOGIN PRISMA</h4>
+                        <small>Portal Real-time Informasi & Sistem Manajemen Aparatur</small>
                     </div>
                     <div class="card-body p-4 bg-white">
 
@@ -89,7 +89,7 @@
                         </form>
                     </div>
                     <div class="card-footer text-center py-3 bg-light text-muted">
-                        <small>&copy; {{ date('Y') }} Dashboard Kepegawaian</small>
+                        <small>&copy; {{ date('Y') }} Tim IT BKPSDM Kab. Blitar</small>
                     </div>
                 </div>
             </div>

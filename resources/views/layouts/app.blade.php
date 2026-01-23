@@ -237,6 +237,35 @@
                         </div>
                     </nav>
 
+                    <!-- Surat Menu -->
+                    <nav class="space-y-1 mt-2">
+                        <div>
+                            <button type="button" id="menu-surat-toggle"
+                                class="w-full flex items-center justify-between px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors group">
+                                <div class="flex items-center">
+                                    <svg class="mr-3 h-6 w-6 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <span class="sidebar-text truncate">Surat</span>
+                                </div>
+                                <svg id="menu-surat-icon"
+                                    class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div id="menu-surat-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+                                <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                                    <a href="{{ route('surat-masuk.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Inbox</a>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
                     <!-- Pengaturan Menu -->
                     <nav class="space-y-1 mt-2">
                         <div>
@@ -263,6 +292,9 @@
                                 <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                                     <a href="{{ route('users.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">User</a>
+                                    <a href="{{ route('sync.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Sync
+                                        Data</a>
                                 </div>
                             </div>
                         </div>
@@ -271,50 +303,26 @@
             </div>
             @if(auth()->user()->role === 'admin')
                 <div class="p-4 border-t border-gray-100 dark:border-gray-700">
-                    <form action="{{ route('sync.pegawai') }}" method="POST" id="sync-form">
-                        @csrf
-                        <button type="submit"
-                            class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 group disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Sync Data" id="btn-sync">
-                            <svg class="w-5 h-5 flex-shrink-0 group-hover:animate-spin" id="icon-sync" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                </path>
-                            </svg>
-                            <svg class="w-5 h-5 flex-shrink-0 animate-spin hidden" id="icon-loading" fill="none"
-                                viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                                </circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            <span class="sidebar-text" id="text-sync">Sync Data</span>
-                            <span class="sidebar-text hidden" id="text-loading">Memproses...</span>
-                        </button>
-                    </form>
-                    <script>
-                        document.getElementById('sync-form').addEventListener('submit', function (e) {
-                            if (!confirm('Mulai sinkronisasi data dari server? Proses ini mungkin memakan waktu.')) {
-                                e.preventDefault();
-                                return;
-                            }
-                            const btn = document.getElementById('btn-sync');
-                            const iconSync = document.getElementById('icon-sync');
-                            const iconLoading = document.getElementById('icon-loading');
-                            const textSync = document.getElementById('text-sync');
-                            const textLoading = document.getElementById('text-loading');
 
-                            btn.disabled = true;
-                            iconSync.classList.add('hidden');
-                            iconLoading.classList.remove('hidden');
-                            textSync.classList.add('hidden');
-                            textLoading.classList.remove('hidden');
-                        });
-                    </script>
                 </div>
             @endif
+
+            <!-- Logout Button (Sidebar Footer) -->
+            <div class="p-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="w-full flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors group">
+                        <svg class="w-5 h-5 flex-shrink-0 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        <span class="sidebar-text font-medium">Keluar</span>
+                    </button>
+                </form>
+            </div>
         </aside>
 
         <main id="main-content"
@@ -399,6 +407,15 @@
             menuLaporanToggle.addEventListener('click', () => {
                 const isHidden = menuLaporanContent.classList.contains('hidden');
                 if (isHidden) { menuLaporanContent.classList.remove('hidden'); menuLaporanIcon.classList.add('rotate-180'); } else { menuLaporanContent.classList.add('hidden'); menuLaporanIcon.classList.remove('rotate-180'); }
+            });
+        }
+        const menuSuratToggle = document.getElementById('menu-surat-toggle');
+        const menuSuratContent = document.getElementById('menu-surat-content');
+        const menuSuratIcon = document.getElementById('menu-surat-icon');
+        if (menuSuratToggle && menuSuratContent) {
+            menuSuratToggle.addEventListener('click', () => {
+                const isHidden = menuSuratContent.classList.contains('hidden');
+                if (isHidden) { menuSuratContent.classList.remove('hidden'); menuSuratIcon.classList.add('rotate-180'); } else { menuSuratContent.classList.add('hidden'); menuSuratIcon.classList.remove('rotate-180'); }
             });
         }
         function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }

@@ -22,6 +22,7 @@ class SnapshotPegawai extends Model
         'jenikel',
         'sts_peg',
         'tk_pend',
+        'golongan',
         'last_sync_at',
     ];
 
