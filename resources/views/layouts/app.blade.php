@@ -190,12 +190,17 @@
                                 <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                                     <a href="#"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Perangkat</a>
-                                    <a href="#"
+                                    <a href="{{ route('admin.chat.messages.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Pesan</a>
                                     <a href="#"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Grup</a>
-                                    <a href="{{ route('admin.chat.index') }}"
+                                    <a href="{{ route('admin.chat.contacts.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Kontak</a>
+                                    <a href="{{ route('admin.chat.faqs.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">FAQ</a>
+                                    <a href="{{ route('admin.chat.api.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Api
+                                        Fonnte</a>
                                 </div>
                             </div>
                         </div>

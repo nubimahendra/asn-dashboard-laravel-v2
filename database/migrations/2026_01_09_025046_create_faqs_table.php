@@ -10,10 +10,16 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // Drop table if exists to ensure clean state given schema change
+        Schema::dropIfExists('faqs');
+
         Schema::create('faqs', function (Blueprint $table) {
             $table->id();
-            $table->string('keyword');
-            $table->text('answer');
+            $table->string('question')->comment('Judul/Pertanyaan untuk referensi admin');
+            $table->text('keywords')->comment('Kata kunci dipisahkan koma');
+            $table->text('answer')->comment('Jawaban untuk WhatsApp');
+            $table->string('category')->default('umum');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

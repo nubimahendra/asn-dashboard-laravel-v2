@@ -26,9 +26,17 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', \App\Http\Controllers\UserController::class);
 
         Route::prefix('admin/chat')->name('admin.chat.')->group(function () {
-            Route::get('/', [ChatAdminController::class, 'index'])->name('index');
-            Route::get('/{phone}', [ChatAdminController::class, 'show'])->name('show');
-            Route::post('/reply', [ChatAdminController::class, 'reply'])->name('reply');
+            Route::get('/', [ChatAdminController::class, 'index'])->name('messages.index'); // Changed name
+            Route::get('/messages/{phone}', [ChatAdminController::class, 'show'])->name('messages.show'); // Moved to /messages/
+            Route::post('/messages/reply', [ChatAdminController::class, 'reply'])->name('messages.reply');
+
+            Route::get('/api', [\App\Http\Controllers\FonnteController::class, 'index'])->name('api.index');
+            Route::post('/api', [\App\Http\Controllers\FonnteController::class, 'store'])->name('api.store');
+            Route::post('/api/check', [\App\Http\Controllers\FonnteController::class, 'checkConnection'])->name('api.check');
+
+            Route::resource('contacts', \App\Http\Controllers\ChatContactController::class);
+            Route::resource('faqs', \App\Http\Controllers\FaqController::class);
+
         });
 
         // Pengajuan Cerai Routes
