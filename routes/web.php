@@ -25,6 +25,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/sync/cleanup', [SyncController::class, 'cleanup'])->name('sync.cleanup');
         Route::resource('users', \App\Http\Controllers\UserController::class);
 
+        // Snapshot / Laporan Routes
+        Route::get('/snapshot', [App\Http\Controllers\SnapshotController::class, 'index'])->name('snapshot.index');
+        Route::post('/snapshot', [App\Http\Controllers\SnapshotController::class, 'store'])->name('snapshot.store');
+        Route::get('/snapshot/export/pdf', [App\Http\Controllers\SnapshotController::class, 'downloadPdf'])->name('snapshot.export.pdf');
+        Route::get('/snapshot/export/excel', [App\Http\Controllers\SnapshotController::class, 'downloadExcel'])->name('snapshot.export.excel');
+
         Route::prefix('admin/chat')->name('admin.chat.')->group(function () {
             Route::get('/', [ChatAdminController::class, 'index'])->name('messages.index'); // Changed name
             Route::get('/messages/{phone}', [ChatAdminController::class, 'show'])->name('messages.show'); // Moved to /messages/
