@@ -1,3 +1,15 @@
+<style>
+    .typing-cursor::after {
+        content: '|';
+        animation: blink 1s step-start infinite;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+</style>
 <div id="asn-chat-widget">
     <!-- Chat Window -->
     <div id="chat-window"
@@ -22,10 +34,12 @@
 
         <!-- Input Area -->
         <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-            <form id="chat-form" onsubmit="event.preventDefault(); sendMessage();" class="flex gap-2">
-                <input type="text" id="chat-input" placeholder="Ketik pesan..."
-                    class="flex-1 px-3 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    autocomplete="off">
+            <form id="chat-form" onsubmit="event.preventDefault(); sendMessage();" class="flex gap-2 items-end">
+                <textarea id="chat-input" rows="1" placeholder="Ketik pesan..."
+                    class="flex-1 px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none overflow-hidden scrollbar-none"
+                    style="min-height: 40px; max-height: 100px;"
+                    oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'"
+                    onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
                 <button type="submit"
                     class="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 transition-colors focus:outline-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -105,7 +119,7 @@
 
             html += `
                 <div class="mb-3 flex ${alignClass}">
-                    <div class="max-w-[80%] rounded-lg px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${bgClass}">
+                    <div id="msg-${msg.id || 'hist-' + Math.random().toString(36).substr(2, 9)}" class="max-w-[80%] w-fit rounded-lg px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${bgClass}">
                         ${escapeHtml(msg.message)}
                     </div>
                 </div>
@@ -121,6 +135,7 @@
 
         // Optimistic UI
         chatInput.value = '';
+        chatInput.style.height = 'auto'; // Reset height
         appendMessage(text, false);
         scrollToBottom();
 
@@ -145,7 +160,13 @@
             // Ideally we re-fetch history or just append the bot response.
             // Let's just append bot response if available
             if (data.bot_message) {
-                appendMessage(data.bot_message.message, true);
+                // Modified: Use Typewriter effect for bot response
+                const msgId = `msg-${data.bot_message.id}`;
+                appendMessage(data.bot_message.message, true, msgId);
+
+                // Trigger typewriter
+                await typeWriterEffect(msgId, data.bot_message.message);
+
                 notifSound.play().catch(e => console.log('Audio play failed', e));
                 scrollToBottom();
             }
@@ -155,18 +176,50 @@
         }
     }
 
-    function appendMessage(text, isBot) {
+    function appendMessage(text, isBot, specificId = null) {
         const alignClass = isBot ? 'justify-start' : 'justify-end';
         const bgClass = isBot ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600' : 'bg-blue-600 text-white rounded-br-none';
+        const msgId = specificId || `msg-${Date.now()}`;
 
         const div = document.createElement('div');
         div.className = `mb-3 flex ${alignClass}`;
         div.innerHTML = `
-            <div class="max-w-[80%] rounded-lg px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${bgClass}">
+            <div id="${msgId}" class="max-w-[80%] w-fit rounded-lg px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${bgClass}">
                 ${escapeHtml(text)}
             </div>
         `;
         messagesContainer.appendChild(div);
+    }
+
+    // Typewriter Effect Function
+    function typeWriterEffect(elementId, text) {
+        return new Promise((resolve) => {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                resolve();
+                return;
+            }
+
+            element.innerHTML = ''; // Clear content
+            element.classList.add('typing-cursor'); // Add cursor
+
+            let i = 0;
+            const speed = 30; // ms per char
+
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += escapeHtml(text.charAt(i));
+                    i++;
+                    setTimeout(type, speed);
+                    scrollToBottom(); // Auto scroll while typing
+                } else {
+                    element.classList.remove('typing-cursor'); // Remove cursor
+                    resolve();
+                }
+            }
+
+            type();
+        });
     }
 
     function scrollToBottom() {

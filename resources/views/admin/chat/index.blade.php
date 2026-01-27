@@ -48,12 +48,14 @@
             <!-- Input -->
             <div id="chat-input-area"
                 class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 hidden">
-                <form id="admin-chat-form" onsubmit="event.preventDefault(); sendReply();" class="flex gap-2">
-                    <input type="text" id="admin-reply-input" placeholder="Ketik balasan..."
-                        class="flex-1 px-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        autocomplete="off">
+                <form id="admin-chat-form" onsubmit="event.preventDefault(); sendReply();" class="flex gap-2 items-end">
+                    <textarea id="admin-reply-input" rows="1" placeholder="Ketik balasan..."
+                        class="flex-1 px-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none overflow-hidden"
+                        style="min-height: 40px; max-height: 120px;"
+                        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'"
+                        onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendReply(); }"></textarea>
                     <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition-colors">
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition-colors h-10">
                         Kirim
                     </button>
                 </form>
@@ -99,18 +101,18 @@
                     const unreadBadge = user.unread_count > 0 ? `<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">${user.unread_count}</span>` : '';
 
                     html += `
-                        <div onclick="selectUser(${user.id}, '${escapeHtml(user.name)}', '${user.nip}')" 
-                             class="p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-colors ${bgClass}">
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(user.name)}</span>
-                                ${unreadBadge}
-                            </div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate flex justify-between">
-                                <span class="truncate max-w-[70%]">${escapeHtml(user.last_message)}</span>
-                                <span>${user.last_time}</span>
-                            </div>
-                        </div>
-                    `;
+                                    <div onclick="selectUser(${user.id}, ${JSON.stringify(user.name).replace(/"/g, '&quot;')}, ${user.nip ? JSON.stringify(user.nip).replace(/"/g, '&quot;') : 'null'})" 
+                                         class="p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-colors ${bgClass}">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(user.name)}</span>
+                                            ${unreadBadge}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 truncate flex justify-between">
+                                            <span class="truncate max-w-[70%]">${escapeHtml(user.last_message)}</span>
+                                            <span>${user.last_time}</span>
+                                        </div>
+                                    </div>
+                                `;
                 });
             }
             // Only update if innerHTML changed to avoid flicker/scroll reset? 
@@ -124,97 +126,98 @@
             }
         }
 
-    async function selectUser(userId, name, nip) {
-        selectedUserId = userId;
-        document.getElementById('chat-header').classList.remove('hidden');
-        document.getElementById('chat-input-area').classList.remove('hidden');
-        document.getElementById('chat-user-name').innerText = name;
-        document.getElementById('chat-user-nip').innerText = nip ? 'NIP: ' + nip : (name === 'System' ? 'System' : 'NIP: -');
-        
-        loadUsers(); 
-        
-        loadMessages(userId);
-    }
+        async function selectUser(userId, name, nip) {
+            selectedUserId = userId;
+            document.getElementById('chat-header').classList.remove('hidden');
+            document.getElementById('chat-input-area').classList.remove('hidden');
+            document.getElementById('chat-user-name').innerText = name;
+            document.getElementById('chat-user-nip').innerText = nip ? 'NIP: ' + nip : (name === 'System' ? 'System' : 'NIP: -');
 
-    async function loadMessages(userId) {
-        const container = document.getElementById('admin-chat-messages');
-        container.innerHTML = '<div class="flex h-full items-center justify-center text-gray-500">Memuat...</div>';
-        
-        try {
-            const res = await fetch(`/api/chat/admin/history/${userId}`);
-            if(!res.ok) throw new Error('Failed');
-            const messages = await res.json();
-            
-            if (messages.length === 0) {
-                container.innerHTML = '<div class="flex h-full items-center justify-center text-gray-400">Belum ada pesan.</div>';
-                return;
+            loadUsers();
+
+            loadMessages(userId);
+        }
+
+        async function loadMessages(userId) {
+            const container = document.getElementById('admin-chat-messages');
+            container.innerHTML = '<div class="flex h-full items-center justify-center text-gray-500">Memuat...</div>';
+
+            try {
+                const res = await fetch(`/api/chat/admin/history/${userId}`);
+                if (!res.ok) throw new Error('Failed');
+                const messages = await res.json();
+
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="flex h-full items-center justify-center text-gray-400">Belum ada pesan.</div>';
+                    return;
+                }
+
+                let html = '';
+                messages.forEach(msg => {
+                    const isMyMessage = msg.is_from_bot;
+                    const alignClass = isMyMessage ? 'justify-end' : 'justify-start';
+                    const bgClass = isMyMessage ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600';
+
+                    html += `
+                                <div class="mb-4 flex ${alignClass}">
+                                    <div class="max-w-[75%] w-fit px-4 py-2 rounded-lg shadow-sm text-sm whitespace-pre-wrap ${bgClass}">
+                                         ${escapeHtml(msg.message)}
+                                    </div>
+                                </div>
+                            `;
+                });
+                container.innerHTML = html;
+                container.scrollTop = container.scrollHeight;
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div class="text-red-500 text-center mt-10">Gagal memuat pesan.</div>';
             }
+        }
 
-            let html = '';
-            messages.forEach(msg => {
-                const isMyMessage = msg.is_from_bot; 
-                const alignClass = isMyMessage ? 'justify-end' : 'justify-start';
-                const bgClass = isMyMessage ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600';
-                
-                html += `
-                    <div class="mb-4 flex ${alignClass}">
-                        <div class="max-w-[75%] px-4 py-2 rounded-lg shadow-sm text-sm whitespace-pre-wrap ${bgClass}">
-                             ${escapeHtml(msg.message)}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+        async function sendReply() {
+            if (!selectedUserId) return;
+            const input = document.getElementById('admin-reply-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto'; // Reset height
+
+            const container = document.getElementById('admin-chat-messages');
+            const div = document.createElement('div');
+            div.className = 'mb-4 flex justify-end';
+            div.innerHTML = `<div class="max-w-[75%] w-fit px-4 py-2 rounded-lg shadow-sm text-sm whitespace-pre-wrap bg-blue-600 text-white rounded-br-none">${escapeHtml(text)}</div>`;
+            container.appendChild(div);
             container.scrollTop = container.scrollHeight;
-        } catch(e) {
-            console.error(e);
-            container.innerHTML = '<div class="text-red-500 text-center mt-10">Gagal memuat pesan.</div>';
+
+            try {
+                const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/api/chat/admin/reply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({ user_id: selectedUserId, message: text })
+                });
+
+                if (!res.ok) throw new Error('Failed');
+                loadUsers();
+            } catch (e) {
+                console.error(e);
+                alert('Gagal mengirim pesan');
+            }
         }
-    }
 
-    async function sendReply() {
-        if (!selectedUserId) return;
-        const input = document.getElementById('admin-reply-input');
-        const text = input.value.trim();
-        if(!text) return;
-        
-        input.value = '';
-        
-        const container = document.getElementById('admin-chat-messages');
-        const div = document.createElement('div');
-        div.className = 'mb-4 flex justify-end';
-        div.innerHTML = `<div class="max-w-[75%] px-4 py-2 rounded-lg shadow-sm text-sm whitespace-pre-wrap bg-blue-600 text-white rounded-br-none">${escapeHtml(text)}</div>`;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-
-        try {
-            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const res = await fetch('/api/chat/admin/reply', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token
-                },
-                body: JSON.stringify({ user_id: selectedUserId, message: text })
-            });
-            
-            if(!res.ok) throw new Error('Failed');
-            loadUsers(); 
-        } catch(e) {
-            console.error(e);
-            alert('Gagal mengirim pesan');
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
-    }
-
-    function escapeHtml(text) {
-        if (!text) return text;
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
     </script>
 @endsection

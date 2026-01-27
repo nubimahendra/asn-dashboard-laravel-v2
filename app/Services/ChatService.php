@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Faq;
 use App\Models\SnapshotPegawai;
 use App\Models\User;
+use App\Models\ChatMessage;
 
 class ChatService
 {
@@ -27,26 +28,14 @@ class ChatService
         }
 
         // 2. Cari jawaban di FAQ
-        // Menggunakan scopeFindByKeyword dari model FAQ yang sudah ada (pastikan logicnya aman)
-        // Atau kita buat logic simple di sini.
-        // Asumsi Faq model punya scopeFindByKeyword atau kita query manual.
-
-        // Cek dulu apakah model FAQ punya scopeFindByKeyword yang kita fix sebelumnya (removed is_active)
-        // Kita gunakan pencarian sederhana saja agar robust.
-        $faq = Faq::where(function ($query) use ($message) {
-            $words = explode(' ', strtolower($message));
-            foreach ($words as $word) {
-                if (strlen($word) > 2) {
-                    $query->orWhere('keywords', 'LIKE', "%{$word}%");
-                }
-            }
-        })->first();
+        $faq = Faq::findByKeyword($message)->first();
 
         if ($faq) {
             return $faq->answer;
         }
 
-        return "Mohon maaf, saya belum mengerti pertanyaan Anda. Pertanyaan ini akan diteruskan ke Admin.";
+        // 3. Fallback jika tidak ada jawaban
+        return "Mohon maaf, saya belum mengerti pertanyaan Anda. Pertanyaan ini akan diteruskan ke Admin untuk ditindaklanjuti. Mohon menunggu respon selanjutnya.";
     }
 
     private function verifyAndSaveNip(string $nip, User $user): string
@@ -54,7 +43,17 @@ class ChatService
         $pegawai = SnapshotPegawai::where('nip_baru', $nip)->first();
 
         if ($pegawai) {
+            // 1. Update User Profile
             $user->update(['nip' => $nip]);
+
+            // 2. Sync Chat History Names
+            // Update ALL messages from this user to reflect the real employee name
+            ChatMessage::where('user_id', $user->id)
+                ->update([
+                    'nip_sender' => $pegawai->nip_baru,
+                    'nama_sender' => $pegawai->nama_pegawai
+                ]);
+
             return "Terima kasih Bpk/Ibu {$pegawai->nama_pegawai}, identitas Anda terverifikasi. Ada yang bisa kami bantu?";
         }
 

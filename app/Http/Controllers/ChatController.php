@@ -62,6 +62,9 @@ class ChatController extends Controller
         // 2. Bot Response
         $botResponse = $this->chatService->getBotResponse($messageText, $user);
 
+        // Refresh User Message to get updated name if NIP was verified
+        $userMsg->refresh();
+
         $botMsg = ChatMessage::create([
             'user_id' => $user->id,
             'session_id' => $sessionId,
