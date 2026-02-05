@@ -45,9 +45,19 @@ class ChatController extends Controller
         $messageText = $request->input('message');
         $sessionId = $request->session()->getId();
 
+        // --- 1. Timeout Check ---
+        $lastActivity = session('chat_last_activity');
+        // 10 minutes = 600 seconds
+        if ($lastActivity && (time() - $lastActivity > 600)) {
+            $this->expireSession($user);
+            return response()->json(['status' => 'session_expired'], 401);
+        }
+        // Update activity
+        session(['chat_last_activity' => time()]);
+
         $pegawai = $user->snapshotPegawai;
 
-        // 1. Simpan Pesan User
+        // --- 2. Save User Message ---
         $userMsg = ChatMessage::create([
             'user_id' => $user->id,
             'session_id' => $sessionId,
@@ -59,22 +69,31 @@ class ChatController extends Controller
             'source' => 'web'
         ]);
 
-        // 2. Bot Response
-        $botResponse = $this->chatService->getBotResponse($messageText, $user);
+        // --- 3. Check Chat Mode (Bot vs Human) ---
+        $chatMode = session('chat_mode', 'bot'); // default 'bot'
 
-        // Refresh User Message to get updated name if NIP was verified
-        $userMsg->refresh();
+        $botMsg = null;
+        if ($chatMode === 'bot') {
+            // Get Bot Response
+            $botResponse = $this->chatService->getBotResponse($messageText, $user);
 
-        $botMsg = ChatMessage::create([
-            'user_id' => $user->id,
-            'session_id' => $sessionId,
-            'nip_sender' => 'bot',
-            'nama_sender' => 'Assistant',
-            'message' => $botResponse,
-            'is_from_bot' => true,
-            'is_read' => true,
-            'source' => 'web'
-        ]);
+            // Refresh User Message to get updated name if NIP was verified
+            $userMsg->refresh();
+
+            $botMsg = ChatMessage::create([
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'nip_sender' => 'bot',
+                'nama_sender' => 'Assistant',
+                'message' => $botResponse,
+                'is_from_bot' => true,
+                'is_read' => true,
+                'source' => 'web'
+            ]);
+        } else {
+            // Human mode: Silent. Admin will reply later.
+            // Optionally we could send an auto-ack, but requirement implies just "bypass faq".
+        }
 
         return response()->json([
             'user_message' => $userMsg,
@@ -83,23 +102,50 @@ class ChatController extends Controller
         ]);
     }
 
+    public function expire(Request $request)
+    {
+        $this->expireSession($request->user());
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function switchMode(Request $request)
+    {
+        $request->validate(['mode' => 'required|in:bot,human']);
+        session(['chat_mode' => $request->input('mode')]);
+
+        // Update activity to prevent immediate timeout after switch
+        session(['chat_last_activity' => time()]);
+
+        return response()->json(['status' => 'ok', 'mode' => $request->input('mode')]);
+    }
+
+    private function expireSession($user)
+    {
+        session()->forget(['chat_last_activity', 'chat_mode']);
+        // Clearing NIP as per requirement to force re-entry
+        if ($user) {
+            $user->update(['nip' => null]);
+        }
+    }
+
     // Admin Methods (Unchanged except fetching session logic if needed? 
     // Conversations view works across all sessions.
     // Reply needs session_id)
     public function conversations()
     {
-        // ... (Keep existing implementation, maybe show latest message from ANY session)
-        // Actually, if we reset, previous chats are "History". Admin might want to see latest active.
-        // Current logic `latest()` works fine.
+        // Fetch users who have chat messages
         $users = \App\Models\User::whereHas('chatMessages')
+            ->with([
+                'snapshotPegawai',
+                'chatMessages' => function ($q) {
+                    // Ensure we get the latest messages to find the last user message if needed, 
+                    // and for the preview text.
+                    $q->orderBy('created_at', 'desc');
+                }
+            ])
             ->withCount([
                 'chatMessages as unread_count' => function ($query) {
                     $query->where('is_from_bot', false)->where('is_read', false);
-                }
-            ])
-            ->with([
-                'chatMessages' => function ($q) {
-                    $q->latest()->limit(1);
                 }
             ])
             ->get()
@@ -108,10 +154,29 @@ class ChatController extends Controller
             })
             ->values()
             ->map(function ($user) {
-                $lastMsg = $user->chatMessages->first();
+                $lastMsg = $user->chatMessages->first(); // Newest message (could be bot)
+    
+                // Priority:
+                // 1. Snapshot Pegawai Name (Real Employee Name)
+                // 2. Name from the last "User" message (stored in chat_messages table)
+                // 3. User Table Name (Fallback)
+    
+                $displayName = $user->name; // Default
+    
+                if ($user->snapshotPegawai) {
+                    $displayName = $user->snapshotPegawai->nama_pegawai;
+                } else {
+                    // Try to find last message from this user to see if they laid claim to a name
+                    // (useful if they verified NIP previously but snapshot relation isn't loaded or something)
+                    $lastUserMsg = $user->chatMessages->where('is_from_bot', false)->first();
+                    if ($lastUserMsg && $lastUserMsg->nama_sender) {
+                        $displayName = $lastUserMsg->nama_sender;
+                    }
+                }
+
                 return [
                     'id' => $user->id,
-                    'name' => $lastMsg?->nama_sender ?? $user->name,
+                    'name' => $displayName,
                     'nip' => $user->nip,
                     'unread_count' => $user->unread_count,
                     'last_message' => $lastMsg ? $lastMsg->message : '',

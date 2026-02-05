@@ -55,6 +55,16 @@ Route::middleware(['auth'])->group(function () {
         // Chatbot Admin (Refactoring to Vanilla JS)
         // Route::get('/chat', App\Livewire\ChatAdmin::class)->name('chat.index');
         Route::get('/chat', [App\Http\Controllers\ChatAdminController::class, 'index'])->name('chat.index'); // We need to create this controller
+
+        // Pegawai Import Routes
+        Route::prefix('pegawai/import')
+            ->name('pegawai.import.')
+            ->group(function () {
+                Route::get('/', [App\Http\Controllers\PegawaiImportController::class, 'index'])->name('index');
+                Route::post('/upload', [App\Http\Controllers\PegawaiImportController::class, 'upload'])->name('upload');
+                Route::get('/history', [App\Http\Controllers\PegawaiImportController::class, 'history'])->name('history');
+                Route::get('/status/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'status'])->name('status');
+            });
     });
 });
 

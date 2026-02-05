@@ -73,11 +73,6 @@
 
         async function loadUsers() {
             try {
-                // Need an API endpoint for this or just reuse a controller method returning JSON
-                // Since we didn't make one yet, let's assume we add one or use a new route.
-                // Wait, I didn't create an API for listing users/chats.
-                // I should probably add `conversations` method to ChatController or ChatAdminController.
-                // For now, let's create the route.
                 const res = await fetch('/api/chat/conversations');
                 if (!res.ok) return;
                 const data = await res.json();
@@ -87,9 +82,6 @@
 
         function renderUsers(data) {
             const container = document.getElementById('user-list');
-            // Simple diff or re-render
-            // Ideally only re-render if changed, but for simplicity:
-            // Note: keeping selection state is important.
 
             let html = '';
             if (data.length === 0) {
@@ -100,28 +92,24 @@
                     const bgClass = isActive ? 'bg-blue-100 dark:bg-gray-700' : 'hover:bg-blue-50 dark:hover:bg-gray-700';
                     const unreadBadge = user.unread_count > 0 ? `<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">${user.unread_count}</span>` : '';
 
+                    // Pass user.name (which is nama_sender from controller) to selectUser
                     html += `
-                                    <div onclick="selectUser(${user.id}, ${JSON.stringify(user.name).replace(/"/g, '&quot;')}, ${user.nip ? JSON.stringify(user.nip).replace(/"/g, '&quot;') : 'null'})" 
-                                         class="p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-colors ${bgClass}">
-                                        <div class="flex justify-between items-start mb-1">
-                                            <span class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(user.name)}</span>
-                                            ${unreadBadge}
-                                        </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 truncate flex justify-between">
-                                            <span class="truncate max-w-[70%]">${escapeHtml(user.last_message)}</span>
-                                            <span>${user.last_time}</span>
-                                        </div>
-                                    </div>
-                                `;
+                                                            <div onclick="selectUser(${user.id}, ${JSON.stringify(user.name).replace(/"/g, '&quot;')}, ${user.nip ? JSON.stringify(user.nip).replace(/"/g, '&quot;') : 'null'})" 
+                                                                 class="p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-colors ${bgClass}">
+                                                                <div class="flex justify-between items-start mb-1">
+                                                                    <span class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(user.name)}</span>
+                                                                    ${unreadBadge}
+                                                                </div>
+                                                                <div class="text-xs text-gray-500 dark:text-gray-400 truncate flex justify-between">
+                                                                    <span class="truncate max-w-[70%]">${escapeHtml(user.last_message)}</span>
+                                                                    <span>${user.last_time}</span>
+                                                                </div>
+                                                            </div>
+                                                        `;
                 });
             }
-            // Only update if innerHTML changed to avoid flicker/scroll reset? 
-            // For now just replace
-            // Better: Find a way to persist selection visual if re-rendering
+
             if (container.innerHTML !== html) {
-                // container.innerHTML = html; // This kills click handlers if not careful, but onclick is inline so it's ok.
-                // But it resets scroll.
-                // Let's just do it.
                 container.innerHTML = html;
             }
         }
@@ -130,16 +118,18 @@
             selectedUserId = userId;
             document.getElementById('chat-header').classList.remove('hidden');
             document.getElementById('chat-input-area').classList.remove('hidden');
+
+            // Name should be the one passed from renderUsers (which comes from API mapping to nama_sender)
             document.getElementById('chat-user-name').innerText = name;
-            document.getElementById('chat-user-nip').innerText = nip ? 'NIP: ' + nip : (name === 'System' ? 'System' : 'NIP: -');
+            document.getElementById('chat-user-nip').innerText = nip ? 'NIP: ' + nip : (name === 'Assistant' ? 'System' : 'NIP: -');
 
-            loadUsers();
-
+            loadUsers(); // Refresh to update active state UI
             loadMessages(userId);
         }
 
         async function loadMessages(userId) {
             const container = document.getElementById('admin-chat-messages');
+            // Don't clear if already showing this user? Maybe better UX. But simpler to clear.
             container.innerHTML = '<div class="flex h-full items-center justify-center text-gray-500">Memuat...</div>';
 
             try {
@@ -154,17 +144,24 @@
 
                 let html = '';
                 messages.forEach(msg => {
-                    const isMyMessage = msg.is_from_bot;
+                    const isMyMessage = msg.is_from_bot; // In Admin view, "bot" (admin reply) is "Me"
                     const alignClass = isMyMessage ? 'justify-end' : 'justify-start';
                     const bgClass = isMyMessage ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600';
 
+                    // Format Timestamp
+                    const date = new Date(msg.created_at);
+                    const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+
                     html += `
-                                <div class="mb-4 flex ${alignClass}">
-                                    <div class="max-w-[75%] w-fit px-4 py-2 rounded-lg shadow-sm text-sm whitespace-pre-wrap ${bgClass}">
-                                         ${escapeHtml(msg.message)}
-                                    </div>
-                                </div>
-                            `;
+                                        <div class="mb-2 flex ${alignClass}">
+                                            <div class="max-w-[85%] w-fit px-2 py-1 rounded-lg shadow-sm text-sm whitespace-pre-wrap leading-tight ${bgClass}">
+                                                 ${escapeHtml(msg.message)}
+                                                 <div class="text-[10px] text-right -mt-1 opacity-70 flex justify-end items-center gap-1 leading-none pb-0">
+                                                    <span>${timeStr}</span>
+                                                 </div>
+                                            </div>
+                                        </div>
+                                    `;
                 });
                 container.innerHTML = html;
                 container.scrollTop = container.scrollHeight;
@@ -181,17 +178,29 @@
             if (!text) return;
 
             input.value = '';
-            input.style.height = 'auto'; // Reset height
+            input.style.height = 'auto';
 
             const container = document.getElementById('admin-chat-messages');
+
+            // Format current time
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
             const div = document.createElement('div');
-            div.className = 'mb-4 flex justify-end';
-            div.innerHTML = `<div class="max-w-[75%] w-fit px-4 py-2 rounded-lg shadow-sm text-sm whitespace-pre-wrap bg-blue-600 text-white rounded-br-none">${escapeHtml(text)}</div>`;
+            div.className = 'mb-2 flex justify-end';
+            div.innerHTML = `
+                    <div class="max-w-[85%] w-fit px-2 py-1 rounded-lg shadow-sm text-sm whitespace-pre-wrap leading-tight bg-blue-600 text-white rounded-br-none">
+                        ${escapeHtml(text)}
+                        <div class="text-[10px] text-right -mt-1 opacity-70 flex justify-end items-center gap-1 leading-none pb-0">
+                            <span>${timeStr}</span>
+                        </div>
+                    </div>`;
             container.appendChild(div);
             container.scrollTop = container.scrollHeight;
 
             try {
                 const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                // Use fetch to send
                 const res = await fetch('/api/chat/admin/reply', {
                     method: 'POST',
                     headers: {
@@ -203,9 +212,10 @@
                 });
 
                 if (!res.ok) throw new Error('Failed');
-                loadUsers();
+                loadUsers(); // Update left sidebar
             } catch (e) {
                 console.error(e);
+                div.querySelector('.bg-blue-600').classList.add('bg-red-500'); // Indicate error
                 alert('Gagal mengirim pesan');
             }
         }

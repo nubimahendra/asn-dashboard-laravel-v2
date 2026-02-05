@@ -16,14 +16,26 @@
         class="fixed bottom-6 right-6 z-[9999] w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col h-[500px] hidden">
         <!-- Header -->
         <div class="bg-blue-600 p-4 text-white flex justify-between items-center shrink-0">
-            <h3 class="font-semibold">Bantuan ASN</h3>
-            <button onclick="toggleChat()" class="hover:bg-blue-700 rounded p-1 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clip-rule="evenodd" />
-                </svg>
-            </button>
+            <h3 class="font-semibold flex items-center gap-2">
+                Bantuan ASN
+                <span id="admin-mode-indicator" class="hidden text-xs bg-red-500 px-2 py-0.5 rounded-full">Admin</span>
+            </h3>
+            <div class="flex items-center gap-2">
+                <!-- Admin Mode Button -->
+                <button id="btn-toggle-mode" onclick="toggleChatMode()"
+                    class="text-xs bg-white text-blue-600 px-2 py-1 rounded hover:bg-gray-100 transition shadow-sm"
+                    title="Hubungi Admin Langsung">
+                    Hubungi Admin
+                </button>
+
+                <button onclick="toggleChat()" class="hover:bg-blue-700 rounded p-1 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- Chat Messages -->
@@ -64,11 +76,24 @@
 <script>
     let chatOpen = false;
     let chatPollingInterval = null;
+    let idleTimer = null;
+    let currentChatMode = 'bot'; // 'bot' or 'human'
+
+    const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 Minutes
+    // const IDLE_TIMEOUT_MS = 10 * 1000; // Testing: 10s
+
     const chatWindow = document.getElementById('chat-window');
     const chatBubble = document.getElementById('chat-bubble');
     const messagesContainer = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
-    const notifSound = new Audio('/sounds/notif.mp3');
+    const modeBtn = document.getElementById('btn-toggle-mode');
+    const adminIndicator = document.getElementById('admin-mode-indicator');
+    const notifSound = new Audio('/sounds/notif.wav');
+
+    // Activity tracking events
+    ['mousemove', 'mousedown', 'keydown', 'touchstart'].forEach(evt => {
+        chatWindow.addEventListener(evt, resetIdleTimer);
+    });
 
     function toggleChat() {
         chatOpen = !chatOpen;
@@ -78,10 +103,100 @@
             loadHistory();
             startPolling();
             setTimeout(scrollToBottom, 100);
+            resetIdleTimer(); // Start timer on open
         } else {
             chatWindow.classList.add('hidden');
             chatBubble.classList.remove('hidden');
             stopPolling();
+            clearIdleTimer();
+        }
+    }
+
+    // --- Idle Timer Logic ---
+    function resetIdleTimer() {
+        if (!chatOpen) return;
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(expireSession, IDLE_TIMEOUT_MS);
+    }
+
+    function clearIdleTimer() {
+        clearTimeout(idleTimer);
+    }
+
+    async function expireSession() {
+        if (!chatOpen) return; // Only expire if window is open? Or maybe expire anyway.
+
+        try {
+            // Notify backend
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            await fetch('/api/chat/expire', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': token }
+            });
+
+            // UI Feedback
+            messagesContainer.innerHTML += `
+                <div class="text-center text-red-500 text-sm my-4 bg-red-50 p-2 rounded">
+                    Sesi chat telah berakhir karena inaktivitas. Silakan masukkan kembali NIP Anda.
+                </div>
+            `;
+            scrollToBottom();
+
+            // Wait a bit then close or refresh?
+            // Actually, just append message and let history reload on next interaction handle it (or force reload)
+            // But we want to FORCE user to re-input NIP.
+            // Let's reload history (which should return empty or ask for NIP)
+            setTimeout(() => {
+                loadHistory();
+                // Reset mode UI
+                setChatModeUI('bot');
+            }, 2000);
+
+        } catch (e) {
+            console.error("Failed to expire session", e);
+        }
+    }
+
+    // --- Chat Mode Logic ---
+    async function toggleChatMode() {
+        const newMode = currentChatMode === 'bot' ? 'human' : 'bot';
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const res = await fetch('/api/chat/mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({ mode: newMode })
+            });
+
+            if (res.ok) {
+                setChatModeUI(newMode);
+                const msg = newMode === 'human'
+                    ? "Mode Admin diaktifkan. Pesan Anda akan diteruskan langsung ke petugas kami."
+                    : "Mode Otomatis diaktifkan. Saya akan mencoba menjawab pertanyaan Anda.";
+
+                appendMessage(msg, true); // System message as bot
+                scrollToBottom();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function setChatModeUI(mode) {
+        currentChatMode = mode;
+        if (mode === 'human') {
+            modeBtn.innerText = "Kembali ke FAQ";
+            modeBtn.classList.replace('text-blue-600', 'text-red-600');
+            adminIndicator.classList.remove('hidden');
+        } else {
+            modeBtn.innerText = "Hubungi Admin";
+            modeBtn.classList.replace('text-red-600', 'text-blue-600');
+            adminIndicator.classList.add('hidden');
         }
     }
 
@@ -90,15 +205,18 @@
             const res = await fetch('/api/chat/history', {
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': 'Bearer ' + getCookie('XSRF-TOKEN') // Ensure auth if needed, but normally default axio/fetch handles it if configured. Sanctum needs Referer/CSRF
+                    'Authorization': 'Bearer ' + getCookie('XSRF-TOKEN')
                 }
             });
-            // Sanctum simple usage for web actually relies on sessions if we are on same domain. 
-            // We just need to make sure we hit the endpoint. If using 'middleware: auth:sanctum', it checks session if Referer is present.
 
             if (!res.ok) throw new Error('Failed to load');
             const data = await res.json();
             renderMessages(data.messages, data.user);
+
+            // Restore mode from session state if we had it? 
+            // Currently API history doesn't return mode. We default to bot.
+            // Ideally history API should return current mode.
+            // For now, let's assume default or adding a quick check could be better.
         } catch (e) {
             console.error(e);
             messagesContainer.innerHTML = '<p class="text-center text-red-500 text-sm mt-4">Gagal memuat percakapan.</p>';
@@ -116,11 +234,17 @@
             const isBot = msg.is_from_bot;
             const alignClass = isBot ? 'justify-start' : 'justify-end';
             const bgClass = isBot ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600' : 'bg-blue-600 text-white rounded-br-none';
+            // Timestamp
+            const date = new Date(msg.created_at);
+            const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
 
             html += `
-                <div class="mb-3 flex ${alignClass}">
-                    <div id="msg-${msg.id || 'hist-' + Math.random().toString(36).substr(2, 9)}" class="max-w-[80%] w-fit rounded-lg px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${bgClass}">
+                <div class="mb-2 flex ${alignClass}">
+                    <div id="msg-${msg.id || 'hist-' + Math.random().toString(36).substr(2, 9)}" class="max-w-[85%] w-fit rounded-lg px-2 py-1 text-sm shadow-sm whitespace-pre-wrap leading-tight ${bgClass}">
                         ${escapeHtml(msg.message)}
+                        <div class="text-[10px] text-right -mt-1 opacity-70 flex justify-end items-center gap-1 leading-none pb-0">
+                            <span>${timeStr}</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -132,6 +256,9 @@
     async function sendMessage() {
         const text = chatInput.value.trim();
         if (!text) return;
+
+        // Reset Timer on send
+        resetIdleTimer();
 
         // Optimistic UI
         chatInput.value = '';
@@ -153,16 +280,30 @@
                 body: JSON.stringify({ message: text })
             });
 
+            if (res.status === 401) {
+                // Session expired
+                const data = await res.json();
+                if (data.status === 'session_expired') {
+                    messagesContainer.innerHTML += `
+                        <div class="text-center text-red-500 text-sm my-4 bg-red-50 p-2 rounded">
+                            Sesi chat telah berakhir. Silakan masukkan kembali NIP.
+                        </div>
+                    `;
+                    scrollToBottom();
+                    setTimeout(loadHistory, 2000); // Reload to reset flow
+                    return;
+                }
+            }
+
             if (!res.ok) throw new Error('Send failed');
             const data = await res.json();
 
             // Replace/Append response
-            // Ideally we re-fetch history or just append the bot response.
-            // Let's just append bot response if available
             if (data.bot_message) {
                 // Modified: Use Typewriter effect for bot response
                 const msgId = `msg-${data.bot_message.id}`;
-                appendMessage(data.bot_message.message, true, msgId);
+                // Pass created_at if available or just let appendMessage use NOW
+                appendMessage(data.bot_message.message, true, msgId, data.bot_message.created_at);
 
                 // Trigger typewriter
                 await typeWriterEffect(msgId, data.bot_message.message);
@@ -176,16 +317,22 @@
         }
     }
 
-    function appendMessage(text, isBot, specificId = null) {
+    function appendMessage(text, isBot, specificId = null, createdAt = null) {
         const alignClass = isBot ? 'justify-start' : 'justify-end';
         const bgClass = isBot ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-600' : 'bg-blue-600 text-white rounded-br-none';
         const msgId = specificId || `msg-${Date.now()}`;
 
+        const date = createdAt ? new Date(createdAt) : new Date();
+        const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+
         const div = document.createElement('div');
-        div.className = `mb-3 flex ${alignClass}`;
+        div.className = `mb-2 flex ${alignClass}`;
         div.innerHTML = `
-            <div id="${msgId}" class="max-w-[80%] w-fit rounded-lg px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${bgClass}">
+            <div id="${msgId}" class="max-w-[85%] w-fit rounded-lg px-2 py-1 text-sm shadow-sm whitespace-pre-wrap leading-tight ${bgClass}">
                 ${escapeHtml(text)}
+                <div class="text-[10px] text-right -mt-1 opacity-70 flex justify-end items-center gap-1 leading-none pb-0">
+                    <span>${timeStr}</span>
+                </div>
             </div>
         `;
         messagesContainer.appendChild(div);
@@ -229,10 +376,6 @@
     function startPolling() {
         if (chatPollingInterval) clearInterval(chatPollingInterval);
         return;
-        // Polling logic: fetch history every 5s and diff? 
-        // For simplicity, maybe just leave it manually refreshed or simple poll
-        // chatPollingInterval = setInterval(loadHistory, 5000); 
-        // Careful with overwriting scroll
     }
 
     function stopPolling() {
@@ -249,7 +392,6 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Helper for Cookie (if needed, but mainly using meta CSRF)
     function getCookie(name) {
         let matches = document.cookie.match(new RegExp(
             "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"

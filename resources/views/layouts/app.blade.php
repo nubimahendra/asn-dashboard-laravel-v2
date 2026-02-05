@@ -275,6 +275,37 @@
                             </div>
                         </div>
                     </nav>
+
+                    <!-- Data Pegawai Menu -->
+                    <nav class="space-y-1 mt-2">
+                        <div>
+                            <button type="button" id="menu-pegawai-toggle"
+                                class="w-full flex items-center justify-between px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors group">
+                                <div class="flex items-center">
+                                    <svg class="mr-3 h-6 w-6 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span class="sidebar-text truncate">Data Pegawai</span>
+                                </div>
+                                <svg id="menu-pegawai-icon"
+                                    class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div id="menu-pegawai-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+                                <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                                    <a href="{{ route('pegawai.import.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('pegawai.import.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Master Pegawai
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
                     <script>
 
                     </script>
@@ -429,6 +460,15 @@
             menuSuratToggle.addEventListener('click', () => {
                 const isHidden = menuSuratContent.classList.contains('hidden');
                 if (isHidden) { menuSuratContent.classList.remove('hidden'); menuSuratIcon.classList.add('rotate-180'); } else { menuSuratContent.classList.add('hidden'); menuSuratIcon.classList.remove('rotate-180'); }
+            });
+        }
+        const menuPegawaiToggle = document.getElementById('menu-pegawai-toggle');
+        const menuPegawaiContent = document.getElementById('menu-pegawai-content');
+        const menuPegawaiIcon = document.getElementById('menu-pegawai-icon');
+        if (menuPegawaiToggle && menuPegawaiContent) {
+            menuPegawaiToggle.addEventListener('click', () => {
+                const isHidden = menuPegawaiContent.classList.contains('hidden');
+                if (isHidden) { menuPegawaiContent.classList.remove('hidden'); menuPegawaiIcon.classList.add('rotate-180'); } else { menuPegawaiContent.classList.add('hidden'); menuPegawaiIcon.classList.remove('rotate-180'); }
             });
         }
         function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }

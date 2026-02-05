@@ -35,7 +35,7 @@ class ChatService
         }
 
         // 3. Fallback jika tidak ada jawaban
-        return "Mohon maaf, saya belum mengerti pertanyaan Anda. Pertanyaan ini akan diteruskan ke Admin untuk ditindaklanjuti. Mohon menunggu respon selanjutnya.";
+        return "Mohon maaf, saya belum mengerti pertanyaan Anda. Pertanyaan ini akan diteruskan ke Admin untuk ditindaklanjuti. Mohon menunggu respon selanjutnya / silahkan tekan tombol Hubungi Admin di pojok kanan atas.";
     }
 
     private function verifyAndSaveNip(string $nip, User $user): string
