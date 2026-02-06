@@ -5,17 +5,48 @@ namespace App\Imports;
 use App\Models\StgPegawaiImport;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\ImportFailed;
+use Maatwebsite\Excel\Validators\Failure;
+use Illuminate\Support\Facades\Log;
 
-class PegawaiImport implements ToModel, WithHeadingRow, WithCustomCsvSettings, WithBatchInserts, WithChunkReading
+class PegawaiImport implements
+    ToModel,
+    WithHeadingRow,
+    WithBatchInserts,
+    WithChunkReading,
+    SkipsOnError,
+    SkipsOnFailure,
+    WithEvents
 {
     protected $sourceFile;
+    protected $errors = [];
+    protected $failures = [];
 
     public function __construct($sourceFile)
     {
         $this->sourceFile = $sourceFile;
+    }
+
+    /**
+     * Get all errors that occurred during import
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
+
+    /**
+     * Get all validation failures that occurred during import
+     */
+    public function getFailures()
+    {
+        return $this->failures;
     }
 
     /**
@@ -84,20 +115,6 @@ class PegawaiImport implements ToModel, WithHeadingRow, WithCustomCsvSettings, W
     }
 
     /**
-     * Configure CSV settings for pipe delimiter
-     */
-    public function getCsvSettings(): array
-    {
-        return [
-            'delimiter' => '|',
-            'enclosure' => '"',
-            'escape_character' => '\\',
-            'contiguous' => false,
-            'input_encoding' => 'UTF-8'
-        ];
-    }
-
-    /**
      * Batch insert for performance
      */
     public function batchSize(): int
@@ -111,5 +128,59 @@ class PegawaiImport implements ToModel, WithHeadingRow, WithCustomCsvSettings, W
     public function chunkSize(): int
     {
         return 100;
+    }
+
+    /**
+     * Handle errors that occur during import
+     */
+    public function onError(\Throwable $e)
+    {
+        $errorMessage = $e->getMessage();
+        $this->errors[] = [
+            'message' => $errorMessage,
+            'exception' => get_class($e),
+            'trace' => $e->getTraceAsString()
+        ];
+
+        Log::error("Import error in file {$this->sourceFile}: {$errorMessage}", [
+            'exception' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+    }
+
+    /**
+     * Handle validation failures
+     */
+    public function onFailure(Failure ...$failures)
+    {
+        foreach ($failures as $failure) {
+            $this->failures[] = [
+                'row' => $failure->row(),
+                'attribute' => $failure->attribute(),
+                'errors' => $failure->errors(),
+                'values' => $failure->values()
+            ];
+
+            Log::warning("Validation failure in file {$this->sourceFile} at row {$failure->row()}", [
+                'attribute' => $failure->attribute(),
+                'errors' => $failure->errors(),
+                'values' => $failure->values()
+            ]);
+        }
+    }
+
+    /**
+     * Register events for the import
+     */
+    public function registerEvents(): array
+    {
+        return [
+            ImportFailed::class => function (ImportFailed $event) {
+                Log::error("Import failed for file {$this->sourceFile}", [
+                    'exception' => $event->getException()->getMessage()
+                ]);
+            },
+        ];
     }
 }

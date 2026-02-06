@@ -6,24 +6,24 @@
         <!-- Page Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Master Pegawai</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">Import dan sinkronisasi data pegawai dari file CSV</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Import dan sinkronisasi data pegawai dari file Excel (XLSX)</p>
         </div>
 
         <!-- Upload Section -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Upload File CSV</h2>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Upload File Excel (XLSX)</h2>
 
             <form id="upload-form" enctype="multipart/form-data">
                 @csrf
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Pilih File CSV (Delimiter: |)
+                        Pilih File Excel (XLSX)
                     </label>
-                    <input type="file" id="csv-file" name="file" accept=".csv,.txt"
+                    <input type="file" id="excel-file" name="file" accept=".xlsx,.xls"
                         class="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Format: CSV dengan delimiter pipe (|). Maksimal 2MB (dapat ditingkatkan di konfigurasi server).
+                        Format: File Excel (.xlsx atau .xls). Maksimal 10MB.
                     </p>
                 </div>
 
@@ -76,6 +76,9 @@
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Jumlah Baris</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Error</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Status</th>
@@ -153,7 +156,18 @@
                     uploadForm.reset();
                     loadHistory();
                 } else {
-                    showStatus('error', data.message);
+                    // Display error with details if available
+                    let errorMessage = data.message;
+                    if (data.errors && data.errors.length > 0) {
+                        errorMessage += ':\n' + data.errors.slice(0, 5).join('\n');
+                        if (data.errors.length > 5) {
+                            errorMessage += `\n... dan ${data.errors.length - 5} error lainnya`;
+                        }
+                    }
+                    if (data.error_detail) {
+                        errorMessage += `\n\nDetail: ${data.error_detail.type} di ${data.error_detail.file}:${data.error_detail.line}`;
+                    }
+                    showStatus('error', errorMessage);
                 }
             } catch (error) {
                 showStatus('error', 'Terjadi kesalahan saat mengupload file: ' + error.message);
@@ -187,43 +201,46 @@
 
                 if (data.length === 0) {
                     historyTableBody.innerHTML = `
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                            Belum ada riwayat import
-                                        </td>
-                                    </tr>
-                                `;
+                                                    <tr>
+                                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                                            Belum ada riwayat import
+                                                        </td>
+                                                    </tr>
+                                                `;
                     return;
                 }
 
                 historyTableBody.innerHTML = data.map(item => `
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                                        ${item.filename}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        ${item.uploaded_at}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        ${item.total_rows}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        ${getStatusBadge(item.status)}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        ${getProgressBar(item.progress, item.status)}
-                                    </td>
-                                </tr>
-                            `).join('');
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                                                ${item.filename}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                ${item.uploaded_at}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                ${item.total_rows}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                ${getStatusBadge(item.status)}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                ${getProgressBar(item.progress, item.status)}
+                                            </td>
+                                        </tr>
+                                    `).join('');
             } catch (error) {
                 console.error('Error loading history:', error);
                 historyTableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
-                                        Gagal memuat riwayat import
-                                    </td>
-                                </tr>
-                            `;
+                                                <tr>
+                                                    <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
+                                                        Gagal memuat riwayat import
+                                                    </td>
+                                                </tr>
+                                            `;
             }
         }
 
@@ -238,6 +255,24 @@
             return badges[status] || status;
         }
 
+        // Get error badge HTML
+        function getErrorBadge(totalErrors, importErrors, processingErrors) {
+            if (totalErrors === 0) {
+                return '<span class="text-gray-500 dark:text-gray-400">-</span>';
+            }
+
+            let tooltip = '';
+            if (importErrors > 0 && processingErrors > 0) {
+                tooltip = `Import: ${importErrors}, Processing: ${processingErrors}`;
+            } else if (importErrors > 0) {
+                tooltip = `Import error: ${importErrors}`;
+            } else {
+                tooltip = `Processing error: ${processingErrors}`;
+            }
+
+            return `<span class="text-red-600 dark:text-red-400 font-semibold" title="${tooltip}">${totalErrors}</span>`;
+        }
+
         // Get progress bar HTML
         function getProgressBar(progress, status) {
             if (status === 'Selesai') {
@@ -247,11 +282,11 @@
                 return '<span class="text-sm text-red-600 dark:text-red-400">-</span>';
             }
             return `
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
-                            </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
-                        `;
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
+                                `;
         }
 
         // Refresh button
