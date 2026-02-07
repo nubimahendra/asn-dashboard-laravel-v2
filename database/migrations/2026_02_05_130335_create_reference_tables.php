@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         // Tabel Referensi Agama
         Schema::create('ref_agama', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -20,7 +20,7 @@ return new class extends Migration {
 
         // Tabel Referensi Jenis Kawin
         Schema::create('ref_jenis_kawin', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -28,7 +28,7 @@ return new class extends Migration {
 
         // Tabel Referensi Jenis Pegawai
         Schema::create('ref_jenis_pegawai', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -36,7 +36,7 @@ return new class extends Migration {
 
         // Tabel Referensi Kedudukan Hukum
         Schema::create('ref_kedudukan_hukum', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -44,7 +44,7 @@ return new class extends Migration {
 
         // Tabel Referensi Golongan
         Schema::create('ref_golongan', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -52,7 +52,7 @@ return new class extends Migration {
 
         // Tabel Referensi Jenis Jabatan
         Schema::create('ref_jenis_jabatan', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -60,7 +60,7 @@ return new class extends Migration {
 
         // Tabel Referensi Jabatan
         Schema::create('ref_jabatan', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -68,7 +68,7 @@ return new class extends Migration {
 
         // Tabel Referensi Tingkat Pendidikan
         Schema::create('ref_tingkat_pendidikan', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -76,7 +76,7 @@ return new class extends Migration {
 
         // Tabel Referensi Pendidikan
         Schema::create('ref_pendidikan', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -84,7 +84,7 @@ return new class extends Migration {
 
         // Tabel Referensi Unit Organisasi
         Schema::create('ref_unor', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -92,7 +92,7 @@ return new class extends Migration {
 
         // Tabel Referensi Instansi
         Schema::create('ref_instansi', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -100,7 +100,7 @@ return new class extends Migration {
 
         // Tabel Referensi Lokasi Kerja
         Schema::create('ref_lokasi', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -108,7 +108,7 @@ return new class extends Migration {
 
         // Tabel Referensi KPKN
         Schema::create('ref_kpkn', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();
@@ -116,7 +116,7 @@ return new class extends Migration {
 
         // Tabel Referensi Jenis ASN (PNS/PPPK)
         Schema::create('ref_jenis_asn', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id', 50)->primary();
             $table->string('nama');
             $table->timestamps();
             $table->softDeletes();

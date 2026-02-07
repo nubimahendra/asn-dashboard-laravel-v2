@@ -61,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('pegawai.import.')
             ->group(function () {
                 Route::get('/', [App\Http\Controllers\PegawaiImportController::class, 'index'])->name('index');
+                Route::get('/data', [App\Http\Controllers\PegawaiImportController::class, 'data'])->name('data');
+                Route::get('/filter-options', [App\Http\Controllers\PegawaiImportController::class, 'getFilterOptions'])->name('filter-options');
                 Route::post('/upload', [App\Http\Controllers\PegawaiImportController::class, 'upload'])->name('upload');
                 Route::get('/history', [App\Http\Controllers\PegawaiImportController::class, 'history'])->name('history');
                 Route::get('/status/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'status'])->name('status');

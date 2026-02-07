@@ -5,12 +5,94 @@ namespace App\Http\Controllers;
 use App\Imports\PegawaiImport;
 use App\Jobs\ProcessPegawaiImport;
 use App\Models\StgPegawaiImport;
+use App\Models\Pegawai;
+use App\Models\RefAgama;
+use App\Models\RefJenisKawin;
+use App\Models\RefJenisJabatan;
+use App\Models\RefTingkatPendidikan;
+use App\Models\RefLokasi;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 
 class PegawaiImportController extends Controller
 {
+    /**
+     * Get paginated employee data with search and filter
+     */
+    public function data(Request $request)
+    {
+        $query = Pegawai::with([
+            'agama',
+            'jenisKawin',
+            'jenisJabatan',
+            'tingkatPendidikan',
+            'lokasiKerja'
+        ]);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nip_baru', 'like', "%{$search}%")
+                    ->orWhere('nama', 'like', "%{$search}%")
+                    ->orWhere('tempat_lahir', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('no_hp', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by jenis_kelamin
+        if ($request->filled('jenis_kelamin')) {
+            $query->where('jenis_kelamin', $request->jenis_kelamin);
+        }
+
+        // Filter by agama_id
+        if ($request->filled('agama_id')) {
+            $query->where('agama_id', $request->agama_id);
+        }
+
+        // Filter by jenis_kawin_id
+        if ($request->filled('jenis_kawin_id')) {
+            $query->where('jenis_kawin_id', $request->jenis_kawin_id);
+        }
+
+        // Filter by jenis_jabatan_id
+        if ($request->filled('jenis_jabatan_id')) {
+            $query->where('jenis_jabatan_id', $request->jenis_jabatan_id);
+        }
+
+        // Filter by tingkat_pendidikan_id
+        if ($request->filled('tingkat_pendidikan_id')) {
+            $query->where('tingkat_pendidikan_id', $request->tingkat_pendidikan_id);
+        }
+
+        // Filter by lokasi_kerja_id
+        if ($request->filled('lokasi_kerja_id')) {
+            $query->where('lokasi_kerja_id', $request->lokasi_kerja_id);
+        }
+
+        // Paginate results
+        $pegawai = $query->orderBy('nip_baru')->paginate(100);
+
+        return response()->json($pegawai);
+    }
+
+    /**
+     * Get filter options for dropdowns
+     */
+    public function getFilterOptions()
+    {
+        return response()->json([
+            'agama' => RefAgama::orderBy('nama')->get(['id', 'nama']),
+            'jenis_kawin' => RefJenisKawin::orderBy('nama')->get(['id', 'nama']),
+            'jenis_jabatan' => RefJenisJabatan::orderBy('nama')->get(['id', 'nama']),
+            'tingkat_pendidikan' => RefTingkatPendidikan::orderBy('nama')->get(['id', 'nama']),
+            'lokasi_kerja' => RefLokasi::orderBy('nama')->get(['id', 'nama']),
+        ]);
+    }
+
     /**
      * Display the import page
      */

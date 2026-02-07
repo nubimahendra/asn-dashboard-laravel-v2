@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\ImportFailed;
 use Maatwebsite\Excel\Validators\Failure;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class PegawaiImport implements
     ToModel,
@@ -48,6 +49,34 @@ class PegawaiImport implements
     {
         return $this->failures;
     }
+    /**
+     * Format Tanggal excel
+     */
+    private function formatDate($value)
+    {
+        if (is_null($value)) {
+            return null;
+        }
+
+        // Jika sudah berupa Carbon/DateTime
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        // Jika berupa string (misal "2023-10-26")
+        if (is_string($value)) {
+            return $value;
+        }
+
+        // Jika berupa Excel serial number (float)
+        if (is_numeric($value)) {
+            return ExcelDate::excelToDateTimeObject($value)->format('Y-m-d');
+        }
+
+        return null;
+    }
+
+
 
     /**
      * Map each row to StgPegawaiImport model
@@ -64,48 +93,48 @@ class PegawaiImport implements
             'gelar_depan' => $row['gelar_depan'] ?? null,
             'gelar_belakang' => $row['gelar_belakang'] ?? null,
             'agama_id' => $row['agama_id'] ?? null,
-            'agama' => $row['agama'] ?? null,
+            'agama' => $row['agama_nama'] ?? null,
             'jenis_kawin_id' => $row['jenis_kawin_id'] ?? null,
-            'jenis_kawin' => $row['jenis_kawin'] ?? null,
+            'jenis_kawin' => $row['jenis_kawin_nama'] ?? null,
             'jenis_pegawai_id' => $row['jenis_pegawai_id'] ?? null,
-            'jenis_pegawai' => $row['jenis_pegawai'] ?? null,
+            'jenis_pegawai' => $row['jenis_pegawai_nama'] ?? null,
             'kedudukan_hukum_id' => $row['kedudukan_hukum_id'] ?? null,
-            'kedudukan_hukum' => $row['kedudukan_hukum'] ?? null,
+            'kedudukan_hukum' => $row['kedudukan_hukum_nama'] ?? null,
             'gol_awal_id' => $row['gol_awal_id'] ?? null,
-            'gol_awal' => $row['gol_awal'] ?? null,
+            'gol_awal' => $row['gol_awal_nama'] ?? null,
             'gol_akhir_id' => $row['gol_akhir_id'] ?? null,
-            'gol_akhir' => $row['gol_akhir'] ?? null,
-            'tmt_gol_akhir' => $row['tmt_gol_akhir'] ?? null,
+            'gol_akhir' => $row['gol_akhir_nama'] ?? null,
+            'tmt_gol_akhir' => $this->formatDate($row['tmt_golongan']) ?? null,
             'mk_tahun' => $row['mk_tahun'] ?? null,
             'mk_bulan' => $row['mk_bulan'] ?? null,
             'jenis_jabatan_id' => $row['jenis_jabatan_id'] ?? null,
-            'jenis_jabatan' => $row['jenis_jabatan'] ?? null,
+            'jenis_jabatan' => $row['jenis_jabatan_nama'] ?? null,
             'jabatan_id' => $row['jabatan_id'] ?? null,
-            'jabatan' => $row['jabatan'] ?? null,
-            'tmt_jabatan' => $row['tmt_jabatan'] ?? null,
+            'jabatan' => $row['jabatan_nama'] ?? null,
+            'tmt_jabatan' => $this->formatDate($row['tmt_jabatan']) ?? null,
             'tingkat_pendidikan_id' => $row['tingkat_pendidikan_id'] ?? null,
-            'tingkat_pendidikan' => $row['tingkat_pendidikan'] ?? null,
+            'tingkat_pendidikan' => $row['tingkat_pendidikan_nama'] ?? null,
             'pendidikan_id' => $row['pendidikan_id'] ?? null,
-            'pendidikan' => $row['pendidikan'] ?? null,
+            'pendidikan' => $row['pendidikan_nama'] ?? null,
             'tahun_lulus' => $row['tahun_lulus'] ?? null,
             'unor_id' => $row['unor_id'] ?? null,
-            'unor' => $row['unor'] ?? null,
+            'unor' => $row['unor_nama'] ?? null,
             'instansi_induk_id' => $row['instansi_induk_id'] ?? null,
-            'instansi_induk' => $row['instansi_induk'] ?? null,
+            'instansi_induk' => $row['instansi_induk_nama'] ?? null,
             'instansi_kerja_id' => $row['instansi_kerja_id'] ?? null,
-            'instansi_kerja' => $row['instansi_kerja'] ?? null,
+            'instansi_kerja' => $row['instansi_kerja_nama'] ?? null,
             'lokasi_kerja_id' => $row['lokasi_kerja_id'] ?? null,
-            'lokasi_kerja' => $row['lokasi_kerja'] ?? null,
+            'lokasi_kerja' => $row['lokasi_kerja_nama'] ?? null,
             'kpkn_id' => $row['kpkn_id'] ?? null,
-            'kpkn' => $row['kpkn'] ?? null,
+            'kpkn' => $row['kpkn_nama'] ?? null,
             'status_cpns_pns' => $row['status_cpns_pns'] ?? null,
-            'tmt_cpns' => $row['tmt_cpns'] ?? null,
-            'tmt_pns' => $row['tmt_pns'] ?? null,
+            'tmt_cpns' => $this->formatDate($row['tmt_cpns']) ?? null,
+            'tmt_pns' => $this->formatDate($row['tmt_pns']) ?? null,
             'jenis_kelamin' => $row['jenis_kelamin'] ?? null,
-            'tanggal_lahir' => $row['tanggal_lahir'] ?? null,
-            'tempat_lahir' => $row['tempat_lahir'] ?? null,
+            'tanggal_lahir' => $this->formatDate($row['tanggal_lahir']) ?? null,
+            'tempat_lahir' => $row['tempat_lahir_nama'] ?? null,
             'alamat' => $row['alamat'] ?? null,
-            'no_hp' => $row['no_hp'] ?? null,
+            'no_hp' => $row['nomor_hp'] ?? null,
             'email' => $row['email'] ?? null,
             'flag_ikd' => $row['flag_ikd'] ?? null,
             'source_file' => $this->sourceFile,
