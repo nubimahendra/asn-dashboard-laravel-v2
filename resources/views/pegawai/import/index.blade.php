@@ -251,7 +251,7 @@
 @section('scripts')
     <script>
         // Pegawai Data Table Elements
-        const searchInput = document.getElementById('pegawai-search-input');
+        const pegawaiSearchInput = document.getElementById('pegawai-search-input');
         const filterJenisKelamin = document.getElementById('filter-jenis-kelamin');
         const filterAgama = document.getElementById('filter-agama');
         const filterJenisKawin = document.getElementById('filter-jenis-kawin');
@@ -331,7 +331,7 @@
             try {
                 const params = new URLSearchParams({
                     page: page,
-                    search: searchInput.value,
+                    search: pegawaiSearchInput.value,
                     jenis_kelamin: filterJenisKelamin.value,
                     agama_id: filterAgama.value,
                     jenis_kawin_id: filterJenisKawin.value,
@@ -345,12 +345,12 @@
 
                 if (data.data.length === 0) {
                     pegawaiTableBody.innerHTML = `
-                                                <tr>
-                                                    <td colspan="12" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                                        Tidak ada data pegawai
-                                                    </td>
-                                                </tr>
-                                            `;
+                                                    <tr>
+                                                        <td colspan="12" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                                            Tidak ada data pegawai
+                                                        </td>
+                                                    </tr>
+                                                `;
                     paginationInfo.textContent = '';
                     paginationLinks.innerHTML = '';
                     return;
@@ -371,21 +371,21 @@
                         new Date(pegawai.tanggal_lahir).toLocaleDateString('id-ID') : '-';
 
                     return `
-                                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${pegawai.nip_baru || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${namaLengkap || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${jenisKelamin}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${tanggalLahir}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.tempat_lahir || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.alamat || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.no_hp || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.agama?.nama || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.jenis_kawin?.nama || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.jenis_jabatan?.nama || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.tingkat_pendidikan?.nama || '-'}</td>
-                                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.lokasi_kerja?.nama || '-'}</td>
-                                                </tr>
-                                            `;
+                                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${pegawai.nip_baru || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${namaLengkap || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${jenisKelamin}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${tanggalLahir}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.tempat_lahir || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.alamat || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.no_hp || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.agama?.nama || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.jenis_kawin?.nama || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.jenis_jabatan?.nama || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.tingkat_pendidikan?.nama || '-'}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${pegawai.lokasi_kerja?.nama || '-'}</td>
+                                                    </tr>
+                                                `;
                 }).join('');
 
                 // Update pagination info
@@ -397,12 +397,12 @@
             } catch (error) {
                 console.error('Error loading pegawai data:', error);
                 pegawaiTableBody.innerHTML = `
-                                            <tr>
-                                                <td colspan="12" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
-                                                    Gagal memuat data pegawai
-                                                </td>
-                                            </tr>
-                                        `;
+                                                <tr>
+                                                    <td colspan="12" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
+                                                        Gagal memuat data pegawai
+                                                    </td>
+                                                </tr>
+                                            `;
             }
         }
 
@@ -472,7 +472,7 @@
         }
 
         // Search with debounce
-        searchInput.addEventListener('input', () => {
+        pegawaiSearchInput.addEventListener('input', () => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 currentPage = 1;
@@ -491,7 +491,7 @@
 
         // Reset filter button
         resetFilterBtn.addEventListener('click', () => {
-            searchInput.value = '';
+            pegawaiSearchInput.value = '';
             filterJenisKelamin.value = '';
             filterAgama.value = '';
             filterJenisKawin.value = '';
@@ -584,46 +584,46 @@
 
                 if (data.length === 0) {
                     historyTableBody.innerHTML = `
-                                                                                <tr>
-                                                                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                                                                        Belum ada riwayat import
-                                                                                    </td>
-                                                                                </tr>
-                                                                            `;
+                                                                                    <tr>
+                                                                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                                                                            Belum ada riwayat import
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                `;
                     return;
                 }
 
                 historyTableBody.innerHTML = data.map(item => `
-                                                                    <tr>
-                                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                                                                            ${item.filename}
-                                                                        </td>
-                                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                                            ${item.uploaded_at}
-                                                                        </td>
-                                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                                            ${item.total_rows}
-                                                                        </td>
-                                                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                                            ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
-                                                                        </td>
-                                                                        <td class="px-6 py-4 whitespace-nowrap">
-                                                                            ${getStatusBadge(item.status)}
-                                                                        </td>
-                                                                        <td class="px-6 py-4 whitespace-nowrap">
-                                                                            ${getProgressBar(item.progress, item.status)}
-                                                                        </td>
-                                                                    </tr>
-                                                                `).join('');
+                                                                        <tr>
+                                                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                                                                                ${item.filename}
+                                                                            </td>
+                                                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                                                ${item.uploaded_at}
+                                                                            </td>
+                                                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                                                ${item.total_rows}
+                                                                            </td>
+                                                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                                                ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
+                                                                            </td>
+                                                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                                                ${getStatusBadge(item.status)}
+                                                                            </td>
+                                                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                                                ${getProgressBar(item.progress, item.status)}
+                                                                            </td>
+                                                                        </tr>
+                                                                    `).join('');
             } catch (error) {
                 console.error('Error loading history:', error);
                 historyTableBody.innerHTML = `
-                                                                            <tr>
-                                                                                <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
-                                                                                    Gagal memuat riwayat import
-                                                                                </td>
-                                                                            </tr>
-                                                                        `;
+                                                                                <tr>
+                                                                                    <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
+                                                                                        Gagal memuat riwayat import
+                                                                                    </td>
+                                                                                </tr>
+                                                                            `;
             }
         }
 
@@ -665,11 +665,11 @@
                 return '<span class="text-sm text-red-600 dark:text-red-400">-</span>';
             }
             return `
-                                                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                                                    <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
-                                                                </div>
-                                                                <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
-                                                            `;
+                                                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                                                        <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                                                                    </div>
+                                                                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
+                                                                `;
         }
 
         // Refresh button
