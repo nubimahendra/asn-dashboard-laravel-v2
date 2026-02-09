@@ -392,31 +392,62 @@
 
     </div>
     <script>
-        const dropdownTrigger = document.getElementById('dropdown-trigger');
-        const dropdownMenu = document.getElementById('dropdown-menu');
-        const searchInput = document.getElementById('opd-search');
-        const opdList = document.getElementById('opd-list');
-        const opdItems = opdList ? opdList.getElementsByClassName('opd-item') : [];
-        const noResults = document.getElementById('no-results');
-        if (dropdownTrigger && dropdownMenu) {
-            dropdownTrigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isHidden = dropdownMenu.classList.contains('hidden');
-                if (isHidden) { dropdownMenu.classList.remove('hidden'); requestAnimationFrame(() => { dropdownMenu.classList.remove('scale-95', 'opacity-0'); dropdownMenu.classList.add('scale-100', 'opacity-100'); }); if (searchInput) setTimeout(() => searchInput.focus(), 100); }
-                else { closeDropdown(); }
-            });
-            document.addEventListener('click', (e) => { if (!dropdownMenu.contains(e.target) && !dropdownTrigger.contains(e.target)) { closeDropdown(); } });
-        }
-        function closeDropdown() { if (!dropdownMenu) return; dropdownMenu.classList.remove('scale-100', 'opacity-100'); dropdownMenu.classList.add('scale-95', 'opacity-0'); setTimeout(() => { dropdownMenu.classList.add('hidden'); }, 200); }
-        if (searchInput) {
-            searchInput.addEventListener('click', (e) => e.stopPropagation());
-            searchInput.addEventListener('keyup', function (e) {
-                const term = e.target.value.toLowerCase();
-                let hasResults = false;
-                Array.from(opdItems).forEach(item => { const name = item.getAttribute('data-name'); if (name.includes(term)) { item.classList.remove('hidden'); hasResults = true; } else { item.classList.add('hidden'); } });
-                if (noResults) { noResults.classList.toggle('hidden', hasResults); }
-            });
-        }
+        // Wrap OPD dropdown functionality in IIFE to avoid variable name conflicts
+        (function() {
+            const dropdownTrigger = document.getElementById('dropdown-trigger');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            const searchInput = document.getElementById('opd-search');
+            const opdList = document.getElementById('opd-list');
+            const opdItems = opdList ? opdList.getElementsByClassName('opd-item') : [];
+            const noResults = document.getElementById('no-results');
+            
+            function closeDropdown() { 
+                if (!dropdownMenu) return; 
+                dropdownMenu.classList.remove('scale-100', 'opacity-100'); 
+                dropdownMenu.classList.add('scale-95', 'opacity-0'); 
+                setTimeout(() => { dropdownMenu.classList.add('hidden'); }, 200); 
+            }
+            
+            if (dropdownTrigger && dropdownMenu) {
+                dropdownTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isHidden = dropdownMenu.classList.contains('hidden');
+                    if (isHidden) { 
+                        dropdownMenu.classList.remove('hidden'); 
+                        requestAnimationFrame(() => { 
+                            dropdownMenu.classList.remove('scale-95', 'opacity-0'); 
+                            dropdownMenu.classList.add('scale-100', 'opacity-100'); 
+                        }); 
+                        if (searchInput) setTimeout(() => searchInput.focus(), 100); 
+                    } else { 
+                        closeDropdown(); 
+                    }
+                });
+                document.addEventListener('click', (e) => { 
+                    if (!dropdownMenu.contains(e.target) && !dropdownTrigger.contains(e.target)) { 
+                        closeDropdown(); 
+                    } 
+                });
+            }
+            
+            if (searchInput) {
+                searchInput.addEventListener('click', (e) => e.stopPropagation());
+                searchInput.addEventListener('keyup', function (e) {
+                    const term = e.target.value.toLowerCase();
+                    let hasResults = false;
+                    Array.from(opdItems).forEach(item => { 
+                        const name = item.getAttribute('data-name'); 
+                        if (name.includes(term)) { 
+                            item.classList.remove('hidden'); 
+                            hasResults = true; 
+                        } else { 
+                            item.classList.add('hidden'); 
+                        } 
+                    });
+                    if (noResults) { noResults.classList.toggle('hidden', hasResults); }
+                });
+            }
+        })();
         const menuStatistikToggle = document.getElementById('menu-statistik-toggle');
         const menuStatistikContent = document.getElementById('menu-statistik-content');
         const menuStatistikIcon = document.getElementById('menu-statistik-icon');
@@ -472,16 +503,19 @@
             });
         }
         function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
-        const employeeSearchInput = document.getElementById('employee-search');
-        if (employeeSearchInput) {
-            employeeSearchInput.addEventListener('input', debounce(function (e) {
-                const searchTerm = e.target.value;
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('search', searchTerm);
-                currentUrl.searchParams.set('page', 1);
-                fetch(currentUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(response => response.text()).then(html => { document.getElementById('employee-table-container').innerHTML = html; }).catch(error => console.error('Error searching:', error));
-            }, 300));
-        }
+        // Wrap in IIFE to avoid variable name conflicts
+        (function () {
+            const employeeSearchInput = document.getElementById('employee-search');
+            if (employeeSearchInput) {
+                employeeSearchInput.addEventListener('input', debounce(function (e) {
+                    const searchTerm = e.target.value;
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('search', searchTerm);
+                    currentUrl.searchParams.set('page', 1);
+                    fetch(currentUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(response => response.text()).then(html => { document.getElementById('employee-table-container').innerHTML = html; }).catch(error => console.error('Error searching:', error));
+                }, 300));
+            }
+        })();
         document.addEventListener('click', function (e) {
             const link = e.target.closest('#employee-table-container .pagination a, #employee-table-container nav[role="navigation"] a');
             if (link) { e.preventDefault(); const url = new URL(link.getAttribute('href')); const currentSearch = document.getElementById('employee-search')?.value; if (currentSearch) { url.searchParams.set('search', currentSearch); } fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(response => response.text()).then(html => { document.getElementById('employee-table-container').innerHTML = html; }).catch(error => console.error('Error loading page:', error)); }

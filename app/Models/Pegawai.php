@@ -14,6 +14,7 @@ class Pegawai extends Model
 
     protected $fillable = [
         'pns_id',
+        'nik',
         'nip_baru',
         'nip_lama',
         'nama',

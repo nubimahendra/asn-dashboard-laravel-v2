@@ -87,6 +87,7 @@ class PegawaiImport implements
         // Header dari CSV menggunakan pipe delimiter
         return new StgPegawaiImport([
             'pns_id' => $row['pns_id'] ?? null,
+            'nik' => $row['nik'] ?? null,
             'nip_baru' => $row['nip_baru'] ?? null,
             'nip_lama' => $row['nip_lama'] ?? null,
             'nama' => $row['nama'] ?? null,

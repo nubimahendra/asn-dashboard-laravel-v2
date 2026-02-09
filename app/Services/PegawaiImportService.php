@@ -84,6 +84,7 @@ class PegawaiImportService
         $pegawai = Pegawai::updateOrCreate(
             ['pns_id' => $staging->pns_id],
             [
+                'nik' => $staging->nik,
                 'nip_baru' => $staging->nip_baru,
                 'nip_lama' => $staging->nip_lama,
                 'nama' => $staging->nama,

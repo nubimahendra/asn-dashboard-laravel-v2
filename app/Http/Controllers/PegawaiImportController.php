@@ -18,79 +18,150 @@ use Illuminate\Support\Facades\Storage;
 class PegawaiImportController extends Controller
 {
     /**
-     * Get paginated employee data with search and filter
+     * Search for employees by NIP or Name
      */
-    public function data(Request $request)
+    public function searchEmployee(Request $request)
     {
-        $query = Pegawai::with([
-            'agama',
-            'jenisKawin',
-            'jenisJabatan',
-            'tingkatPendidikan',
-            'lokasiKerja'
-        ]);
+        $search = $request->input('query', '');
 
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nip_baru', 'like', "%{$search}%")
-                    ->orWhere('nama', 'like', "%{$search}%")
-                    ->orWhere('tempat_lahir', 'like', "%{$search}%")
-                    ->orWhere('alamat', 'like', "%{$search}%")
-                    ->orWhere('no_hp', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+        if (empty($search)) {
+            return response()->json([]);
+        }
+
+        $employees = Pegawai::where(function ($q) use ($search) {
+            $q->where('nip_baru', 'like', "%{$search}%")
+                ->orWhere('nama', 'like', "%{$search}%")
+                ->orWhere('nip_lama', 'like', "%{$search}%");
+        })
+            ->select('id', 'nip_baru', 'nama', 'gelar_depan', 'gelar_belakang')
+            ->limit(20)
+            ->get()
+            ->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'nip_baru' => $employee->nip_baru,
+                    'nama_lengkap' => trim(implode(' ', array_filter([
+                        $employee->gelar_depan,
+                        $employee->nama,
+                        $employee->gelar_belakang
+                    ])))
+                ];
             });
-        }
 
-        // Filter by jenis_kelamin
-        if ($request->filled('jenis_kelamin')) {
-            $query->where('jenis_kelamin', $request->jenis_kelamin);
-        }
-
-        // Filter by agama_id
-        if ($request->filled('agama_id')) {
-            $query->where('agama_id', $request->agama_id);
-        }
-
-        // Filter by jenis_kawin_id
-        if ($request->filled('jenis_kawin_id')) {
-            $query->where('jenis_kawin_id', $request->jenis_kawin_id);
-        }
-
-        // Filter by jenis_jabatan_id
-        if ($request->filled('jenis_jabatan_id')) {
-            $query->where('jenis_jabatan_id', $request->jenis_jabatan_id);
-        }
-
-        // Filter by tingkat_pendidikan_id
-        if ($request->filled('tingkat_pendidikan_id')) {
-            $query->where('tingkat_pendidikan_id', $request->tingkat_pendidikan_id);
-        }
-
-        // Filter by lokasi_kerja_id
-        if ($request->filled('lokasi_kerja_id')) {
-            $query->where('lokasi_kerja_id', $request->lokasi_kerja_id);
-        }
-
-        // Paginate results
-        $pegawai = $query->orderBy('nip_baru')->paginate(100);
-
-        return response()->json($pegawai);
+        return response()->json($employees);
     }
 
     /**
-     * Get filter options for dropdowns
+     * Get complete employee profile with history
      */
-    public function getFilterOptions()
+    public function getEmployeeProfile($id)
     {
-        return response()->json([
-            'agama' => RefAgama::orderBy('nama')->get(['id', 'nama']),
-            'jenis_kawin' => RefJenisKawin::orderBy('nama')->get(['id', 'nama']),
-            'jenis_jabatan' => RefJenisJabatan::orderBy('nama')->get(['id', 'nama']),
-            'tingkat_pendidikan' => RefTingkatPendidikan::orderBy('nama')->get(['id', 'nama']),
-            'lokasi_kerja' => RefLokasi::orderBy('nama')->get(['id', 'nama']),
-        ]);
+        $employee = Pegawai::with([
+            'agama',
+            'jenisKawin',
+            'jenisPegawai',
+            'kedudukanHukum',
+            'golongan',
+            'jabatan',
+            'jenisJabatan',
+            'pendidikan',
+            'tingkatPendidikan',
+            'unor',
+            'instansiInduk',
+            'instansiKerja',
+            'lokasiKerja',
+            'kpkn',
+            'riwayatGolongan.golongan',
+            'riwayatJabatan.jabatan',
+            'riwayatJabatan.jenisJabatan',
+            'riwayatJabatan.unor',
+            'riwayatPendidikan.pendidikan',
+            'riwayatPendidikan.tingkatPendidikan',
+            'riwayatStatus'
+        ])->find($id);
+
+        if (!$employee) {
+            return response()->json(['error' => 'Employee not found'], 404);
+        }
+
+        // Format the response
+        $data = [
+            'profile' => [
+                'id' => $employee->id,
+                'nik' => $employee->nik,
+                'nip_baru' => $employee->nip_baru,
+                'nip_lama' => $employee->nip_lama,
+                'nama_lengkap' => $employee->nama_lengkap,
+                'nama' => $employee->nama,
+                'gelar_depan' => $employee->gelar_depan,
+                'gelar_belakang' => $employee->gelar_belakang,
+                'jenis_kelamin' => $employee->jenis_kelamin,
+                'tanggal_lahir' => $employee->tanggal_lahir?->format('d/m/Y'),
+                'tempat_lahir' => $employee->tempat_lahir,
+                'alamat' => $employee->alamat,
+                'no_hp' => $employee->no_hp,
+                'email' => $employee->email,
+                'agama' => $employee->agama?->nama,
+                'jenis_kawin' => $employee->jenisKawin?->nama,
+                'jenis_pegawai' => $employee->jenisPegawai?->nama,
+                'kedudukan_hukum' => $employee->kedudukanHukum?->nama,
+                'golongan' => $employee->golongan?->nama,
+                'jabatan' => $employee->jabatan?->nama,
+                'jenis_jabatan' => $employee->jenisJabatan?->nama,
+                'pendidikan' => $employee->pendidikan?->nama,
+                'tingkat_pendidikan' => $employee->tingkatPendidikan?->nama,
+                'unor' => $employee->unor?->nama,
+                'instansi_induk' => $employee->instansiInduk?->nama,
+                'instansi_kerja' => $employee->instansiKerja?->nama,
+                'lokasi_kerja' => $employee->lokasiKerja?->nama,
+                'kpkn' => $employee->kpkn?->nama,
+                'status_cpns_pns' => $employee->status_cpns_pns,
+                'tmt_cpns' => $employee->tmt_cpns?->format('d/m/Y'),
+                'tmt_pns' => $employee->tmt_pns?->format('d/m/Y'),
+            ],
+            'riwayat' => [
+                'golongan' => $employee->riwayatGolongan->map(function ($riwayat) {
+                    return [
+                        'id' => $riwayat->id,
+                        'golongan' => $riwayat->golongan?->nama,
+                        'tmt' => $riwayat->tmt?->format('d/m/Y'),
+                        'mk_tahun' => $riwayat->mk_tahun,
+                        'mk_bulan' => $riwayat->mk_bulan,
+                        'keterangan' => $riwayat->keterangan,
+                    ];
+                })->sortByDesc('tmt')->values(),
+                'jabatan' => $employee->riwayatJabatan->map(function ($riwayat) {
+                    return [
+                        'id' => $riwayat->id,
+                        'jabatan' => $riwayat->jabatan?->nama,
+                        'jenis_jabatan' => $riwayat->jenisJabatan?->nama,
+                        'unor' => $riwayat->unor?->nama,
+                        'tmt' => $riwayat->tmt?->format('d/m/Y'),
+                        'keterangan' => $riwayat->keterangan,
+                    ];
+                })->sortByDesc('tmt')->values(),
+                'pendidikan' => $employee->riwayatPendidikan->map(function ($riwayat) {
+                    return [
+                        'id' => $riwayat->id,
+                        'pendidikan' => $riwayat->pendidikan?->nama,
+                        'tingkat_pendidikan' => $riwayat->tingkatPendidikan?->nama,
+                        'institusi' => $riwayat->institusi,
+                        'tahun_lulus' => $riwayat->tahun_lulus,
+                        'keterangan' => $riwayat->keterangan,
+                    ];
+                })->sortByDesc('tahun_lulus')->values(),
+                'status' => $employee->riwayatStatus->map(function ($riwayat) {
+                    return [
+                        'id' => $riwayat->id,
+                        'status' => $riwayat->status,
+                        'tmt' => $riwayat->tmt?->format('d/m/Y'),
+                        'keterangan' => $riwayat->keterangan,
+                    ];
+                })->sortByDesc('tmt')->values(),
+            ]
+        ];
+
+        return response()->json($data);
     }
 
     /**
