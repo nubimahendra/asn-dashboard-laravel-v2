@@ -14,18 +14,19 @@
             @forelse($pegawai as $index => $p)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="px-6 py-4">{{ $pegawai->firstItem() + $index }}</td>
-                        <td class="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">{{ $p->nama_pegawai }}</td>
-                        <td class="px-6 py-4">{{ $p->jabatan }}</td>
-                        <td class="px-6 py-4">{{ $p->pd }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">{{ $p->nama_lengkap }}</td>
+                        <td class="px-6 py-4">{{ optional($p->jabatan)->nama ?? '-' }}</td>
+                        <td class="px-6 py-4">{{ optional($p->unor)->nama ?? optional($p->instansiKerja)->nama ?? '-' }}</td>
                         <td class="px-6 py-4">
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                    {{ str_contains($p->sts_peg, 'PNS') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                (str_contains($p->sts_peg, 'PPPK') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300') }}">
-                                {{ $p->sts_peg }}
+                                            {{ optional($p->jenisPegawai)->nama && str_contains($p->jenisPegawai->nama, 'PNS') && !str_contains($p->jenisPegawai->nama, 'CPNS') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                (optional($p->jenisPegawai)->nama && str_contains($p->jenisPegawai->nama, 'PPPK') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                    (optional($p->jenisPegawai)->nama && str_contains($p->jenisPegawai->nama, 'CPNS') ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300')) }}">
+                                {{ optional($p->jenisPegawai)->nama ?? '-' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">{{ $p->tk_pend }}</td>
+                        <td class="px-6 py-4">{{ optional($p->tingkatPendidikan)->nama ?? '-' }}</td>
                     </tr>
             @empty
                 <tr>

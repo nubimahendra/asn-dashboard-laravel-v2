@@ -5,9 +5,9 @@
     "scripts": {
         "dev": "vite",
         "serve": "php artisan serve",
-        "queue": "php artisan queue:work",
-        "queue-listen": "php artisan queue:listen",
-        "all": "concurrently \"php artisan serve\" \"php artisan queue:work\" \"php artisan queue:listen\" \"npm run dev\""
+        "queue": "php artisan queue:work --timeout=600 --sleep=3 --tries=3",
+        "queue-listen": "php artisan queue:listen --timeout=600",
+        "all": "concurrently \"php artisan serve\" \"php artisan queue:work --timeout=600 --sleep=3 --tries=3\" \"npm run dev\""
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

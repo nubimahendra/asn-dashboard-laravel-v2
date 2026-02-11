@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SnapshotPegawai;
+use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -14,16 +14,27 @@ class DashboardController extends Controller
         // 0. Filter Setup (pd = Perangkat Daerah / OPD)
         $filterOpd = $request->input('opd');
 
-        $listOpd = SnapshotPegawai::select('pd')
-            ->whereNotNull('pd')
-            ->distinct()
-            ->orderBy('pd')
-            ->pluck('pd');
+        $listOpd = Pegawai::with('unor')
+            ->whereHas('unor')
+            ->get()
+            ->pluck('unor.nama')
+            ->unique()
+            ->sort()
+            ->values();
 
-        $query = SnapshotPegawai::query();
+        $query = Pegawai::with([
+            'golongan',
+            'jabatan',
+            'tingkatPendidikan',
+            'unor',
+            'jenisPegawai',
+            'instansiKerja'
+        ]);
 
         if ($filterOpd) {
-            $query->where('pd', $filterOpd);
+            $query->whereHas('unor', function ($q) use ($filterOpd) {
+                $q->where('nama', $filterOpd);
+            });
         }
 
         // 1. Top Cards Metrics
@@ -31,88 +42,81 @@ class DashboardController extends Controller
         // Note: Calculations need to check for specific string matches or just count
         $totalPegawai = (clone $query)->count();
 
-        // Updated Logic for Jenikel: 1 or L% -> Laki-laki, 2 or P% -> Perempuan
-        $totalLaki = (clone $query)->where(function ($q) {
-            $q->where('jenikel', 'LIKE', 'L%')
-                ->orWhere('jenikel', 'LIKE', '1%')
-                ->orWhere('jenikel', 'LIKE', 'Pria%');
-        })->count();
+        // jenis_kelamin from pegawai table: 'M' (Male) = Laki-laki, 'F' (Female) = Perempuan
+        $totalLaki = (clone $query)->where('jenis_kelamin', 'M')->count();
+        $totalPerempuan = (clone $query)->where('jenis_kelamin', 'F')->count();
 
-        $totalPerempuan = (clone $query)->where(function ($q) {
-            $q->where('jenikel', 'LIKE', 'P%')
-                ->orWhere('jenikel', 'LIKE', '2%')
-                ->orWhere('jenikel', 'LIKE', 'Wanita%');
-        })
-            ->whereNot('jenikel', 'LIKE', 'Pria%') // Safety check
+        // Status pegawai kombinasi kedudukan_hukum_id dan status_cpns_pns
+        // PNS: kedudukan_hukum_id IN (1,2,3,4,15) AND status_cpns_pns = 'P'
+        $totalPns = (clone $query)
+            ->whereIn('kedudukan_hukum_id', [1, 2, 3, 4, 15])
+            ->where('status_cpns_pns', 'P')
             ->count();
 
-        // New Summaries: CPNS, PNS, PPPK
-        $totalCpns = (clone $query)->where('sts_peg', 'LIKE', '%CPNS%')->count();
-        $totalPns = (clone $query)->where('sts_peg', 'LIKE', '%PNS%')->where('sts_peg', 'NOT LIKE', '%CPNS%')->count();
-        $totalPppk = (clone $query)->where('sts_peg', 'LIKE', '%PPPK%')->count();
+        // CPNS: kedudukan_hukum_id IN (1,2,3,4,15) AND status_cpns_pns = 'C'
+        $totalCpns = (clone $query)
+            ->whereIn('kedudukan_hukum_id', [1, 2, 3, 4, 15])
+            ->where('status_cpns_pns', 'C')
+            ->count();
+
+        // PPPK: kedudukan_hukum_id IN (71, 73)
+        $totalPppk = (clone $query)->whereIn('kedudukan_hukum_id', [71, 73])->count();
+
+        // PPPK PW: kedudukan_hukum_id = 101
+        $totalPppkPw = (clone $query)->where('kedudukan_hukum_id', 101)->count();
 
         // 2. Charts Data
 
         // Chart 1: Jenis Kelamin (Pie)
-        // Group by normalized jenikel if possible. 
-        // Since we can't easily normalize in query with SQlite/MySQL diffs easily without raw, 
-        // let's fetch raw stats and map in PHP.
-        $rawJenikel = (clone $query)->select('jenikel', DB::raw('count(*) as total'))
-            ->groupBy('jenikel')
-            ->pluck('total', 'jenikel');
-
         $statsJenikel = [
-            'Laki-laki' => 0,
-            'Perempuan' => 0
+            'Laki-laki' => $totalLaki,
+            'Perempuan' => $totalPerempuan
         ];
-
-        foreach ($rawJenikel as $key => $val) {
-            // Check Laki
-            if (str_starts_with($key, '1') || stripos($key, 'L') === 0 || stripos($key, 'Pria') !== false) {
-                $statsJenikel['Laki-laki'] += $val;
-            }
-            // Check Perempuan
-            elseif (str_starts_with($key, '2') || stripos($key, 'P') === 0 || stripos($key, 'Wanita') !== false) {
-                if (stripos($key, 'Pria') === false) {
-                    $statsJenikel['Perempuan'] += $val;
-                }
-            }
-        }
 
         $chartJenikel = [
             'labels' => array_keys($statsJenikel),
             'series' => array_values($statsJenikel),
         ];
 
-        // Chart 2: Status Pegawai (Pie)
-        $statsStsPeg = (clone $query)->select('sts_peg', DB::raw('count(*) as total'))
-            ->groupBy('sts_peg')
-            ->pluck('total', 'sts_peg');
-
-        $chartStsPeg = [
-            'labels' => $statsStsPeg->keys()->toArray(),
-            'series' => $statsStsPeg->values()->toArray(),
+        // Chart 2: Status Pegawai (Pie) - CPNS, PNS, PPPK, PPPK PW
+        $statsStsPeg = [
+            'PNS' => $totalPns,
+            'CPNS' => $totalCpns,
+            'PPPK' => $totalPppk,
+            'PPPK PW' => $totalPppkPw,
         ];
 
-        // Chart 3: Pendidikan (tk_pend) (Bar)
-        $dataPendidikan = (clone $query)->select('tk_pend', DB::raw('count(*) as total'))
-            ->whereNotNull('tk_pend')
-            ->groupBy('tk_pend')
-            ->orderBy('total', 'desc')
-            ->pluck('total', 'tk_pend');
+        $chartStsPeg = [
+            'labels' => array_keys($statsStsPeg),
+            'series' => array_values($statsStsPeg),
+        ];
+
+        // Chart 3: Pendidikan (tingkat_pendidikan) (Bar)
+        $dataPendidikan = (clone $query)
+            ->whereHas('tingkatPendidikan')
+            ->with('tingkatPendidikan')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->tingkatPendidikan->nama ?? 'Tidak Diketahui';
+            })
+            ->map->count()
+            ->sortDesc();
 
         $chartPendidikan = [
             'categories' => $dataPendidikan->keys()->toArray(),
             'series' => $dataPendidikan->values()->toArray(),
         ];
 
-        // Chart 4: Eselon (Bar) - Replaces Golongan/Jabatan generic
-        $dataEselon = (clone $query)->select('eselon', DB::raw('count(*) as total'))
-            ->whereNotNull('eselon')
-            ->where('eselon', '!=', '')
-            ->groupBy('eselon')
-            ->orderBy('eselon')
-            ->pluck('total', 'eselon');
+        // Chart 4: Eselon (Bar) - Based on jenis_jabatan
+        $dataEselon = (clone $query)
+            ->whereHas('jenisJabatan')
+            ->with('jenisJabatan')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->jenisJabatan->nama ?? 'Tidak Diketahui';
+            })
+            ->map->count()
+            ->sortKeys();
 
         $chartEselon = [
             'categories' => $dataEselon->keys()->toArray(),
@@ -120,12 +124,16 @@ class DashboardController extends Controller
         ];
 
         // Chart 5: Unit Kerja (Horizontal Bar - Top 10)
-        $dataOpd = (clone $query)->select('pd', DB::raw('count(*) as total'))
-            ->whereNotNull('pd')
-            ->groupBy('pd')
-            ->orderBy('total', 'desc')
-            ->limit(10)
-            ->pluck('total', 'pd');
+        $dataOpd = (clone $query)
+            ->whereHas('unor')
+            ->with('unor')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->unor->nama ?? 'Tidak Diketahui';
+            })
+            ->map->count()
+            ->sortDesc()
+            ->take(10);
 
         $chartOpd = [
             'categories' => $dataOpd->keys()->toArray(),
@@ -133,24 +141,27 @@ class DashboardController extends Controller
         ];
 
         // Chart 6: Golongan (Bar)
-        $dataGolongan = (clone $query)->select('golongan', DB::raw('count(*) as total'))
-            ->whereNotNull('golongan')
-            ->where('golongan', '!=', '')
-            ->groupBy('golongan')
-            ->orderBy('golongan')
-            ->pluck('total', 'golongan');
+        $dataGolongan = (clone $query)
+            ->whereHas('golongan')
+            ->with('golongan')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->golongan->nama ?? 'Tidak Diketahui';
+            })
+            ->map->count()
+            ->sortKeys();
 
         $chartGolongan = [
             'categories' => $dataGolongan->keys()->toArray(),
             'series' => $dataGolongan->values()->toArray(),
         ];
 
-        // Chart 7: Generasi (Pie) - Based on tgl_lahir
+        // Chart 7: Generasi (Pie) - Based on tanggal_lahir
         // Gen Z: 1997 - 2012
         // Gen Y: 1981 - 1996
         // Gen X: 1965 - 1980
         // Baby Boomer: 1946 - 1964 (Using < 1965 as Others/Boomers)
-        $rawTglLahir = (clone $query)->select('tgl_lahir')->whereNotNull('tgl_lahir')->get();
+        $rawTglLahir = (clone $query)->select('tanggal_lahir')->whereNotNull('tanggal_lahir')->get();
 
         $statsGenerasi = [
             'Gen Z (1997-2012)' => 0,
@@ -160,11 +171,11 @@ class DashboardController extends Controller
         ];
 
         foreach ($rawTglLahir as $item) {
-            if (!$item->tgl_lahir)
+            if (!$item->tanggal_lahir)
                 continue;
 
             try {
-                $year = Carbon::parse($item->tgl_lahir)->year;
+                $year = Carbon::parse($item->tanggal_lahir)->year;
 
                 if ($year >= 1997 && $year <= 2012) {
                     $statsGenerasi['Gen Z (1997-2012)']++;
@@ -187,18 +198,18 @@ class DashboardController extends Controller
         ];
 
         // 6. Paginated Table Data
-        $pegawaiQuery = (clone $query)->select('nama_pegawai', 'jabatan', 'pd', 'sts_peg', 'tk_pend');
+        $pegawaiQuery = (clone $query)->select('pegawai.*');
 
         if ($request->has('search') && !empty($request->search)) {
-            $pegawaiQuery->where('nama_pegawai', 'like', '%' . $request->search . '%');
+            $pegawaiQuery->where('nama', 'like', '%' . $request->search . '%');
         }
 
-        $pegawai = $pegawaiQuery->orderBy('nama_pegawai')
+        $pegawai = $pegawaiQuery->orderBy('nama')
             ->paginate(10)
             ->withQueryString();
 
         // Last Sync Info
-        $lastSyncRaw = SnapshotPegawai::max('last_sync_at');
+        $lastSyncRaw = Pegawai::max('updated_at');
         $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw)->format('d M Y H:i') : '-';
 
         if ($request->ajax()) {
@@ -214,6 +225,7 @@ class DashboardController extends Controller
             'totalPns',
             'totalCpns',
             'totalPppk',
+            'totalPppkPw',
             'chartJenikel',
             'chartStsPeg',
             'chartPendidikan',

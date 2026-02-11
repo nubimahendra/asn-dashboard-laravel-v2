@@ -65,23 +65,9 @@
 
 
 
-        <!-- Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Pegawai</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalPegawai) }}</h2>
-                    </div>
-                    <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-full"><svg class="w-6 h-6 text-blue-500"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg></div>
-                </div>
-            </div>
+        <!-- Cards Grid - 6 cards in 3 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-teal-500 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
@@ -142,6 +128,55 @@
                     </div>
                     <div class="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-full"><span
                             class="text-orange-600 font-bold text-lg">PPPK</span></div>
+                </div>
+            </div>
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-sky-500 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">PPPK PW</p>
+                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalPppkPw) }}</h2>
+                    </div>
+                    <div class="p-3 bg-sky-50 dark:bg-sky-900/30 rounded-full"><span
+                            class="text-sky-600 font-bold text-lg">PW</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Pegawai Banner - Stretched Full Width -->
+        <div class="mb-8">
+            <div
+                class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-700 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="p-4 bg-white/20 dark:bg-white/10 rounded-full">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-blue-100 dark:text-blue-200 mb-1 font-medium">Total Pegawai</p>
+                            <h2 class="text-4xl font-bold text-white">{{ number_format($totalPegawai) }}</h2>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center gap-8 text-white/90">
+                        <div class="text-center">
+                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">Laki-laki</p>
+                            <p class="text-2xl font-semibold">{{ number_format($totalLaki) }}</p>
+                        </div>
+                        <div class="h-12 w-px bg-white/30"></div>
+                        <div class="text-center">
+                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">Perempuan</p>
+                            <p class="text-2xl font-semibold">{{ number_format($totalPerempuan) }}</p>
+                        </div>
+                        <div class="h-12 w-px bg-white/30"></div>
+                        <div class="text-center">
+                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">PNS</p>
+                            <p class="text-2xl font-semibold">{{ number_format($totalPns) }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
