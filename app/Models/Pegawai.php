@@ -5,7 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $tanggal_lahir
+ * @property Carbon|null $tmt_cpns
+ * @property Carbon|null $tmt_pns
+ */
 class Pegawai extends Model
 {
     use HasFactory, SoftDeletes;

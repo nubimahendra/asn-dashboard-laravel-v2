@@ -278,6 +278,7 @@ class PegawaiImportController extends Controller
             $counts = ['new' => 0, 'changed' => 0, 'unchanged' => 0];
 
             foreach ($stagingRows as $row) {
+                /** @var StgPegawaiImport $row */
                 $analysis = $diffService->analyze($row);
 
                 $row->update([
