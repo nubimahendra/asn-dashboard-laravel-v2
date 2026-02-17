@@ -212,6 +212,7 @@ class PegawaiImportController extends Controller
             try {
                 Excel::import($import, $file);
             } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+                // ... validation error handling (keep as is)
                 $failures = $e->failures();
                 $errorMessages = [];
 
@@ -232,6 +233,7 @@ class PegawaiImportController extends Controller
             $failures = $import->getFailures();
 
             if (!empty($errors)) {
+                // ... error handling (keep as is)
                 $errorMessages = array_map(function ($error) {
                     return $error['message'];
                 }, $errors);
@@ -245,6 +247,7 @@ class PegawaiImportController extends Controller
             }
 
             if (!empty($failures)) {
+                // ... failure handling (keep as is)
                 $errorMessages = [];
                 foreach ($failures as $failure) {
                     $errorMessages[] = "Baris {$failure['row']}: " . implode(', ', $failure['errors']);
@@ -269,14 +272,32 @@ class PegawaiImportController extends Controller
                 ], 422);
             }
 
-            // Dispatch queue job for processing
-            ProcessPegawaiImport::dispatch($filename);
+            // DIFF ANALYSIS START
+            $diffService = new \App\Services\PegawaiDiffService();
+            $stagingRows = StgPegawaiImport::where('source_file', $filename)->get();
+            $counts = ['new' => 0, 'changed' => 0, 'unchanged' => 0];
+
+            foreach ($stagingRows as $row) {
+                $analysis = $diffService->analyze($row);
+
+                $row->update([
+                    'data_hash' => $analysis['hash'],
+                    'sync_status' => $analysis['status'],
+                    'change_summary' => $analysis['changes'] ? json_encode($analysis['changes']) : null,
+                ]);
+
+                if (isset($counts[$analysis['status']])) {
+                    $counts[$analysis['status']]++;
+                }
+            }
+            // DIFF ANALYSIS END
 
             return response()->json([
                 'success' => true,
-                'message' => 'File berhasil diupload dan sedang diproses',
+                'message' => 'File berhasil diupload dan dianalisis. Silakan konfirmasi sinkronisasi.',
                 'filename' => $filename,
                 'record_count' => $recordCount,
+                'diff_summary' => $counts
             ]);
 
         } catch (\Exception $e) {
@@ -374,6 +395,92 @@ class PegawaiImportController extends Controller
             'progress' => $import->total_rows > 0
                 ? round(($import->processed_rows / $import->total_rows) * 100, 2)
                 : 0,
+        ]);
+    }
+
+    /**
+     * Get diff summary for a specific file
+     */
+    public function diffSummary($filename)
+    {
+        $summary = StgPegawaiImport::where('source_file', $filename)
+            ->selectRaw('sync_status, COUNT(*) as total')
+            ->groupBy('sync_status')
+            ->pluck('total', 'sync_status');
+
+        return response()->json([
+            'new' => $summary['new'] ?? 0,
+            'changed' => $summary['changed'] ?? 0,
+            'unchanged' => $summary['unchanged'] ?? 0,
+            'total' => $summary->sum()
+        ]);
+    }
+
+    /**
+     * Get diff details (list of new/changed records)
+     */
+    public function diffDetails(Request $request, $filename)
+    {
+        $type = $request->query('type', 'all'); // new, changed, all
+
+        $query = StgPegawaiImport::where('source_file', $filename);
+
+        if ($type !== 'all') {
+            $query->where('sync_status', $type);
+        } else {
+            $query->whereIn('sync_status', ['new', 'changed']);
+        }
+
+        $details = $query->paginate(20);
+
+        // Transform for frontend
+        $details->getCollection()->transform(function ($item) {
+            return [
+                'id' => $item->id,
+                'nama' => $item->nama,
+                'nip_baru' => $item->nip_baru,
+                'status' => $item->sync_status,
+                'changes' => $item->change_summary ? json_decode($item->change_summary) : null,
+            ];
+        });
+
+        return response()->json($details);
+    }
+
+    /**
+     * Confirm synchronization
+     */
+    public function confirmSync(Request $request)
+    {
+        $request->validate([
+            'filename' => 'required|string',
+        ]);
+
+        $filename = $request->input('filename');
+
+        // Check if file exists in staging
+        $count = StgPegawaiImport::where('source_file', $filename)->count();
+        if ($count == 0) {
+            return response()->json(['success' => false, 'message' => 'File tidak ditemukan'], 404);
+        }
+
+        // Dispatch job to process the confirmed file
+        // We can reuse the existing job but it needs to be updated to handle logic conditionally
+        // OR we can process it here if it's not too large, but better use queue.
+        // For now, let's use the existing job class but update it to handle "confirmed" logic?
+        // Actually, the existing job `ProcessPegawaiImport` processes where `is_processed` = false.
+        // The implementation plan says: "Step 6... confirmSync... foreach $rows... $service->sync($row)"
+
+        // Let's implement immediate sync for now as per user request example, 
+        // OR use the existing job mechanism. 
+        // Given "TIDAK boleh langsung update", we stopped it at upload.
+        // Now at confirm, we can dispatch the job.
+
+        ProcessPegawaiImport::dispatch($filename);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sinkronisasi sedang berjalan di background',
         ]);
     }
 }

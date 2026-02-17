@@ -46,6 +46,17 @@ class ProcessPegawaiImport implements ShouldQueue
         foreach ($stagingRecords as $staging) {
             /** @var StgPegawaiImport $staging */
             try {
+                // Skip if sync_status is unchanged, but mark as processed
+                if ($staging->sync_status === 'unchanged') {
+                    $staging->update([
+                        'is_processed' => true,
+                        'processed_at' => now(),
+                        'processing_error' => null,
+                    ]);
+                    $processedCount++;
+                    continue;
+                }
+
                 $importService->processStagingRecord($staging);
                 $processedCount++;
 

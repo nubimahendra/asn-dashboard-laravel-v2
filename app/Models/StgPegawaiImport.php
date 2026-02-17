@@ -69,6 +69,9 @@ class StgPegawaiImport extends Model
         'is_processed',
         'processed_at',
         'processing_error',
+        'data_hash',
+        'sync_status',
+        'change_summary',
     ];
 
     protected $casts = [

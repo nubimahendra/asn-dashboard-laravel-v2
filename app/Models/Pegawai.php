@@ -44,6 +44,7 @@ class Pegawai extends Model
         'tmt_cpns',
         'tmt_pns',
         'flag_ikd',
+        'data_hash',
     ];
 
     protected $casts = [

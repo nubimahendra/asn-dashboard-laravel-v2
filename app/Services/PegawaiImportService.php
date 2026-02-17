@@ -123,6 +123,7 @@ class PegawaiImportService
                 'tmt_pns' => $staging->tmt_pns,
 
                 'flag_ikd' => $staging->flag_ikd,
+                'data_hash' => $staging->data_hash,
             ]
         );
 

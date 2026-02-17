@@ -66,6 +66,11 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/upload', [App\Http\Controllers\PegawaiImportController::class, 'upload'])->name('upload');
                 Route::get('/history', [App\Http\Controllers\PegawaiImportController::class, 'history'])->name('history');
                 Route::get('/status/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'status'])->name('status');
+
+                // Diff & Sync Routes
+                Route::get('/diff-summary/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'diffSummary'])->name('diff-summary');
+                Route::get('/diff-details/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
+                Route::post('/sync-confirm', [App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
             });
     });
 });
