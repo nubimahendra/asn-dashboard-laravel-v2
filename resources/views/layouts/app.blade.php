@@ -233,9 +233,7 @@
                                     <a href="#"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Profil
                                         Pegawai</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Iuran
-                                        Korpri</a>
+
                                     <a href="{{ route('admin.pengajuan-cerai.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Pengajuan
                                         Cerai</a>
@@ -309,6 +307,21 @@
                     <script>
 
                     </script>
+
+                    <!-- Iuran Korpri Menu -->
+                    <nav class="space-y-1 mt-2">
+                        <div>
+                            <a href="{{ route('iuran-korpri.index') }}"
+                                class="w-full flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors group {{ request()->routeIs('iuran-korpri.*') ? 'bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                                <svg class="mr-3 h-6 w-6 flex-shrink-0 transition-colors {{ request()->routeIs('iuran-korpri.*') ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-300' }}"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                <span class="sidebar-text truncate">Iuran Korpri</span>
+                            </a>
+                        </div>
+                    </nav>
 
                     <!-- Pengaturan Menu -->
                     <nav class="space-y-1 mt-2">
@@ -393,56 +406,56 @@
     </div>
     <script>
         // Wrap OPD dropdown functionality in IIFE to avoid variable name conflicts
-        (function() {
+        (function () {
             const dropdownTrigger = document.getElementById('dropdown-trigger');
             const dropdownMenu = document.getElementById('dropdown-menu');
             const searchInput = document.getElementById('opd-search');
             const opdList = document.getElementById('opd-list');
             const opdItems = opdList ? opdList.getElementsByClassName('opd-item') : [];
             const noResults = document.getElementById('no-results');
-            
-            function closeDropdown() { 
-                if (!dropdownMenu) return; 
-                dropdownMenu.classList.remove('scale-100', 'opacity-100'); 
-                dropdownMenu.classList.add('scale-95', 'opacity-0'); 
-                setTimeout(() => { dropdownMenu.classList.add('hidden'); }, 200); 
+
+            function closeDropdown() {
+                if (!dropdownMenu) return;
+                dropdownMenu.classList.remove('scale-100', 'opacity-100');
+                dropdownMenu.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { dropdownMenu.classList.add('hidden'); }, 200);
             }
-            
+
             if (dropdownTrigger && dropdownMenu) {
                 dropdownTrigger.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const isHidden = dropdownMenu.classList.contains('hidden');
-                    if (isHidden) { 
-                        dropdownMenu.classList.remove('hidden'); 
-                        requestAnimationFrame(() => { 
-                            dropdownMenu.classList.remove('scale-95', 'opacity-0'); 
-                            dropdownMenu.classList.add('scale-100', 'opacity-100'); 
-                        }); 
-                        if (searchInput) setTimeout(() => searchInput.focus(), 100); 
-                    } else { 
-                        closeDropdown(); 
+                    if (isHidden) {
+                        dropdownMenu.classList.remove('hidden');
+                        requestAnimationFrame(() => {
+                            dropdownMenu.classList.remove('scale-95', 'opacity-0');
+                            dropdownMenu.classList.add('scale-100', 'opacity-100');
+                        });
+                        if (searchInput) setTimeout(() => searchInput.focus(), 100);
+                    } else {
+                        closeDropdown();
                     }
                 });
-                document.addEventListener('click', (e) => { 
-                    if (!dropdownMenu.contains(e.target) && !dropdownTrigger.contains(e.target)) { 
-                        closeDropdown(); 
-                    } 
+                document.addEventListener('click', (e) => {
+                    if (!dropdownMenu.contains(e.target) && !dropdownTrigger.contains(e.target)) {
+                        closeDropdown();
+                    }
                 });
             }
-            
+
             if (searchInput) {
                 searchInput.addEventListener('click', (e) => e.stopPropagation());
                 searchInput.addEventListener('keyup', function (e) {
                     const term = e.target.value.toLowerCase();
                     let hasResults = false;
-                    Array.from(opdItems).forEach(item => { 
-                        const name = item.getAttribute('data-name'); 
-                        if (name.includes(term)) { 
-                            item.classList.remove('hidden'); 
-                            hasResults = true; 
-                        } else { 
-                            item.classList.add('hidden'); 
-                        } 
+                    Array.from(opdItems).forEach(item => {
+                        const name = item.getAttribute('data-name');
+                        if (name.includes(term)) {
+                            item.classList.remove('hidden');
+                            hasResults = true;
+                        } else {
+                            item.classList.add('hidden');
+                        }
                     });
                     if (noResults) { noResults.classList.toggle('hidden', hasResults); }
                 });

@@ -14,5 +14,10 @@ class RefUnor extends Model
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected $fillable = ['id', 'nama'];
+    protected $fillable = [
+        'nama',
+        'nama_lengkap',
+        'nama_unit',
+        'nama_opd',
+    ];
 }

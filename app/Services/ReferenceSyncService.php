@@ -97,7 +97,62 @@ class ReferenceSyncService
 
     public function syncUnor($id, $nama)
     {
-        return $this->syncRef('ref_unor', $id, $nama);
+        // Custom logic for RefUnor because of new columns
+        if (empty($id)) {
+            return null;
+        }
+
+        if (empty($nama)) {
+            Log::warning("Reference sync skipped: ref_unor - ID {$id} has no name");
+            return null;
+        }
+
+        // Logic split nama
+        // Assumed format: "OPD - Unit - Sub Unit" or just "OPD"
+        $parts = explode(' - ', $nama);
+        $count = count($parts);
+
+        $namaOpd = null;
+        $namaUnit = null;
+        $namaUnor = $nama; // Default to full string if not split, or last part?
+
+        $namaLengkap = $nama;
+
+        if ($count >= 3) {
+            $namaOpd = $parts[0];
+            $namaUnor = end($parts); // The specific unit name (last part)
+            // Join everything in between as nama_unit
+            $namaUnit = implode(' - ', array_slice($parts, 1, $count - 2));
+        } elseif ($count == 2) {
+            $namaOpd = $parts[0];
+            $namaUnor = $parts[1];
+            $namaUnit = null; // No middle unit
+        } else {
+            // Only 1 part
+            $namaOpd = $parts[0];
+            $namaUnor = $parts[0];
+            $namaUnit = null;
+        }
+
+        try {
+            DB::table('ref_unor')->updateOrInsert(
+                ['id' => $id],
+                [
+                    'nama' => $namaUnor,
+                    'nama_lengkap' => $namaLengkap,
+                    'nama_unit' => $namaUnit,
+                    'nama_opd' => $namaOpd,
+                    'updated_at' => now(),
+                    'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+                ]
+            );
+
+            Log::debug("Reference synced: ref_unor - ID: {$id}, Nama: {$namaUnor}, OPD: {$namaOpd}");
+            return $id;
+        } catch (\Exception $e) {
+            Log::error("Failed to sync reference ref_unor - ID: {$id}, Error: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     public function syncInstansi($id, $nama)

@@ -332,34 +332,34 @@ class PegawaiImportController extends Controller
             ->selectRaw('SUM(CASE WHEN import_error IS NOT NULL THEN 1 ELSE 0 END) as import_error_rows')
             ->groupBy('source_file', 'imported_at')
             ->orderBy('imported_at', 'desc')
-            ->limit(20)
-            ->get()
-            ->map(function ($import) {
-                $totalErrors = $import->processing_error_rows + $import->import_error_rows;
+            ->paginate(5);
 
-                $status = 'Menunggu';
-                if ($totalErrors > 0) {
-                    $status = 'Gagal';
-                } elseif ($import->processed_rows == $import->total_rows) {
-                    $status = 'Selesai';
-                } elseif ($import->processed_rows > 0) {
-                    $status = 'Diproses';
-                }
+        $imports->getCollection()->transform(function ($import) {
+            $totalErrors = $import->processing_error_rows + $import->import_error_rows;
 
-                return [
-                    'filename' => $import->source_file,
-                    'uploaded_at' => $import->imported_at->format('d/m/Y H:i:s'),
-                    'total_rows' => $import->total_rows,
-                    'processed_rows' => $import->processed_rows,
-                    'import_error_rows' => $import->import_error_rows,
-                    'processing_error_rows' => $import->processing_error_rows,
-                    'total_error_rows' => $totalErrors,
-                    'status' => $status,
-                    'progress' => $import->total_rows > 0
-                        ? round(($import->processed_rows / $import->total_rows) * 100, 2)
-                        : 0,
-                ];
-            });
+            $status = 'Menunggu';
+            if ($totalErrors > 0) {
+                $status = 'Gagal';
+            } elseif ($import->processed_rows == $import->total_rows) {
+                $status = 'Selesai';
+            } elseif ($import->processed_rows > 0) {
+                $status = 'Diproses';
+            }
+
+            return [
+                'filename' => $import->source_file,
+                'uploaded_at' => $import->imported_at->format('d/m/Y H:i:s'),
+                'total_rows' => $import->total_rows,
+                'processed_rows' => $import->processed_rows,
+                'import_error_rows' => $import->import_error_rows,
+                'processing_error_rows' => $import->processing_error_rows,
+                'total_error_rows' => $totalErrors,
+                'status' => $status,
+                'progress' => $import->total_rows > 0
+                    ? round(($import->processed_rows / $import->total_rows) * 100, 2)
+                    : 0,
+            ];
+        });
 
         return response()->json($imports);
     }

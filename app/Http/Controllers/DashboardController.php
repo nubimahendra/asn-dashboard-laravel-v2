@@ -12,15 +12,15 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // 0. Filter Setup (pd = Perangkat Daerah / OPD)
+        // 0. Filter Setup (pd = Perangkat Daerah / OPD)
         $filterOpd = $request->input('opd');
 
-        $listOpd = Pegawai::with('unor')
-            ->whereHas('unor')
-            ->get()
-            ->pluck('unor.nama')
-            ->unique()
-            ->sort()
-            ->values();
+        // Fetch distinct nama_opd from RefUnor directly for better performance
+        $listOpd = \App\Models\RefUnor::whereNotNull('nama_opd')
+            ->where('nama_opd', '!=', '')
+            ->distinct()
+            ->orderBy('nama_opd')
+            ->pluck('nama_opd');
 
         $query = Pegawai::with([
             'golongan',
@@ -33,7 +33,8 @@ class DashboardController extends Controller
 
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
-                $q->where('nama', $filterOpd);
+                // Filter by nama_opd which is now the standard
+                $q->where('nama_opd', $filterOpd);
             });
         }
 
@@ -99,7 +100,9 @@ class DashboardController extends Controller
             ->groupBy(function ($item) {
                 return $item->tingkatPendidikan->nama ?? 'Tidak Diketahui';
             })
-            ->map->count()
+            ->map(function ($group) {
+                return $group->count();
+            })
             ->sortDesc();
 
         $chartPendidikan = [
@@ -115,7 +118,9 @@ class DashboardController extends Controller
             ->groupBy(function ($item) {
                 return $item->jenisJabatan->nama ?? 'Tidak Diketahui';
             })
-            ->map->count()
+            ->map(function ($group) {
+                return $group->count();
+            })
             ->sortKeys();
 
         $chartEselon = [
@@ -129,9 +134,12 @@ class DashboardController extends Controller
             ->with('unor')
             ->get()
             ->groupBy(function ($item) {
-                return $item->unor->nama ?? 'Tidak Diketahui';
+                // Use nama_opd as requested, fallback to nama if empty
+                return $item->unor->nama_opd ?? $item->unor->nama ?? 'Tidak Diketahui';
             })
-            ->map->count()
+            ->map(function ($group) {
+                return $group->count();
+            })
             ->sortDesc()
             ->take(10);
 
@@ -148,7 +156,9 @@ class DashboardController extends Controller
             ->groupBy(function ($item) {
                 return $item->golongan->nama ?? 'Tidak Diketahui';
             })
-            ->map->count()
+            ->map(function ($group) {
+                return $group->count();
+            })
             ->sortKeys();
 
         $chartGolongan = [

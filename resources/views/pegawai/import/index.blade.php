@@ -498,6 +498,10 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            <div id="history-pagination" class="mt-4 flex justify-end"></div>
+
         </div>
     </div>
 
@@ -521,6 +525,7 @@
         const uploadStatus = document.getElementById('upload-status');
         const historyTableBody = document.getElementById('history-table-body');
         const refreshBtn = document.getElementById('refresh-btn');
+        const historyPagination = document.getElementById('history-pagination');
 
         let searchTimeout = null;
 
@@ -549,12 +554,12 @@
                     noResults.classList.add('hidden');
                     searchResults.classList.remove('hidden');
                     searchResultsList.innerHTML = employees.map(emp => `
-                            <div class="search-result-item p-3 mb-2 bg-white dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
-                                data-employee-id="${emp.id}">
-                                <div class="font-medium text-gray-900 dark:text-gray-100">${emp.nama_lengkap}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">NIP: ${emp.nip_baru || '-'}</div>
-                            </div>
-                        `).join('');
+                                <div class="search-result-item p-3 mb-2 bg-white dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                                    data-employee-id="${emp.id}">
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">${emp.nama_lengkap}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">NIP: ${emp.nip_baru || '-'}</div>
+                                </div>
+                            `).join('');
 
                     // Add click handlers to search results
                     document.querySelectorAll('.search-result-item').forEach(item => {
@@ -640,14 +645,14 @@
                 golonganBody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">Tidak ada riwayat golongan</td></tr>';
             } else {
                 golonganBody.innerHTML = riwayat.golongan.map(item => `
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tmt || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.golongan || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.mk_tahun || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.mk_bulan || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
-                        </tr>
-                    `).join('');
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tmt || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.golongan || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.mk_tahun || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.mk_bulan || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
+                            </tr>
+                        `).join('');
             }
 
             // Riwayat Jabatan
@@ -656,14 +661,14 @@
                 jabatanBody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">Tidak ada riwayat jabatan</td></tr>';
             } else {
                 jabatanBody.innerHTML = riwayat.jabatan.map(item => `
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tmt || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.jabatan || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.jenis_jabatan || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.unor || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
-                        </tr>
-                    `).join('');
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tmt || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.jabatan || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.jenis_jabatan || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.unor || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
+                            </tr>
+                        `).join('');
             }
 
             // Riwayat Pendidikan
@@ -672,14 +677,14 @@
                 pendidikanBody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">Tidak ada riwayat pendidikan</td></tr>';
             } else {
                 pendidikanBody.innerHTML = riwayat.pendidikan.map(item => `
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tahun_lulus || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tingkat_pendidikan || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.pendidikan || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.institusi || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
-                        </tr>
-                    `).join('');
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tahun_lulus || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tingkat_pendidikan || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.pendidikan || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.institusi || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
+                            </tr>
+                        `).join('');
             }
 
             // Riwayat Status
@@ -688,12 +693,12 @@
                 statusBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">Tidak ada riwayat status</td></tr>';
             } else {
                 statusBody.innerHTML = riwayat.status.map(item => `
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tmt || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.status || '-'}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
-                        </tr>
-                    `).join('');
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.tmt || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">${item.status || '-'}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.keterangan || '-'}</td>
+                            </tr>
+                        `).join('');
             }
         }
 
@@ -727,228 +732,228 @@
         });
 
         // Diff Elements
-    const diffSection = document.getElementById('diff-section');
-    const countNew = document.getElementById('count-new');
-    const countChanged = document.getElementById('count-changed');
-    const countUnchanged = document.getElementById('count-unchanged');
-    const confirmSyncBtn = document.getElementById('confirm-sync-btn');
-    const showDetailsBtn = document.getElementById('show-details-btn');
-    const diffDetailsContainer = document.getElementById('diff-details-container');
-    const diffDetailsBody = document.getElementById('diff-details-body');
-    const loadMoreDetailsBtn = document.getElementById('load-more-details-btn');
+        const diffSection = document.getElementById('diff-section');
+        const countNew = document.getElementById('count-new');
+        const countChanged = document.getElementById('count-changed');
+        const countUnchanged = document.getElementById('count-unchanged');
+        const confirmSyncBtn = document.getElementById('confirm-sync-btn');
+        const showDetailsBtn = document.getElementById('show-details-btn');
+        const diffDetailsContainer = document.getElementById('diff-details-container');
+        const diffDetailsBody = document.getElementById('diff-details-body');
+        const loadMoreDetailsBtn = document.getElementById('load-more-details-btn');
 
-    let currentUploadFilename = null;
-    let detailsPage = 1;
+        let currentUploadFilename = null;
+        let detailsPage = 1;
 
-    // Handle file upload
-    uploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        // Handle file upload
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        const formData = new FormData(uploadForm);
+            const formData = new FormData(uploadForm);
 
-        // Show loading state
-        uploadBtn.disabled = true;
-        uploadText.classList.add('hidden');
-        uploadLoading.classList.remove('hidden');
-        uploadStatus.classList.add('hidden');
-        diffSection.classList.add('hidden'); // Hide diff section on new upload
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadText.classList.add('hidden');
+            uploadLoading.classList.remove('hidden');
+            uploadStatus.classList.add('hidden');
+            diffSection.classList.add('hidden'); // Hide diff section on new upload
 
-        try {
-            const response = await fetch('{{ route('pegawai.import.upload') }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
-            });
-
-            // Check if response is ok
-            if (!response.ok) {
-                const text = await response.text();
-                console.error('Server response:', text);
-                throw new Error(`Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-                showStatus('success', data.message);
-                uploadForm.reset();
-                loadHistory();
-                
-                // Show Diff Summary if available
-                if (data.diff_summary) {
-                    currentUploadFilename = data.filename;
-                    showDiffSummary(data.diff_summary);
-                }
-            } else {
-                // Display error with details if available
-                let errorMessage = data.message;
-                if (data.errors && data.errors.length > 0) {
-                    errorMessage += ':\n' + data.errors.slice(0, 5).join('\n');
-                    if (data.errors.length > 5) {
-                        errorMessage += `\n... dan ${data.errors.length - 5} error lainnya`;
+            try {
+                const response = await fetch('{{ route('pegawai.import.upload') }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
                     }
+                });
+
+                // Check if response is ok
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Server response:', text);
+                    throw new Error(`Server error: ${response.status}`);
                 }
-                if (data.error_detail) {
-                    errorMessage += `\n\nDetail: ${data.error_detail.type} di ${data.error_detail.file}:${data.error_detail.line}`;
-                }
-                showStatus('error', errorMessage);
-            }
-        } catch (error) {
-            showStatus('error', 'Terjadi kesalahan saat mengupload file: ' + error.message);
-            console.error('Upload error:', error);
-        } finally {
-            uploadBtn.disabled = false;
-            uploadText.classList.remove('hidden');
-            uploadLoading.classList.add('hidden');
-        }
-    });
 
-    // Show Diff Summary
-    function showDiffSummary(summary) {
-        diffSection.classList.remove('hidden');
-        countNew.textContent = summary.new;
-        countChanged.textContent = summary.changed;
-        countUnchanged.textContent = summary.unchanged;
-        
-        // Reset details view
-        diffDetailsContainer.classList.add('hidden');
-        diffDetailsBody.innerHTML = '';
-        showDetailsBtn.textContent = 'Lihat Detail Perubahan';
-        
-        // Enable/Disable confirm button based on changes
-        if (summary.new === 0 && summary.changed === 0) {
-            confirmSyncBtn.disabled = true;
-            confirmSyncBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            confirmSyncBtn.title = "Tidak ada perubahan data";
-        } else {
-            confirmSyncBtn.disabled = false;
-            confirmSyncBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            confirmSyncBtn.title = "";
-        }
-    }
+                const data = await response.json();
 
-    // Toggle Details
-    showDetailsBtn.addEventListener('click', () => {
-        if (diffDetailsContainer.classList.contains('hidden')) {
-            diffDetailsContainer.classList.remove('hidden');
-            showDetailsBtn.textContent = 'Sembunyikan Detail';
-            loadDiffDetails(1, true);
-        } else {
-            diffDetailsContainer.classList.add('hidden');
-            showDetailsBtn.textContent = 'Lihat Detail Perubahan';
-        }
-    });
+                if (data.success) {
+                    showStatus('success', data.message);
+                    uploadForm.reset();
+                    loadHistory();
 
-    // Load Diff Details
-    async function loadDiffDetails(page = 1, reset = false) {
-        if (!currentUploadFilename) return;
-        
-        try {
-            if (reset) {
-                diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Memuat detail...</td></tr>';
-                detailsPage = 1;
-            }
-
-            const response = await fetch(`{{ route('pegawai.import.index') }}/diff-details/${currentUploadFilename}?page=${page}&type=all`); // all = new + changed
-            const data = await response.json();
-            
-            if (reset) diffDetailsBody.innerHTML = '';
-
-            if (data.data.length === 0) {
-                if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Tidak ada detail perubahan yang ditampilkan.</td></tr>';
-                loadMoreDetailsBtn.classList.add('hidden');
-                return;
-            }
-
-            data.data.forEach(item => {
-                let changesHtml = '';
-                if (item.status === 'new') {
-                    changesHtml = '<span class="text-blue-600">Pegawai Baru</span>';
-                } else if (item.status === 'changed' && item.changes) {
-                    changesHtml = '<ul class="list-disc list-inside text-xs">';
-                    for (const [field, change] of Object.entries(item.changes)) {
-                        changesHtml += `<li><span class="font-semibold">${change.label || field}:</span> 
-                            <span class="text-red-500 line-through">${change.old || '(kosong)'}</span> 
-                            <span class="text-gray-400">→</span> 
-                            <span class="text-green-600 font-medium">${change.new || '(kosong)'}</span></li>`;
+                    // Show Diff Summary if available
+                    if (data.diff_summary) {
+                        currentUploadFilename = data.filename;
+                        showDiffSummary(data.diff_summary);
                     }
-                    changesHtml += '</ul>';
                 } else {
-                     changesHtml = '<span class="text-gray-500">Tidak ada perubahan detail</span>';
+                    // Display error with details if available
+                    let errorMessage = data.message;
+                    if (data.errors && data.errors.length > 0) {
+                        errorMessage += ':\n' + data.errors.slice(0, 5).join('\n');
+                        if (data.errors.length > 5) {
+                            errorMessage += `\n... dan ${data.errors.length - 5} error lainnya`;
+                        }
+                    }
+                    if (data.error_detail) {
+                        errorMessage += `\n\nDetail: ${data.error_detail.type} di ${data.error_detail.file}:${data.error_detail.line}`;
+                    }
+                    showStatus('error', errorMessage);
+                }
+            } catch (error) {
+                showStatus('error', 'Terjadi kesalahan saat mengupload file: ' + error.message);
+                console.error('Upload error:', error);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadText.classList.remove('hidden');
+                uploadLoading.classList.add('hidden');
+            }
+        });
+
+        // Show Diff Summary
+        function showDiffSummary(summary) {
+            diffSection.classList.remove('hidden');
+            countNew.textContent = summary.new;
+            countChanged.textContent = summary.changed;
+            countUnchanged.textContent = summary.unchanged;
+
+            // Reset details view
+            diffDetailsContainer.classList.add('hidden');
+            diffDetailsBody.innerHTML = '';
+            showDetailsBtn.textContent = 'Lihat Detail Perubahan';
+
+            // Enable/Disable confirm button based on changes
+            if (summary.new === 0 && summary.changed === 0) {
+                confirmSyncBtn.disabled = true;
+                confirmSyncBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                confirmSyncBtn.title = "Tidak ada perubahan data";
+            } else {
+                confirmSyncBtn.disabled = false;
+                confirmSyncBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                confirmSyncBtn.title = "";
+            }
+        }
+
+        // Toggle Details
+        showDetailsBtn.addEventListener('click', () => {
+            if (diffDetailsContainer.classList.contains('hidden')) {
+                diffDetailsContainer.classList.remove('hidden');
+                showDetailsBtn.textContent = 'Sembunyikan Detail';
+                loadDiffDetails(1, true);
+            } else {
+                diffDetailsContainer.classList.add('hidden');
+                showDetailsBtn.textContent = 'Lihat Detail Perubahan';
+            }
+        });
+
+        // Load Diff Details
+        async function loadDiffDetails(page = 1, reset = false) {
+            if (!currentUploadFilename) return;
+
+            try {
+                if (reset) {
+                    diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Memuat detail...</td></tr>';
+                    detailsPage = 1;
                 }
 
-                const statusBadge = item.status === 'new' 
-                    ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Baru</span>'
-                    : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Berubah</span>';
+                const response = await fetch(`{{ route('pegawai.import.index') }}/diff-details/${currentUploadFilename}?page=${page}&type=all`); // all = new + changed
+                const data = await response.json();
 
-                const row = `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-4 py-3">
-                             <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
-                             <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
-                        </td>
-                        <td class="px-4 py-3">${statusBadge}</td>
-                        <td class="px-4 py-3">${changesHtml}</td>
-                    </tr>
-                `;
-                diffDetailsBody.insertAdjacentHTML('beforeend', row);
-            });
+                if (reset) diffDetailsBody.innerHTML = '';
 
-            // Handle pagination (simple load more)
-            if (data.next_page_url) {
-                loadMoreDetailsBtn.classList.remove('hidden');
-                loadMoreDetailsBtn.onclick = () => loadDiffDetails(page + 1, false);
-            } else {
-                loadMoreDetailsBtn.classList.add('hidden');
+                if (data.data.length === 0) {
+                    if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Tidak ada detail perubahan yang ditampilkan.</td></tr>';
+                    loadMoreDetailsBtn.classList.add('hidden');
+                    return;
+                }
+
+                data.data.forEach(item => {
+                    let changesHtml = '';
+                    if (item.status === 'new') {
+                        changesHtml = '<span class="text-blue-600">Pegawai Baru</span>';
+                    } else if (item.status === 'changed' && item.changes) {
+                        changesHtml = '<ul class="list-disc list-inside text-xs">';
+                        for (const [field, change] of Object.entries(item.changes)) {
+                            changesHtml += `<li><span class="font-semibold">${change.label || field}:</span> 
+                                <span class="text-red-500 line-through">${change.old || '(kosong)'}</span> 
+                                <span class="text-gray-400">→</span> 
+                                <span class="text-green-600 font-medium">${change.new || '(kosong)'}</span></li>`;
+                        }
+                        changesHtml += '</ul>';
+                    } else {
+                        changesHtml = '<span class="text-gray-500">Tidak ada perubahan detail</span>';
+                    }
+
+                    const statusBadge = item.status === 'new'
+                        ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Baru</span>'
+                        : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Berubah</span>';
+
+                    const row = `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td class="px-4 py-3">
+                                 <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
+                                 <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
+                            </td>
+                            <td class="px-4 py-3">${statusBadge}</td>
+                            <td class="px-4 py-3">${changesHtml}</td>
+                        </tr>
+                    `;
+                    diffDetailsBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // Handle pagination (simple load more)
+                if (data.next_page_url) {
+                    loadMoreDetailsBtn.classList.remove('hidden');
+                    loadMoreDetailsBtn.onclick = () => loadDiffDetails(page + 1, false);
+                } else {
+                    loadMoreDetailsBtn.classList.add('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error loading details:', error);
+                if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-red-500">Gagal memuat detail.</td></tr>';
             }
-
-        } catch (error) {
-            console.error('Error loading details:', error);
-            if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-red-500">Gagal memuat detail.</td></tr>';
         }
-    }
 
-    // Confirm Sync
-    confirmSyncBtn.addEventListener('click', async () => {
-        if (!confirm('Apakah Anda yakin ingin menyinkronkan data ini ke database utama?')) return;
-        
-        confirmSyncBtn.disabled = true;
-        confirmSyncBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...';
-        
-        try {
-            const response = await fetch('{{ route('pegawai.import.confirm-sync') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ filename: currentUploadFilename })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('Sinkronisasi dimulai! Data sedang berjalan di background.');
-                diffSection.classList.add('hidden');
-                loadHistory(); // Refresh history table to see progress
-                
-                // Reset internal state
-                currentUploadFilename = null;
-            } else {
-                alert('Gagal memulai sinkronisasi: ' + data.message);
+        // Confirm Sync
+        confirmSyncBtn.addEventListener('click', async () => {
+            if (!confirm('Apakah Anda yakin ingin menyinkronkan data ini ke database utama?')) return;
+
+            confirmSyncBtn.disabled = true;
+            confirmSyncBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...';
+
+            try {
+                const response = await fetch('{{ route('pegawai.import.confirm-sync') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ filename: currentUploadFilename })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Sinkronisasi dimulai! Data sedang berjalan di background.');
+                    diffSection.classList.add('hidden');
+                    loadHistory(); // Refresh history table to see progress
+
+                    // Reset internal state
+                    currentUploadFilename = null;
+                } else {
+                    alert('Gagal memulai sinkronisasi: ' + data.message);
+                    confirmSyncBtn.disabled = false;
+                    confirmSyncBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Konfirmasi & Sinkronisasi';
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                alert('Terjadi kesalahan saat sinkronisasi.');
                 confirmSyncBtn.disabled = false;
                 confirmSyncBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Konfirmasi & Sinkronisasi';
             }
-        } catch (error) {
-            console.error('Sync error:', error);
-            alert('Terjadi kesalahan saat sinkronisasi.');
-            confirmSyncBtn.disabled = false;
-            confirmSyncBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Konfirmasi & Sinkronisasi';
-        }
-    });
+        });
 
         // Show status message
         function showStatus(type, message) {
@@ -965,53 +970,61 @@
         }
 
         // Load import history
-        async function loadHistory() {
+        async function loadHistory(page = 1) {
             try {
-                const response = await fetch('{{ route('pegawai.import.history') }}');
+                currentHistoryPage = page;
+                const response = await fetch(`{{ route('pegawai.import.history') }}?page=${page}`);
                 const data = await response.json();
 
-                if (data.length === 0) {
+                // Handle paginated response structure
+                const imports = data.data;
+
+                if (imports.length === 0) {
                     historyTableBody.innerHTML = `
-                            <tr>
-                                <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                    Belum ada riwayat import
-                                </td>
-                            </tr>
-                        `;
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                        Belum ada riwayat import
+                                    </td>
+                                </tr>
+                            `;
+                    historyPagination.innerHTML = '';
                     return;
                 }
 
-                historyTableBody.innerHTML = data.map(item => `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                                ${item.filename}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                ${item.uploaded_at}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                ${item.total_rows}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${getStatusBadge(item.status)}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${getProgressBar(item.progress, item.status)}
-                            </td>
-                        </tr>
-                    `).join('');
+                historyTableBody.innerHTML = imports.map(item => `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                                    ${item.filename}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    ${item.uploaded_at}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    ${item.total_rows}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    ${getStatusBadge(item.status)}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    ${getProgressBar(item.progress, item.status)}
+                                </td>
+                            </tr>
+                        `).join('');
+
+                renderHistoryPagination(data);
+
             } catch (error) {
                 console.error('Error loading history:', error);
                 historyTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
-                                Gagal memuat riwayat import
-                            </td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
+                                    Gagal memuat riwayat import
+                                </td>
+                            </tr>
+                        `;
             }
         }
 
@@ -1053,20 +1066,75 @@
                 return '<span class="text-sm text-red-600 dark:text-red-400">-</span>';
             }
             return `
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                        <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
-                    </div>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
-                `;
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
+                    `;
+        }
+
+
+        // Render Pagination
+        function renderHistoryPagination(meta) {
+            if (meta.last_page <= 1) {
+                historyPagination.innerHTML = '';
+                return;
+            }
+
+            let html = '<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">';
+            
+            // Previous Button
+            html += `
+                <button ${meta.current_page === 1 ? 'disabled' : `onclick="loadHistory(${meta.current_page - 1})"`} 
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+
+            // Page Numbers
+            for (let i = 1; i <= meta.last_page; i++) {
+                if (i === 1 || i === meta.last_page || (i >= meta.current_page - 1 && i <= meta.current_page + 1)) {
+                    const activeClass = i === meta.current_page 
+                        ? 'z-10 bg-blue-50 dark:bg-blue-900 border-blue-500 text-blue-600 dark:text-blue-300' 
+                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600';
+                        
+                    html += `
+                        <button onclick="loadHistory(${i})" 
+                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${activeClass}">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === meta.current_page - 2 || i === meta.current_page + 2) {
+                     html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">...</span>`;
+                }
+            }
+
+            // Next Button
+            html += `
+                <button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadHistory(${meta.current_page + 1})"`} 
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                    <span class="sr-only">Next</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+            
+            html += '</nav>';
+            historyPagination.innerHTML = html;
         }
 
         // Refresh button
-        refreshBtn.addEventListener('click', loadHistory);
+        refreshBtn.addEventListener('click', () => loadHistory(currentHistoryPage));
 
         // Auto-refresh every 5 seconds
-        setInterval(loadHistory, 5000);
+        setInterval(() => loadHistory(currentHistoryPage), 5000);
 
         // Initial load
-        loadHistory();
+        loadHistory(1);
     </script>
 @endsection
+

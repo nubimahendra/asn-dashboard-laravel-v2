@@ -72,6 +72,10 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/diff-details/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
                 Route::post('/sync-confirm', [App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
             });
+
+        // Iuran Korpri Routes
+        Route::get('/laporan/iuran-korpri', [App\Http\Controllers\IuranKorpriController::class, 'index'])->name('iuran-korpri.index');
+        Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
     });
 });
 
