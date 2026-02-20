@@ -75,7 +75,7 @@
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-10 bg-gray-50 dark:bg-gray-900/50 z-10 min-w-[200px]">
                                 OPD</th>
-                            @foreach($iuranRates as $key => $rate)
+                            @foreach($allIuranRates as $key => $rate)
                                 <th
                                     class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                                     Gol {{ $key }}</th>
@@ -103,7 +103,7 @@
                                     class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 sticky left-10 bg-white dark:bg-gray-800 z-10">
                                     {{ $opdName }}
                                 </td>
-                                @foreach($iuranRates as $key => $rate)
+                                @foreach($allIuranRates as $key => $rate)
                                     <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
                                         {{ $opd['per_golongan'][$key] ?? 0 }}
                                     </td>
@@ -117,7 +117,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ count($iuranRates) + 4 }}"
+                                <td colspan="{{ count($allIuranRates) + 4 }}"
                                     class="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
                                     Tidak ada data pegawai ditemukan
                                 </td>
@@ -131,7 +131,7 @@
                                 <td
                                     class="px-4 py-4 font-bold text-emerald-800 dark:text-emerald-300 sticky left-10 bg-emerald-50 dark:bg-emerald-900/20 z-10">
                                     GRAND TOTAL</td>
-                                @foreach($iuranRates as $key => $rate)
+                                @foreach($allIuranRates as $key => $rate)
                                     <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300">
                                         {{ $globalTotals['per_golongan'][$key]['count'] ?? 0 }}</td>
                                 @endforeach
@@ -182,7 +182,8 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        @foreach($iuranRates as $key => $rate)
+                        @foreach($iuranRatesPaginated as $rate)
+                            @php $key = $rate->golongan_key; @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                 <td class="px-6 py-4 font-medium text-gray-700 dark:text-gray-200">{{ $rate->label }}</td>
                                 <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
@@ -221,6 +222,9 @@
                         </tr>
                     </tfoot>
                 </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                {{ $iuranRatesPaginated->appends(request()->except('tarif_page'))->links() }}
             </div>
         </div>
 

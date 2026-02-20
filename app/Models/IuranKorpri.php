@@ -10,6 +10,7 @@ class IuranKorpri extends Model
 
     protected $fillable = [
         'golongan_key',
+        'ruang',
         'label',
         'besaran',
     ];

@@ -20,8 +20,7 @@ class IuranKorpriController extends Controller
             return null;
         }
 
-        $parts = explode('/', $namaGolongan);
-        return trim($parts[0]);
+        return trim($namaGolongan);
     }
 
     /**
@@ -32,7 +31,7 @@ class IuranKorpriController extends Controller
         $filterOpd = $request->input('opd');
 
         // Get all iuran rates keyed by golongan_key
-        $iuranRates = IuranKorpri::all()->keyBy('golongan_key');
+        $allIuranRates = IuranKorpri::all()->keyBy('golongan_key');
 
         // Get list of unique OPDs for filter dropdown
         $listOpd = RefUnor::whereNotNull('nama_opd')
@@ -64,7 +63,7 @@ class IuranKorpriController extends Controller
         ];
 
         // Initialize per_golongan counters
-        foreach ($iuranRates as $key => $rate) {
+        foreach ($allIuranRates as $key => $rate) {
             $globalTotals['per_golongan'][$key] = [
                 'label' => $rate->label,
                 'count' => 0,
@@ -88,7 +87,7 @@ class IuranKorpriController extends Controller
                     'total_iuran' => 0,
                     'per_golongan' => [],
                 ];
-                foreach ($iuranRates as $key => $rate) {
+                foreach ($allIuranRates as $key => $rate) {
                     $opdBreakdown[$opdName]['per_golongan'][$key] = 0;
                 }
             }
@@ -96,9 +95,9 @@ class IuranKorpriController extends Controller
             $globalTotals['total_pegawai']++;
             $opdBreakdown[$opdName]['total_pegawai']++;
 
-            if ($golonganKey && isset($iuranRates[$golonganKey])) {
+            if ($golonganKey && isset($allIuranRates[$golonganKey])) {
                 // Pegawai with matching golongan - count iuran
-                $besaran = $iuranRates[$golonganKey]->besaran;
+                $besaran = $allIuranRates[$golonganKey]->besaran;
 
                 $globalTotals['total_ber_golongan']++;
                 $globalTotals['per_golongan'][$golonganKey]['count']++;
@@ -134,8 +133,11 @@ class IuranKorpriController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        $iuranRatesPaginated = IuranKorpri::orderBy('id')->paginate(5, ['*'], 'tarif_page');
+
         return view('admin.iuran-korpri.index', compact(
-            'iuranRates',
+            'allIuranRates',
+            'iuranRatesPaginated',
             'listOpd',
             'filterOpd',
             'globalTotals',
