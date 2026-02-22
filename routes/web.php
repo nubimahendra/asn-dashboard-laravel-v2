@@ -20,11 +20,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Only Routes
     Route::middleware([\App\Http\Middleware\IsAdmin::class])->group(function () {
-        // Route::post('/sync-pegawai', [SyncController::class, 'sync'])->name('sync.pegawai'); // Old route
-        Route::get('/sync', [SyncController::class, 'index'])->name('sync.index');
-        Route::get('/sync/init', [SyncController::class, 'init'])->name('sync.init');
-        Route::post('/sync/batch', [SyncController::class, 'batch'])->name('sync.batch');
-        Route::post('/sync/cleanup', [SyncController::class, 'cleanup'])->name('sync.cleanup');
+        Route::get('/sync-data', [\App\Http\Controllers\PegawaiImportController::class, 'syncPage'])->name('sync.index');
         Route::resource('users', \App\Http\Controllers\UserController::class);
 
         // Snapshot / Laporan Routes
@@ -56,21 +52,27 @@ Route::middleware(['auth'])->group(function () {
         // Route::get('/chat', App\Livewire\ChatAdmin::class)->name('chat.index');
         Route::get('/chat', [App\Http\Controllers\ChatAdminController::class, 'index'])->name('chat.index'); // We need to create this controller
 
-        // Pegawai Import Routes
-        Route::prefix('pegawai/import')
+        // Pegawai Search & Profile Routes
+        Route::prefix('pegawai/master')
             ->name('pegawai.import.')
             ->group(function () {
-                Route::get('/', [App\Http\Controllers\PegawaiImportController::class, 'index'])->name('index');
-                Route::get('/search-employee', [App\Http\Controllers\PegawaiImportController::class, 'searchEmployee'])->name('search-employee');
-                Route::get('/profile/{id}', [App\Http\Controllers\PegawaiImportController::class, 'getEmployeeProfile'])->name('profile');
-                Route::post('/upload', [App\Http\Controllers\PegawaiImportController::class, 'upload'])->name('upload');
-                Route::get('/history', [App\Http\Controllers\PegawaiImportController::class, 'history'])->name('history');
-                Route::get('/status/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'status'])->name('status');
+                Route::get('/', [\App\Http\Controllers\PegawaiImportController::class, 'index'])->name('index');
+                Route::get('/search-employee', [\App\Http\Controllers\PegawaiImportController::class, 'searchEmployee'])->name('search-employee');
+                Route::get('/profile/{id}', [\App\Http\Controllers\PegawaiImportController::class, 'getEmployeeProfile'])->name('profile');
+            });
+
+        // Sync Data Routes (CSV Import)
+        Route::prefix('sync-data')
+            ->name('pegawai.import.')
+            ->group(function () {
+                Route::post('/upload', [\App\Http\Controllers\PegawaiImportController::class, 'upload'])->name('upload');
+                Route::get('/history', [\App\Http\Controllers\PegawaiImportController::class, 'history'])->name('history');
+                Route::get('/status/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'status'])->name('status');
 
                 // Diff & Sync Routes
-                Route::get('/diff-summary/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'diffSummary'])->name('diff-summary');
-                Route::get('/diff-details/{filename}', [App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
-                Route::post('/sync-confirm', [App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
+                Route::get('/diff-summary/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffSummary'])->name('diff-summary');
+                Route::get('/diff-details/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
+                Route::post('/sync-confirm', [\App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
             });
 
         // Iuran Korpri Routes

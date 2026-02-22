@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Imports\PegawaiImport;
 use App\Jobs\ProcessPegawaiImport;
 use App\Models\StgPegawaiImport;
 use App\Models\Pegawai;
@@ -12,7 +11,6 @@ use App\Models\RefJenisJabatan;
 use App\Models\RefTingkatPendidikan;
 use App\Models\RefLokasi;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 
 class PegawaiImportController extends Controller
@@ -172,6 +170,11 @@ class PegawaiImportController extends Controller
         return view('pegawai.import.index');
     }
 
+    public function syncPage()
+    {
+        return view('admin.sync.index');
+    }
+
     /**
      * Handle file upload and import to staging
      */
@@ -179,9 +182,48 @@ class PegawaiImportController extends Controller
     {
         // Check if file was uploaded
         if (!$request->hasFile('file')) {
+            $message = 'Tidak ada file yang diupload.';
+            $fileError = $_FILES['file']['error'] ?? null;
+            
+            if ($fileError !== null && $fileError !== UPLOAD_ERR_OK) {
+                $maxSize = ini_get('upload_max_filesize');
+                switch ($fileError) {
+                    case UPLOAD_ERR_INI_SIZE:
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $message = "File gagal diupload: Ukuran file melebihi batas server ({$maxSize}).";
+                        break;
+                    case UPLOAD_ERR_PARTIAL:
+                        $message = "File gagal diupload: File hanya terupload sebagian.";
+                        break;
+                    case UPLOAD_ERR_NO_TMP_DIR:
+                        $message = "File gagal diupload: Folder temporary ('tmp') tidak ditemukan di server.";
+                        break;
+                    case UPLOAD_ERR_CANT_WRITE:
+                        $message = "File gagal diupload: Gagal menulis file ke disk server.";
+                        break;
+                    case UPLOAD_ERR_EXTENSION:
+                        $message = "File gagal diupload: Ekstensi PHP menghentikan upload file.";
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $message = "Tidak ada file yang dipilih untuk diupload.";
+                        break;
+                    default:
+                        $message = "Gagal upload file (Error code: {$fileError}).";
+                        break;
+                }
+            } elseif (empty($_FILES) && empty($_POST) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $postMaxSize = ini_get('post_max_size');
+                $message = "Request terlalu besar melebihi batas server (post_max_size: {$postMaxSize}).";
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ada file yang diupload',
+                'message' => $message,
+                'debug' => [
+                    'files' => $_FILES,
+                    'post' => $_POST,
+                    'content_length' => $_SERVER['CONTENT_LENGTH'] ?? null
+                ]
             ], 422);
         }
 
@@ -194,7 +236,7 @@ class PegawaiImportController extends Controller
         }
 
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls|max:10000', // Max 10MB (10240 KB)
+            'file' => 'required|file|mimetypes:text/plain,text/csv,application/csv|max:51200', // Max 50MB
         ]);
 
         try {
@@ -204,73 +246,26 @@ class PegawaiImportController extends Controller
 
             // Store file
             $path = $file->storeAs('imports/pegawai', $filename);
+            $fullPath = \Illuminate\Support\Facades\Storage::path($path);
 
-            // Create import instance to track errors
-            $import = new PegawaiImport($filename);
+            // Sanitize the CSV first (Fix UTF-8 and line endings)
+            $sanitizer = new \App\Services\CsvSanitizerService();
+            $sanitizer->sanitize($fullPath);
 
-            // Import to staging table
-            try {
-                Excel::import($import, $file);
-            } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-                // ... validation error handling (keep as is)
-                $failures = $e->failures();
-                $errorMessages = [];
+            // Process the CSV Import
+            $csvService = new \App\Services\CsvImportService();
+            $result = $csvService->import($fullPath, $filename);
 
-                foreach ($failures as $failure) {
-                    $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
-                }
-
+            if ($result['inserted'] === 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validasi gagal pada beberapa baris',
-                    'errors' => $errorMessages,
-                    'error_count' => count($errorMessages)
+                    'message' => 'Tidak ada data yang berhasil diimport. Periksa format file, pastikan menggunakan delimiter pipa (|) dan berisi data minimal 1 baris selain header.',
+                    'skipped' => $result['skipped']
                 ], 422);
             }
 
-            // Check for errors during import
-            $errors = $import->getErrors();
-            $failures = $import->getFailures();
-
-            if (!empty($errors)) {
-                // ... error handling (keep as is)
-                $errorMessages = array_map(function ($error) {
-                    return $error['message'];
-                }, $errors);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Terjadi error saat import file',
-                    'errors' => $errorMessages,
-                    'error_count' => count($errorMessages)
-                ], 500);
-            }
-
-            if (!empty($failures)) {
-                // ... failure handling (keep as is)
-                $errorMessages = [];
-                foreach ($failures as $failure) {
-                    $errorMessages[] = "Baris {$failure['row']}: " . implode(', ', $failure['errors']);
-                }
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Beberapa baris gagal validasi',
-                    'errors' => $errorMessages,
-                    'error_count' => count($errorMessages)
-                ], 422);
-            }
-
-            // Count imported records
-            $recordCount = StgPegawaiImport::where('source_file', $filename)
-                ->count();
-
-            if ($recordCount == 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak ada data yang berhasil diimport. Periksa format file dan pastikan ada data di dalamnya.',
-                ], 422);
-            }
+            // Reference to total records needed for the response
+            $recordCount = $result['inserted'];
 
             // DIFF ANALYSIS START
             $diffService = new \App\Services\PegawaiDiffService();

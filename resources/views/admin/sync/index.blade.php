@@ -1,267 +1,552 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mx-auto px-4 py-6">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Sinkronisasi Data Pegawai</h1>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Sync Data Pegawai</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Sinkronisasi data dengan upload file CSV (Delimiter |)</p>
+        </div>
 
+        <!-- Upload Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Upload File CSV (Delimiter |)</h2>
+
+            <form id="upload-form" enctype="multipart/form-data">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Pilih File CSV
+                    </label>
+                    <input type="file" id="excel-file" name="file" accept=".csv"
+                        class="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Format: File CSV (.csv) dengan pemisah kolom (delimiter) berupa karakter pipa <code>|</code>. Maksimal 50MB.
+                    </p>
+                </div>
+
+                <button type="submit" id="upload-btn"
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="upload-text">Upload & Proses</span>
+                    <span id="upload-loading" class="hidden">
+                        <svg class="animate-spin inline-block w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        Uploading...
+                    </span>
+                </button>
+            </form>
+
+            <!-- Upload Status -->
+            <div id="upload-status" class="mt-4 hidden"></div>
+
+            <!-- Diff Summary Section -->
+            <div id="diff-section" class="mt-6 hidden border-t border-gray-200 dark:border-gray-700 pt-6">
+                <!-- Copied from import index -->
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Hasil Analisis Perubahan</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">Data Baru</div>
+                        <div class="text-2xl font-bold text-blue-700 dark:text-blue-300" id="count-new">0</div>
+                        <div class="text-xs text-blue-500 dark:text-blue-400 mt-1">Pegawai baru akan ditambahkan</div>
+                    </div>
+
+                    <div class="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                        <div class="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Data Berubah</div>
+                        <div class="text-2xl font-bold text-yellow-700 dark:text-yellow-300" id="count-changed">0</div>
+                        <div class="text-xs text-yellow-500 dark:text-yellow-400 mt-1">Pegawai dengan perubahan data</div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">Tidak Berubah</div>
+                        <div class="text-2xl font-bold text-gray-700 dark:text-gray-300" id="count-unchanged">0</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Data identik dengan database</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="confirm-sync-btn"
+                        class="flex-1 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                        Konfirmasi & Sinkronisasi
+                    </button>
+                    <button id="show-details-btn"
+                        class="px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors">
+                        Lihat Detail Perubahan
+                    </button>
+                </div>
+
+                <div id="diff-details-container" class="mt-6 hidden">
+                    <h4 class="text-md font-semibold text-gray-700 dark:text-gray-200 mb-3">Detail Perubahan</h4>
+                    <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg max-h-96">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nama / NIP</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Perubahan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="diff-details-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import History Section -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Status Sinkronisasi</h2>
-                <div id="sync-status-badge"
-                    class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                    Menunggu
-                </div>
-            </div>
-
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Proses ini akan mengambil data pegawai terbaru dari server sumber (SiDawai).
-                Data akan diproses secara bertahap untuk mencegah kegagalan sistem.
-            </p>
-
-            <!-- Progress Bar -->
-            <div class="mb-6">
-                <div class="flex justify-between mb-1">
-                    <span id="sync-status-text" class="text-sm font-medium text-blue-700 dark:text-blue-400">Siap untuk
-                        sinkronisasi</span>
-                    <span id="sync-percent" class="text-sm font-medium text-blue-700 dark:text-blue-400">0%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 overflow-hidden">
-                    <div id="sync-progress-bar"
-                        class="bg-blue-600 h-4 rounded-full transition-all duration-300 flex items-center justify-center text-[10px] text-white font-bold"
-                        style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex gap-4 mb-6">
-                <button type="button" id="btn-start-sync"
-                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Mulai Sinkronisasi
-                </button>
-                <button type="button" id="btn-cancel-sync"
-                    class="hidden px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                    Batal
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Riwayat Sinkronisasi (CSV)</h2>
+                <button id="refresh-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
+                    Refresh
                 </button>
             </div>
-
-            <!-- Logs -->
-            <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Log Proses</h3>
-                <div id="sync-logs"
-                    class="h-64 overflow-y-auto font-mono text-xs text-gray-600 dark:text-gray-400 space-y-1 p-2">
-                    <p class="text-gray-400 italic">Klik tombol "Mulai Sinkronisasi" untuk memulai...</p>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama File</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waktu Upload</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah Baris</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Error</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    </tbody>
+                </table>
             </div>
+            <div id="history-pagination" class="mt-4 flex justify-end"></div>
         </div>
     </div>
 @endsection
 
 @section('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const btnStart = document.getElementById('btn-start-sync');
-            const btnCancel = document.getElementById('btn-cancel-sync');
-            const progressBar = document.getElementById('sync-progress-bar');
-            const statusText = document.getElementById('sync-status-text');
-            const percentText = document.getElementById('sync-percent');
-            const statusBadge = document.getElementById('sync-status-badge');
-            const logs = document.getElementById('sync-logs');
+        // Upload Form Elements
+        const uploadForm = document.getElementById('upload-form');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadText = document.getElementById('upload-text');
+        const uploadLoading = document.getElementById('upload-loading');
+        const uploadStatus = document.getElementById('upload-status');
+        const historyTableBody = document.getElementById('history-table-body');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const historyPagination = document.getElementById('history-pagination');
 
-            let isSyncing = false;
-            let abortController = null;
+        // Diff Elements
+        const diffSection = document.getElementById('diff-section');
+        const countNew = document.getElementById('count-new');
+        const countChanged = document.getElementById('count-changed');
+        const countUnchanged = document.getElementById('count-unchanged');
+        const confirmSyncBtn = document.getElementById('confirm-sync-btn');
+        const showDetailsBtn = document.getElementById('show-details-btn');
+        const diffDetailsContainer = document.getElementById('diff-details-container');
+        const diffDetailsBody = document.getElementById('diff-details-body');
+        const loadMoreDetailsBtn = document.getElementById('load-more-details-btn');
 
-            function log(message, type = 'info') {
-                const p = document.createElement('p');
-                const time = new Date().toLocaleTimeString();
-                p.innerHTML = `<span class="text-gray-400">[${time}]</span> ${message}`;
+        let currentUploadFilename = null;
+        let detailsPage = 1;
+        let currentHistoryPage = 1;
 
-                if (type === 'error') p.classList.add('text-red-500');
-                if (type === 'success') p.classList.add('text-green-500');
+        // Handle file upload
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                logs.appendChild(p);
-                logs.scrollTop = logs.scrollHeight;
-            }
+            const formData = new FormData(uploadForm);
 
-            function setStatus(status, type = 'neutral') {
-                statusBadge.textContent = status;
-                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-medium';
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadText.classList.add('hidden');
+            uploadLoading.classList.remove('hidden');
+            uploadStatus.classList.add('hidden');
+            diffSection.classList.add('hidden'); // Hide diff section on new upload
 
-                if (type === 'process') {
-                    statusBadge.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
-                } else if (type === 'success') {
-                    statusBadge.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200');
-                } else if (type === 'error') {
-                    statusBadge.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+            try {
+                const response = await fetch('{{ route('pegawai.import.upload') }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                let data;
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await response.json();
                 } else {
-                    statusBadge.classList.add('bg-gray-100', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-400');
+                    const text = await response.text();
+                    console.error('Server response:', text);
+                    throw new Error(`Server error: ${response.status}`);
                 }
-            }
 
-            function resetUI() {
-                btnStart.disabled = false;
-                btnStart.classList.remove('hidden');
-                btnCancel.classList.add('hidden');
-                isSyncing = false;
-            }
+                if (response.ok && (data.success === true || data.success === undefined)) {
+                    showStatus('success', data.message || 'File berhasil diupload');
+                    uploadForm.reset();
+                    loadHistory();
 
-            btnCancel.addEventListener('click', function () {
-                if (confirm('Apakah Anda yakin ingin membatalkan proses sinkronisasi? Data mungkin tidak lengkap.')) {
-                    if (abortController) {
-                        abortController.abort();
+                    // Show Diff Summary if available
+                    if (data.diff_summary) {
+                        currentUploadFilename = data.filename;
+                        showDiffSummary(data.diff_summary);
                     }
-                    isSyncing = false;
-                    log('Proses dibatalkan oleh pengguna.', 'error');
-                    setStatus('Dibatalkan', 'error');
-                    statusText.textContent = 'Dibatalkan oleh pengguna';
-                    resetUI();
-                }
-            });
-
-            btnStart.addEventListener('click', async function () {
-                if (isSyncing) return;
-
-                isSyncing = true;
-                abortController = new AbortController();
-                const signal = abortController.signal;
-
-                // UI Reset
-                progressBar.style.width = '0%';
-                percentText.textContent = '0%';
-                logs.innerHTML = '';
-
-                btnStart.disabled = true;
-                btnStart.classList.add('hidden');
-                btnCancel.classList.remove('hidden');
-
-                setStatus('Memproses...', 'process');
-                log('Memulai inisialisasi sinkronisasi...');
-                statusText.textContent = 'Menghubungkan ke server...';
-
-                try {
-                    // Step 1: Init
-                    const initRes = await fetch("{{ route('sync.init') }}", {
-                        signal: signal,
-                        headers: { 'Accept': 'application/json' }
-                    });
-
-                    if (!initRes.ok) throw new Error(`HTTP error! status: ${initRes.status}`);
-
-                    const initData = await initRes.json();
-
-                    if (initData.status !== 'success') {
-                        throw new Error(initData.message || 'Gagal inisialisasi');
-                    }
-
-                    const total = initData.total;
-                    log(`Total data di server sumber: ${total}`);
-
-                    if (total === 0) {
-                        progressBar.style.width = '100%';
-                        percentText.textContent = '100%';
-                        setStatus('Selesai', 'success');
-                        log('Tidak ada data baru untuk disinkronkan.', 'success');
-                        resetUI();
-                        return;
-                    }
-
-                    // Step 2: Batch Loop
-                    const batchSize = 200;
-                    let processed = 0;
-
-                    while (processed < total) {
-                        if (signal.aborted) throw new Error('AbortError');
-
-                        const remaining = total - processed;
-                        const currentBatch = Math.min(remaining, batchSize);
-
-                        statusText.textContent = `Memproses data ${processed + 1} - ${processed + currentBatch} dari ${total}...`;
-
-                        const formData = new FormData();
-                        formData.append('offset', processed);
-                        formData.append('limit', batchSize);
-                        formData.append('_token', "{{ csrf_token() }}");
-
-                        const batchRes = await fetch("{{ route('sync.batch') }}", {
-                            method: 'POST',
-                            body: formData,
-                            signal: signal,
-                            headers: { 'Accept': 'application/json' }
-                        });
-
-                        if (!batchRes.ok) throw new Error(`HTTP error! status: ${batchRes.status}`);
-
-                        const batchData = await batchRes.json();
-
-                        if (batchData.status !== 'success') {
-                            throw new Error(batchData.message || 'Gagal memproses batch');
+                } else {
+                    // Display error with details if available
+                    let errorMessage = data.message || 'Terjadi kesalahan validasi atau server.';
+                    
+                    if (data.errors) {
+                        let errorList = [];
+                        if (Array.isArray(data.errors)) {
+                            errorList = data.errors;
+                        } else if (typeof data.errors === 'object') {
+                            for (let key in data.errors) {
+                                errorList = errorList.concat(data.errors[key]);
+                            }
                         }
-
-                        processed += batchData.processed;
-                        const percent = Math.round((processed / total) * 90);
-
-                        progressBar.style.width = `${percent}%`;
-                        percentText.textContent = `${percent}%`;
-                        log(`Berhasil memproses batch: ${batchData.processed} data.`);
-
-                        if (batchData.processed === 0) break;
-
-                        // Small delay to allow UI updates and cancellation
-                        await new Promise(r => setTimeout(r, 100));
+                        
+                        if (errorList.length > 0) {
+                            errorMessage += ':\n' + errorList.slice(0, 5).join('\n');
+                            if (errorList.length > 5) {
+                                errorMessage += `\n... dan ${errorList.length - 5} error lainnya`;
+                            }
+                        }
                     }
-
-                    // Step 3: Cleanup
-                    if (signal.aborted) throw new Error('AbortError');
-
-                    statusText.textContent = 'Membersihkan data usang...';
-                    log('Menghapus data lokal yang tidak valid...');
-
-                    const cleanupRes = await fetch("{{ route('sync.cleanup') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': "{{ csrf_token() }}"
-                        },
-                        body: JSON.stringify({}),
-                        signal: signal
-                    });
-
-                    if (!cleanupRes.ok) throw new Error(`HTTP error! status: ${cleanupRes.status}`);
-
-                    const cleanupData = await cleanupRes.json();
-
-                    if (cleanupData.status !== 'success') {
-                        throw new Error(cleanupData.message || 'Gagal cleanup');
+                    if (data.error_detail) {
+                        errorMessage += `\n\nDetail: ${data.error_detail.type} di ${data.error_detail.file}:${data.error_detail.line}`;
                     }
-
-                    log(`Pembersihan selesai. Dihapus: ${cleanupData.deleted} data.`);
-
-                    // Finish
-                    progressBar.style.width = '100%';
-                    percentText.textContent = '100%';
-                    setStatus('Sukses', 'success');
-                    statusText.textContent = 'Sinkronisasi Selesai!';
-                    log('Semua proses selesai dengan sukses.', 'success');
-
-                    btnStart.classList.remove('hidden');
-                    btnStart.disabled = false;
-                    btnStart.textContent = 'Sinkronisasi Ulang';
-                    btnCancel.classList.add('hidden');
-                    isSyncing = false;
-
-                } catch (error) {
-                    if (error.message === 'AbortError' || error.name === 'AbortError') {
-                        log('Proses dibatalkan.', 'error');
-                    } else {
-                        console.error(error);
-                        setStatus('Error', 'error');
-                        statusText.textContent = 'Terjadi Kesalahan';
-                        log(`ERROR: ${error.message}`, 'error');
-                        alert('Terjadi kesalahan: ' + error.message);
-                    }
-                    resetUI();
+                    showStatus('error', errorMessage);
                 }
-            });
+            } catch (error) {
+                showStatus('error', 'Terjadi kesalahan saat mengupload file: ' + error.message);
+                console.error('Upload error:', error);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadText.classList.remove('hidden');
+                uploadLoading.classList.add('hidden');
+            }
         });
+
+        // Show Diff Summary
+        function showDiffSummary(summary) {
+            diffSection.classList.remove('hidden');
+            countNew.textContent = summary.new;
+            countChanged.textContent = summary.changed;
+            countUnchanged.textContent = summary.unchanged;
+
+            // Reset details view
+            diffDetailsContainer.classList.add('hidden');
+            diffDetailsBody.innerHTML = '';
+            showDetailsBtn.textContent = 'Lihat Detail Perubahan';
+
+            // Enable/Disable confirm button based on changes
+            if (summary.new === 0 && summary.changed === 0) {
+                confirmSyncBtn.disabled = true;
+                confirmSyncBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                confirmSyncBtn.title = "Tidak ada perubahan data";
+            } else {
+                confirmSyncBtn.disabled = false;
+                confirmSyncBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                confirmSyncBtn.title = "";
+            }
+        }
+
+        // Toggle Details
+        showDetailsBtn.addEventListener('click', () => {
+            if (diffDetailsContainer.classList.contains('hidden')) {
+                diffDetailsContainer.classList.remove('hidden');
+                showDetailsBtn.textContent = 'Sembunyikan Detail';
+                loadDiffDetails(1, true);
+            } else {
+                diffDetailsContainer.classList.add('hidden');
+                showDetailsBtn.textContent = 'Lihat Detail Perubahan';
+            }
+        });
+
+        // Load Diff Details
+        async function loadDiffDetails(page = 1, reset = false) {
+            if (!currentUploadFilename) return;
+
+            try {
+                if (reset) {
+                    diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Memuat detail...</td></tr>';
+                    detailsPage = 1;
+                }
+
+                // Call route parameter using the history/diff location since routes haven't completely decoupled yet
+                const response = await fetch(`{{ route('pegawai.import.index') }}/diff-details/${currentUploadFilename}?page=${page}&type=all`);
+                const data = await response.json();
+
+                if (reset) diffDetailsBody.innerHTML = '';
+
+                if (data.data.length === 0) {
+                    if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Tidak ada detail perubahan yang ditampilkan.</td></tr>';
+                    loadMoreDetailsBtn.classList.add('hidden');
+                    return;
+                }
+
+                data.data.forEach(item => {
+                    let changesHtml = '';
+                    if (item.status === 'new') {
+                        changesHtml = '<span class="text-blue-600">Pegawai Baru</span>';
+                    } else if (item.status === 'changed' && item.changes) {
+                        changesHtml = '<ul class="list-disc list-inside text-xs">';
+                        for (const [field, change] of Object.entries(item.changes)) {
+                            changesHtml += `<li><span class="font-semibold">${change.label || field}:</span> 
+                                <span class="text-red-500 line-through">${change.old || '(kosong)'}</span> 
+                                <span class="text-gray-400">→</span> 
+                                <span class="text-green-600 font-medium">${change.new || '(kosong)'}</span></li>`;
+                        }
+                        changesHtml += '</ul>';
+                    } else {
+                        changesHtml = '<span class="text-gray-500">Tidak ada perubahan detail</span>';
+                    }
+
+                    const statusBadge = item.status === 'new'
+                        ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Baru</span>'
+                        : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Berubah</span>';
+
+                    const row = `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td class="px-4 py-3">
+                                 <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
+                                 <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
+                            </td>
+                            <td class="px-4 py-3">${statusBadge}</td>
+                            <td class="px-4 py-3">${changesHtml}</td>
+                        </tr>
+                    `;
+                    diffDetailsBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // Handle pagination
+                if (data.next_page_url) {
+                    loadMoreDetailsBtn.classList.remove('hidden');
+                    loadMoreDetailsBtn.onclick = () => loadDiffDetails(page + 1, false);
+                } else {
+                    loadMoreDetailsBtn.classList.add('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error loading details:', error);
+                if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-red-500">Gagal memuat detail.</td></tr>';
+            }
+        }
+
+        // Confirm Sync
+        confirmSyncBtn.addEventListener('click', async () => {
+            if (!confirm('Apakah Anda yakin ingin menyinkronkan data ini ke database utama?')) return;
+
+            confirmSyncBtn.disabled = true;
+            confirmSyncBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...';
+
+            try {
+                const response = await fetch('{{ route('pegawai.import.confirm-sync') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ filename: currentUploadFilename })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Sinkronisasi dimulai! Data sedang berjalan di background.');
+                    diffSection.classList.add('hidden');
+                    loadHistory();
+
+                    currentUploadFilename = null;
+                } else {
+                    alert('Gagal memulai sinkronisasi: ' + data.message);
+                    confirmSyncBtn.disabled = false;
+                    confirmSyncBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Konfirmasi & Sinkronisasi';
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                alert('Terjadi kesalahan saat sinkronisasi.');
+                confirmSyncBtn.disabled = false;
+                confirmSyncBtn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Konfirmasi & Sinkronisasi';
+            }
+        });
+
+        // Show status message
+        function showStatus(type, message) {
+            uploadStatus.classList.remove('hidden');
+            uploadStatus.className = 'mt-4 p-4 rounded-lg ' +
+                (type === 'success'
+                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border border-green-400 dark:border-green-700'
+                    : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 border border-red-400 dark:border-red-700');
+            uploadStatus.textContent = message;
+
+            setTimeout(() => {
+                uploadStatus.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Load import history
+        async function loadHistory(page = 1) {
+            try {
+                currentHistoryPage = page;
+                const response = await fetch(`{{ route('pegawai.import.history') }}?page=${page}`);
+                const data = await response.json();
+
+                const imports = data.data;
+
+                if (imports.length === 0) {
+                    historyTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                        Belum ada riwayat import
+                                    </td>
+                                </tr>
+                            `;
+                    historyPagination.innerHTML = '';
+                    return;
+                }
+
+                historyTableBody.innerHTML = imports.map(item => `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                                    ${item.filename}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    ${item.uploaded_at}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    ${item.total_rows}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    ${getStatusBadge(item.status)}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    ${getProgressBar(item.progress, item.status)}
+                                </td>
+                            </tr>
+                        `).join('');
+
+                renderHistoryPagination(data);
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+                historyTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
+                                    Gagal memuat riwayat import
+                                </td>
+                            </tr>
+                        `;
+            }
+        }
+
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            const badges = {
+                'Menunggu': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300">Menunggu</span>',
+                'Diproses': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">Diproses</span>',
+                'Selesai': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">Selesai</span>',
+                'Gagal': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">Gagal</span>'
+            };
+            return badges[status] || status;
+        }
+
+        function getErrorBadge(totalErrors, importErrors, processingErrors) {
+            if (totalErrors === 0) {
+                return '<span class="text-gray-500 dark:text-gray-400">-</span>';
+            }
+
+            let tooltip = '';
+            if (importErrors > 0 && processingErrors > 0) {
+                tooltip = `Import: ${importErrors}, Processing: ${processingErrors}`;
+            } else if (importErrors > 0) {
+                tooltip = `Import error: ${importErrors}`;
+            } else {
+                tooltip = `Processing error: ${processingErrors}`;
+            }
+
+            return `<span class="text-red-600 dark:text-red-400 font-semibold" title="${tooltip}">${totalErrors}</span>`;
+        }
+
+        function getProgressBar(progress, status) {
+            if (status === 'Selesai') {
+                return '<span class="text-sm text-green-600 dark:text-green-400 font-semibold">100%</span>';
+            }
+            if (status === 'Gagal') {
+                return '<span class="text-sm text-red-600 dark:text-red-400">-</span>';
+            }
+            return `
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
+                    `;
+        }
+
+        function renderHistoryPagination(meta) {
+            if (meta.last_page <= 1) {
+                historyPagination.innerHTML = '';
+                return;
+            }
+
+            let html = '<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">';
+            
+            html += `
+                <button ${meta.current_page === 1 ? 'disabled' : `onclick="loadHistory(${meta.current_page - 1})"`} 
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+
+            for (let i = 1; i <= meta.last_page; i++) {
+                if (i === 1 || i === meta.last_page || (i >= meta.current_page - 1 && i <= meta.current_page + 1)) {
+                    const activeClass = i === meta.current_page 
+                        ? 'z-10 bg-blue-50 dark:bg-blue-900 border-blue-500 text-blue-600 dark:text-blue-300' 
+                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600';
+                        
+                    html += `
+                        <button onclick="loadHistory(${i})" 
+                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${activeClass}">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === meta.current_page - 2 || i === meta.current_page + 2) {
+                     html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">...</span>`;
+                }
+            }
+
+            html += `
+                <button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadHistory(${meta.current_page + 1})"`} 
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                    <span class="sr-only">Next</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+            
+            html += '</nav>';
+            historyPagination.innerHTML = html;
+        }
+
+        refreshBtn.addEventListener('click', () => loadHistory(currentHistoryPage));
+        setInterval(() => loadHistory(currentHistoryPage), 5000);
+        loadHistory(1);
     </script>
 @endsection
