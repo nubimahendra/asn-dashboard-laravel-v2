@@ -184,7 +184,7 @@ class PegawaiImportController extends Controller
         if (!$request->hasFile('file')) {
             $message = 'Tidak ada file yang diupload.';
             $fileError = $_FILES['file']['error'] ?? null;
-            
+
             if ($fileError !== null && $fileError !== UPLOAD_ERR_OK) {
                 $maxSize = ini_get('upload_max_filesize');
                 switch ($fileError) {
@@ -266,20 +266,30 @@ class PegawaiImportController extends Controller
 
             // Reference to total records needed for the response
             $recordCount = $result['inserted'];
+            $batchId = $result['batch_id'] ?? null;
 
             // DIFF ANALYSIS START
             $diffService = new \App\Services\PegawaiDiffService();
             $stagingRows = StgPegawaiImport::where('source_file', $filename)->get();
             $counts = ['new' => 0, 'changed' => 0, 'unchanged' => 0];
+            $validationService = app(\App\Services\PegawaiValidationService::class);
 
             foreach ($stagingRows as $row) {
                 /** @var StgPegawaiImport $row */
+                try {
+                    $row->processing_error = null;
+                    $validationService->validate($row);
+                } catch (\Exception $e) {
+                    $row->processing_error = $e->getMessage();
+                }
+
                 $analysis = $diffService->analyze($row);
 
                 $row->update([
                     'data_hash' => $analysis['hash'],
                     'sync_status' => $analysis['status'],
                     'change_summary' => $analysis['changes'] ? json_encode($analysis['changes']) : null,
+                    'processing_error' => $row->processing_error,
                 ]);
 
                 if (isset($counts[$analysis['status']])) {
@@ -288,12 +298,40 @@ class PegawaiImportController extends Controller
             }
             // DIFF ANALYSIS END
 
+            $batchSummary = null;
+            if ($batchId) {
+                $total = StgPegawaiImport::where('batch_id', $batchId)->count();
+                $invalid = StgPegawaiImport::where('batch_id', $batchId)
+                    ->whereNotNull('processing_error')
+                    ->count();
+                $valid = $total - $invalid;
+
+                $batch = \App\Models\ImportBatch::find($batchId);
+                if ($batch) {
+                    $batch->update([
+                        'total_rows' => $total,
+                        'valid_rows' => $valid,
+                        'invalid_rows' => $invalid,
+                        'status' => $invalid > 0 ? 'failed' : 'ready'
+                    ]);
+
+                    $batchSummary = [
+                        'total' => $total,
+                        'valid' => $valid,
+                        'invalid' => $invalid,
+                        'status' => $invalid > 0 ? 'failed' : 'ready'
+                    ];
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'File berhasil diupload dan dianalisis. Silakan konfirmasi sinkronisasi.',
                 'filename' => $filename,
                 'record_count' => $recordCount,
-                'diff_summary' => $counts
+                'diff_summary' => $counts,
+                'batch_id' => $batchId,
+                'batch_summary' => $batchSummary
             ]);
 
         } catch (\Exception $e) {
@@ -460,23 +498,96 @@ class PegawaiImportController extends Controller
             return response()->json(['success' => false, 'message' => 'File tidak ditemukan'], 404);
         }
 
-        // Dispatch job to process the confirmed file
-        // We can reuse the existing job but it needs to be updated to handle logic conditionally
-        // OR we can process it here if it's not too large, but better use queue.
-        // For now, let's use the existing job class but update it to handle "confirmed" logic?
-        // Actually, the existing job `ProcessPegawaiImport` processes where `is_processed` = false.
-        // The implementation plan says: "Step 6... confirmSync... foreach $rows... $service->sync($row)"
-
-        // Let's implement immediate sync for now as per user request example, 
-        // OR use the existing job mechanism. 
-        // Given "TIDAK boleh langsung update", we stopped it at upload.
-        // Now at confirm, we can dispatch the job.
-
         ProcessPegawaiImport::dispatch($filename);
 
         return response()->json([
             'success' => true,
             'message' => 'Sinkronisasi sedang berjalan di background',
         ]);
+    }
+
+    public function downloadErrors($batchId)
+    {
+        $rows = StgPegawaiImport::where('batch_id', $batchId)
+            ->whereNotNull('processing_error')
+            ->get();
+
+        $filename = "error_batch_{$batchId}.csv";
+
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+        ];
+
+        $callback = function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+
+            // Optionally add headers
+            fputcsv($handle, ['ID', 'NIP Baru', 'Nama', 'Error'], '|');
+
+            foreach ($rows as $row) {
+                fputcsv($handle, [
+                    $row->id,
+                    $row->nip_baru,
+                    $row->nama,
+                    $row->processing_error
+                ], '|');
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function retry($batchId)
+    {
+        $rows = StgPegawaiImport::where('batch_id', $batchId)
+            ->whereNotNull('processing_error')
+            ->get();
+
+        $validationService = app(\App\Services\PegawaiValidationService::class);
+
+        foreach ($rows as $row) {
+            /** @var \App\Models\StgPegawaiImport $row */
+            // reset error
+            $row->update(['processing_error' => null]);
+
+            try {
+                $validationService->validate($row);
+            } catch (\Exception $e) {
+                $row->update(['processing_error' => $e->getMessage()]);
+            }
+        }
+
+        // Recalculate properties
+        $total = StgPegawaiImport::where('batch_id', $batchId)->count();
+        $invalid = StgPegawaiImport::where('batch_id', $batchId)
+            ->whereNotNull('processing_error')
+            ->count();
+        $valid = $total - $invalid;
+
+        $batch = \App\Models\ImportBatch::find($batchId);
+        if ($batch) {
+            $batch->update([
+                'total_rows' => $total,
+                'valid_rows' => $valid,
+                'invalid_rows' => $invalid,
+                'status' => $invalid > 0 ? 'failed' : 'ready'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Retry validation selesai.',
+                'batch_summary' => [
+                    'total' => $total,
+                    'valid' => $valid,
+                    'invalid' => $invalid,
+                    'status' => $invalid > 0 ? 'failed' : 'ready'
+                ]
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Batch not found'], 404);
     }
 }

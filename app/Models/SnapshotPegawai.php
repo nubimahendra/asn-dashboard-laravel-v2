@@ -23,6 +23,7 @@ class SnapshotPegawai extends Model
         'sts_peg',
         'tk_pend',
         'golongan',
+        'unor_id',
         'last_sync_at',
     ];
 

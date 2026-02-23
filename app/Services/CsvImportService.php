@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\StgPegawaiImport;
+use App\Models\ImportBatch;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -90,7 +91,8 @@ class CsvImportService
     protected function v(array $row, string $key): ?string
     {
         $idx = self::IDX[$key] ?? null;
-        if ($idx === null) return null;
+        if ($idx === null)
+            return null;
         return isset($row[$idx]) ? trim($row[$idx]) : null;
     }
 
@@ -115,6 +117,12 @@ class CsvImportService
         $batchData = [];
         $batchSize = 250; // Insert 250 rows at a time
         $now = now();
+
+        $batch = ImportBatch::create([
+            'source_file' => $filename,
+            'status' => 'uploaded'
+        ]);
+        $batchId = $batch->id;
 
         DB::beginTransaction();
         try {
@@ -146,10 +154,11 @@ class CsvImportService
                 $nipBaru = ltrim($this->v($row, 'nip_baru') ?? '', "'");
                 $nipLama = ltrim($this->v($row, 'nip_lama') ?? '', "'");
                 $nik = ltrim($this->v($row, 'nik') ?? '', "'");
-                
+
                 // Construct the insert array using valid database columns 
                 // Batch insert requires explicit existing columns mapping (unrelated extra CSV columns are ignored)
                 $batchData[] = [
+                    'batch_id' => $batchId,
                     'pns_id' => $this->v($row, 'pns_id'),
                     'nik' => $nik !== '' ? $nik : null,
                     'nip_baru' => $nipBaru !== '' ? $nipBaru : null,
@@ -157,80 +166,80 @@ class CsvImportService
                     'nama' => $this->v($row, 'nama'),
                     'gelar_depan' => $this->v($row, 'gelar_depan'),
                     'gelar_belakang' => $this->v($row, 'gelar_belakang'),
-                    
+
                     'agama_id' => $this->v($row, 'agama_id') !== '' ? $this->v($row, 'agama_id') : null,
                     'agama' => $this->v($row, 'agama_nama'),
-                    
+
                     'jenis_kawin_id' => $this->v($row, 'jenis_kawin_id') !== '' ? $this->v($row, 'jenis_kawin_id') : null,
                     'jenis_kawin' => $this->v($row, 'jenis_kawin_nama'),
-                    
+
                     'jenis_pegawai_id' => $this->v($row, 'jenis_pegawai_id') !== '' ? $this->v($row, 'jenis_pegawai_id') : null,
                     'jenis_pegawai' => $this->v($row, 'jenis_pegawai_nama'),
-                    
+
                     'kedudukan_hukum_id' => $this->v($row, 'kedudukan_hukum_id') !== '' ? $this->v($row, 'kedudukan_hukum_id') : null,
                     'kedudukan_hukum' => $this->v($row, 'kedudukan_hukum_nama'),
-                    
+
                     'gol_awal_id' => $this->v($row, 'gol_awal_id') !== '' ? $this->v($row, 'gol_awal_id') : null,
                     'gol_awal' => $this->v($row, 'gol_awal_nama'),
-                    
+
                     'gol_akhir_id' => $this->v($row, 'gol_akhir_id') !== '' ? $this->v($row, 'gol_akhir_id') : null,
                     'gol_akhir' => $this->v($row, 'gol_akhir_nama'),
                     'tmt_gol_akhir' => $this->formatDate($this->v($row, 'tmt_golongan')),
-                    
-                    'mk_tahun' => $this->v($row, 'mk_tahun') !== '' ? (int)$this->v($row, 'mk_tahun') : null,
-                    'mk_bulan' => $this->v($row, 'mk_bulan') !== '' ? (int)$this->v($row, 'mk_bulan') : null,
-                    
+
+                    'mk_tahun' => $this->v($row, 'mk_tahun') !== '' ? (int) $this->v($row, 'mk_tahun') : null,
+                    'mk_bulan' => $this->v($row, 'mk_bulan') !== '' ? (int) $this->v($row, 'mk_bulan') : null,
+
                     'jenis_jabatan_id' => $this->v($row, 'jenis_jabatan_id') !== '' ? $this->v($row, 'jenis_jabatan_id') : null,
                     'jenis_jabatan' => $this->v($row, 'jenis_jabatan_nama'),
-                    
+
                     'jabatan_id' => $this->v($row, 'jabatan_id') !== '' ? $this->v($row, 'jabatan_id') : null,
                     'jabatan' => $this->v($row, 'jabatan_nama'),
                     'tmt_jabatan' => $this->formatDate($this->v($row, 'tmt_jabatan')),
-                    
+
                     'tingkat_pendidikan_id' => $this->v($row, 'tingkat_pendidikan_id') !== '' ? $this->v($row, 'tingkat_pendidikan_id') : null,
                     'tingkat_pendidikan' => $this->v($row, 'tingkat_pendidikan_nama'),
-                    
+
                     'pendidikan_id' => $this->v($row, 'pendidikan_id') !== '' ? $this->v($row, 'pendidikan_id') : null,
                     'pendidikan' => $this->v($row, 'pendidikan_nama'),
-                    'tahun_lulus' => $this->v($row, 'tahun_lulus') !== '' ? (int)$this->v($row, 'tahun_lulus') : null,
-                    
+                    'tahun_lulus' => $this->v($row, 'tahun_lulus') !== '' ? (int) $this->v($row, 'tahun_lulus') : null,
+
                     'unor_id' => $this->v($row, 'unor_id') !== '' ? $this->v($row, 'unor_id') : null,
                     'unor' => $this->v($row, 'unor_nama'),
-                    
+
                     'instansi_induk_id' => $this->v($row, 'instansi_induk_id') !== '' ? $this->v($row, 'instansi_induk_id') : null,
                     'instansi_induk' => $this->v($row, 'instansi_induk_nama'),
-                    
+
                     'instansi_kerja_id' => $this->v($row, 'instansi_kerja_id') !== '' ? $this->v($row, 'instansi_kerja_id') : null,
                     'instansi_kerja' => $this->v($row, 'instansi_kerja_nama'),
-                    
+
                     'lokasi_kerja_id' => $this->v($row, 'lokasi_kerja_id') !== '' ? $this->v($row, 'lokasi_kerja_id') : null,
                     'lokasi_kerja' => $this->v($row, 'lokasi_kerja_nama'),
-                    
+
                     'kpkn_id' => $this->v($row, 'kpkn_id') !== '' ? $this->v($row, 'kpkn_id') : null,
                     'kpkn' => $this->v($row, 'kpkn_nama'),
-                    
+
                     'status_cpns_pns' => $this->v($row, 'status_cpns_pns'),
                     'tmt_cpns' => $this->formatDate($this->v($row, 'tmt_cpns')),
                     'tmt_pns' => $this->formatDate($this->v($row, 'tmt_pns')),
-                    
+
                     'jenis_kelamin' => $this->v($row, 'jenis_kelamin'),
                     'tanggal_lahir' => $this->formatDate($this->v($row, 'tanggal_lahir')),
                     'tempat_lahir' => $this->v($row, 'tempat_lahir_nama'),
-                    
+
                     'alamat' => $this->v($row, 'alamat'),
                     'no_hp' => ltrim($this->v($row, 'nomor_hp') ?? '', "'") !== '' ? ltrim($this->v($row, 'nomor_hp') ?? '', "'") : null,
                     'email' => $this->v($row, 'email'),
-                    'flag_ikd' => $this->v($row, 'flag_ikd') !== '' ? (int)$this->v($row, 'flag_ikd') : null,
-                    
+                    'flag_ikd' => $this->v($row, 'flag_ikd') !== '' ? (int) $this->v($row, 'flag_ikd') : null,
+
                     'source_file' => $filename,
                     'imported_at' => $now,
                     'is_processed' => 0,
-                    
+
                     // Fields populated later by DiffEngine
                     'data_hash' => null,
                     'sync_status' => null,
                     'change_summary' => null,
-                    
+
                     // Important for strict DB timestamp fields
                     'created_at' => $now,
                     'updated_at' => $now
@@ -263,7 +272,8 @@ class CsvImportService
 
         return [
             'inserted' => $inserted,
-            'skipped'  => $skipped,
+            'skipped' => $skipped,
+            'batch_id' => $batchId,
         ];
     }
 

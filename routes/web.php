@@ -73,6 +73,10 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/diff-summary/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffSummary'])->name('diff-summary');
                 Route::get('/diff-details/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
                 Route::post('/sync-confirm', [\App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
+
+                // Batch Validation Routes
+                Route::get('/batch/{batchId}/errors', [\App\Http\Controllers\PegawaiImportController::class, 'downloadErrors'])->name('batch.errors');
+                Route::post('/batch/{batchId}/retry', [\App\Http\Controllers\PegawaiImportController::class, 'retry'])->name('batch.retry');
             });
 
         // Iuran Korpri Routes

@@ -12,6 +12,7 @@ class StgPegawaiImport extends Model
     protected $table = 'stg_pegawai_import';
 
     protected $fillable = [
+        'batch_id',
         'pns_id',
         'nik',
         'nip_baru',
@@ -84,4 +85,9 @@ class StgPegawaiImport extends Model
         'processed_at' => 'datetime',
         'is_processed' => 'boolean',
     ];
+
+    public function importBatch()
+    {
+        return $this->belongsTo(ImportBatch::class, 'batch_id');
+    }
 }

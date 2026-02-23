@@ -18,7 +18,7 @@ class PegawaiSyncService
     {
         try {
             $data = DB::connection('sidawai')->table('export_pegawai')
-                ->select('nip_baru', 'nama_pegawai', 'tgl_lahir', 'eselon', 'jabatan', 'pd', 'sub_pd', 'jenikel', 'sts_peg', 'tk_pend', 'golru')
+                ->select('nip_baru', 'nama_pegawai', 'tgl_lahir', 'eselon', 'jabatan', 'pd', 'sub_pd', 'jenikel', 'sts_peg', 'tk_pend', 'golru', 'unor_id')
                 ->orderBy('nip_baru')
                 ->offset($offset)
                 ->limit($limit)
@@ -44,6 +44,7 @@ class PegawaiSyncService
                         'sts_peg' => $row->sts_peg,
                         'tk_pend' => $row->tk_pend,
                         'golongan' => $row->golru,
+                        'unor_id' => $row->unor_id ?: null,
                         'last_sync_at' => $timestamp,
                     ]
                 );
