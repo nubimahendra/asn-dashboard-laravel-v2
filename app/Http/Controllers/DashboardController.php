@@ -15,12 +15,12 @@ class DashboardController extends Controller
         // 0. Filter Setup (pd = Perangkat Daerah / OPD)
         $filterOpd = $request->input('opd');
 
-        // Fetch distinct nama_opd from RefUnor directly for better performance
-        $listOpd = \App\Models\RefUnor::whereNotNull('nama_opd')
-            ->where('nama_opd', '!=', '')
+        // Fetch distinct nama from RefUnor directly for better performance (if needed for filtering)
+        $listOpd = \App\Models\RefUnor::whereNotNull('nama')
+            ->where('nama', '!=', '')
             ->distinct()
-            ->orderBy('nama_opd')
-            ->pluck('nama_opd');
+            ->orderBy('nama')
+            ->pluck('nama');
 
         $query = Pegawai::with([
             'golongan',
@@ -33,8 +33,8 @@ class DashboardController extends Controller
 
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
-                // Filter by nama_opd which is now the standard
-                $q->where('nama_opd', $filterOpd);
+                // Filter by nama per user request
+                $q->where('nama', $filterOpd);
             });
         }
 
@@ -134,8 +134,8 @@ class DashboardController extends Controller
             ->with('unor')
             ->get()
             ->groupBy(function ($item) {
-                // Use nama_opd as requested, fallback to nama if empty
-                return $item->unor->nama_opd ?? $item->unor->nama ?? 'Tidak Diketahui';
+                // Use nama per user request
+                return $item->unor->nama ?? 'Tidak Diketahui';
             })
             ->map(function ($group) {
                 return $group->count();
@@ -149,17 +149,30 @@ class DashboardController extends Controller
         ];
 
         // Chart 6: Golongan (Bar)
+        // Group by pure golongan name to merge duplicate groups like 'III/a' 
+        // Then sort them properly by parsing their values, or just let string sort handle it (or use custom sort if string sort isn't enough, but usually string sort keys is fine, or we can just sortDesc to show the highest populated).
         $dataGolongan = (clone $query)
             ->whereHas('golongan')
             ->with('golongan')
             ->get()
             ->groupBy(function ($item) {
-                return $item->golongan->nama ?? 'Tidak Diketahui';
+                // Hardcode specific grouping request for III/a
+                if (in_array($item->golongan_id, ['19.8', '21.9'])) {
+                    return 'III/a';
+                }
+
+                $namaGolongan = trim($item->golongan->nama ?? 'Tidak Diketahui');
+                // Standardize common whitespace/case issues just in case
+                return empty($namaGolongan) ? 'Tidak Diketahui' : $namaGolongan;
             })
             ->map(function ($group) {
                 return $group->count();
-            })
-            ->sortKeys();
+            });
+
+        // Custom sort for Golongan (I, II, III, IV)
+        $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
+           return $key; // simple sort by key name 'I', 'II', 'III', 'IV' etc.
+        });
 
         $chartGolongan = [
             'categories' => $dataGolongan->keys()->toArray(),
