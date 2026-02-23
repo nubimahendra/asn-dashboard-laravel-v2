@@ -72,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
                 // Diff & Sync Routes
                 Route::get('/diff-summary/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffSummary'])->name('diff-summary');
                 Route::get('/diff-details/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
+                Route::get('/anomaly-details/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'anomalyDetails'])->name('anomaly-details');
                 Route::post('/sync-confirm', [\App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
 
                 // Batch Validation Routes

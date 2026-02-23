@@ -77,9 +77,17 @@ class PegawaiImportService
         if ($staging->kpkn_id && !$kpknId)
             $nullRefs[] = 'kpkn';
 
-        if (!empty($nullRefs)) {
+        $isAnomali = !empty($nullRefs);
+        $catatanAnomali = $isAnomali ? "Referensi tidak valid/ditemukan: " . implode(', ', $nullRefs) : null;
+
+        if ($isAnomali) {
             Log::warning("PNS ID {$staging->pns_id}: Following references set to NULL due to missing names: " . implode(', ', $nullRefs));
         }
+
+        // Save flags back to staging for quick history lookup
+        $staging->is_anomali = $isAnomali;
+        $staging->catatan_anomali = $catatanAnomali;
+        $staging->save();
 
         $pegawai = Pegawai::updateOrCreate(
             ['pns_id' => $staging->pns_id],
@@ -124,6 +132,9 @@ class PegawaiImportService
 
                 'flag_ikd' => $staging->flag_ikd,
                 'data_hash' => $staging->data_hash,
+
+                'is_anomali' => $isAnomali,
+                'catatan_anomali' => $catatanAnomali,
             ]
         );
 

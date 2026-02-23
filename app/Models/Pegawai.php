@@ -51,6 +51,8 @@ class Pegawai extends Model
         'tmt_pns',
         'flag_ikd',
         'data_hash',
+        'is_anomali',
+        'catatan_anomali',
     ];
 
     protected $casts = [

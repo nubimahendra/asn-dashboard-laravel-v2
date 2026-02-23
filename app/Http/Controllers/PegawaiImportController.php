@@ -363,6 +363,7 @@ class PegawaiImportController extends Controller
             ->selectRaw('SUM(CASE WHEN is_processed = 1 THEN 1 ELSE 0 END) as processed_rows')
             ->selectRaw('SUM(CASE WHEN processing_error IS NOT NULL THEN 1 ELSE 0 END) as processing_error_rows')
             ->selectRaw('SUM(CASE WHEN import_error IS NOT NULL THEN 1 ELSE 0 END) as import_error_rows')
+            ->selectRaw('SUM(CASE WHEN is_anomali = 1 THEN 1 ELSE 0 END) as anomaly_rows')
             ->groupBy('source_file', 'imported_at')
             ->orderBy('imported_at', 'desc')
             ->paginate(5);
@@ -386,6 +387,7 @@ class PegawaiImportController extends Controller
                 'processed_rows' => $import->processed_rows,
                 'import_error_rows' => $import->import_error_rows,
                 'processing_error_rows' => $import->processing_error_rows,
+                'anomaly_rows' => $import->anomaly_rows,
                 'total_error_rows' => $totalErrors,
                 'status' => $status,
                 'progress' => $import->total_rows > 0
@@ -395,6 +397,19 @@ class PegawaiImportController extends Controller
         });
 
         return response()->json($imports);
+    }
+
+    /**
+     * Get anomaly details for a specific file
+     */
+    public function anomalyDetails(Request $request, $filename)
+    {
+        $anomalies = tap(StgPegawaiImport::where('source_file', $filename)
+            ->where('is_anomali', true)
+            ->select('id', 'pns_id', 'nama', 'nip_baru', 'catatan_anomali')
+            ->paginate(15))->map(function ($q) { return $q; });
+            
+        return response()->json($anomalies);
     }
 
     /**

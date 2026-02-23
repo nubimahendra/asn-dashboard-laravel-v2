@@ -73,6 +73,8 @@ class StgPegawaiImport extends Model
         'data_hash',
         'sync_status',
         'change_summary',
+        'is_anomali',
+        'catatan_anomali',
     ];
 
     protected $casts = [

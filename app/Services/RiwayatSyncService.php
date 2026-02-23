@@ -130,7 +130,7 @@ class RiwayatSyncService
         if ($staging->gol_akhir_id) {
             $this->syncRiwayatGolongan(
                 $pegawai->id,
-                $staging->gol_akhir_id,
+                $pegawai->golongan_id,
                 $staging->tmt_gol_akhir,
                 $staging->mk_tahun,
                 $staging->mk_bulan
@@ -141,9 +141,9 @@ class RiwayatSyncService
         if ($staging->jabatan_id) {
             $this->syncRiwayatJabatan(
                 $pegawai->id,
-                $staging->jabatan_id,
-                $staging->jenis_jabatan_id,
-                $staging->unor_id,
+                $pegawai->jabatan_id,
+                $pegawai->jenis_jabatan_id,
+                $pegawai->unor_id,
                 $staging->tmt_jabatan
             );
         }
@@ -152,8 +152,8 @@ class RiwayatSyncService
         if ($staging->pendidikan_id) {
             $this->syncRiwayatPendidikan(
                 $pegawai->id,
-                $staging->pendidikan_id,
-                $staging->tingkat_pendidikan_id,
+                $pegawai->pendidikan_id,
+                $pegawai->tingkat_pendidikan_id,
                 $staging->tahun_lulus
             );
         }

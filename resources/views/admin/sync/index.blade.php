@@ -146,6 +146,48 @@
             </div>
         </div>
 
+        <!-- Anomaly Details Modal -->
+        <div id="anomaly-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAnomalyModal()"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-200 dark:border-gray-700">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                    Detail Anomali Data (<span id="anomaly-modal-filename" class="text-sm font-normal text-gray-500"></span>)
+                                </h3>
+                                <div class="mt-4">
+                                    <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                            <thead class="bg-gray-50 dark:bg-gray-900">
+                                                <tr>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PNS ID</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama / NIP</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan Anomali</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rekomendasi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="anomaly-modal-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                                <!-- Content loaded via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div id="anomaly-pagination" class="mt-4 flex justify-end"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-600">
+                        <button type="button" onclick="closeAnomalyModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Import History Section -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
@@ -170,7 +212,7 @@
                                 Jumlah Baris</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Error</th>
+                                Anomali</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Status</th>
@@ -427,8 +469,8 @@
                     detailsPage = 1;
                 }
 
-                // Call route parameter using the history/diff location since routes haven't completely decoupled yet
-                const response = await fetch(`{{ route('pegawai.import.index') }}/diff-details/${currentUploadFilename}?page=${page}&type=all`);
+                // Call properly constructed URL
+                const response = await fetch(`{{ url('admin/sync-data/diff-details') }}/${currentUploadFilename}?page=${page}&type=all`);
                 const data = await response.json();
 
                 if (reset) diffDetailsBody.innerHTML = '';
@@ -572,7 +614,7 @@
                                         ${item.total_rows}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        ${getErrorBadge(item.total_error_rows, item.import_error_rows, item.processing_error_rows)}
+                                        ${getAnomaliBadge(item.filename, item.anomaly_rows || 0)}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         ${getStatusBadge(item.status)}
@@ -608,21 +650,83 @@
             return badges[status] || status;
         }
 
-        function getErrorBadge(totalErrors, importErrors, processingErrors) {
+        function getAnomaliBadge(filename, totalErrors) {
             if (totalErrors === 0) {
                 return '<span class="text-gray-500 dark:text-gray-400">-</span>';
             }
 
-            let tooltip = '';
-            if (importErrors > 0 && processingErrors > 0) {
-                tooltip = `Import: ${importErrors}, Processing: ${processingErrors}`;
-            } else if (importErrors > 0) {
-                tooltip = `Import error: ${importErrors}`;
-            } else {
-                tooltip = `Processing error: ${processingErrors}`;
+            return `<button onclick="openAnomalyModal('${filename}')" class="text-yellow-600 dark:text-yellow-400 font-semibold hover:underline" title="Klik untuk melihat detail anomali">${totalErrors} Anomali</button>`;
+        }
+        
+        // Modal functions
+        const anomalyModal = document.getElementById('anomaly-modal');
+        const anomalyModalFilename = document.getElementById('anomaly-modal-filename');
+        const anomalyModalBody = document.getElementById('anomaly-modal-body');
+        const anomalyPagination = document.getElementById('anomaly-pagination');
+        let currentAnomalyFilename = null;
+
+        function openAnomalyModal(filename) {
+            currentAnomalyFilename = filename;
+            anomalyModalFilename.textContent = filename;
+            anomalyModal.classList.remove('hidden');
+            loadAnomalyDetails(1);
+        }
+
+        function closeAnomalyModal() {
+            anomalyModal.classList.add('hidden');
+            currentAnomalyFilename = null;
+        }
+
+        async function loadAnomalyDetails(page = 1) {
+            if (!currentAnomalyFilename) return;
+            
+            anomalyModalBody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Memuat data...</td></tr>';
+            anomalyPagination.innerHTML = '';
+            
+            try {
+                const response = await fetch(`{{ url('admin/sync-data/anomaly-details') }}/${currentAnomalyFilename}?page=${page}`);
+                const data = await response.json();
+                
+                if (data.data.length === 0) {
+                    anomalyModalBody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Tidak ada anomali.</td></tr>';
+                    return;
+                }
+                
+                anomalyModalBody.innerHTML = data.data.map(item => `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${item.pns_id || '-'}</td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
+                            <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-red-600 dark:text-red-400 font-semibold">${item.catatan_anomali ? item.catatan_anomali.replace('Referensi tidak valid/ditemukan: ', '<span class="px-2 py-1 text-xs rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">') + '</span>' : '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Silakan melengkapi data master yang tercatat diatas sebelum melakukan sinkronisasi selanjutnya.</td>
+                    </tr>
+                `).join('');
+                
+                renderAnomalyPagination(data);
+            } catch (error) {
+                console.error('Error loading anomalies:', error);
+                anomalyModalBody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-red-500">Gagal memuat detail anomali.</td></tr>';
+            }
+        }
+        
+        function renderAnomalyPagination(meta) {
+            if (meta.last_page <= 1) {
+                anomalyPagination.innerHTML = '';
+                return;
             }
 
-            return `<span class="text-red-600 dark:text-red-400 font-semibold" title="${tooltip}">${totalErrors}</span>`;
+            let html = '<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">';
+            
+            html += `<button ${meta.current_page === 1 ? 'disabled' : `onclick="loadAnomalyDetails(${meta.current_page - 1})"`} class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">&lt;</button>`;
+            
+            html += `<button class="relative inline-flex items-center px-4 py-2 border text-sm font-medium z-10 bg-blue-50 dark:bg-blue-900 border-blue-500 text-blue-600 dark:text-blue-300">${meta.current_page}</button>`;
+            
+            html += `<button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadAnomalyDetails(${meta.current_page + 1})"`} class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">&gt;</button>`;
+            
+            html += '</nav>';
+            anomalyPagination.innerHTML = html;
         }
 
         function getProgressBar(progress, status) {
