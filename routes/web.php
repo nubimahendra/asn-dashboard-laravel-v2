@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SyncController;
-use App\Http\Controllers\WhatsAppController;
+
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
@@ -85,6 +85,3 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
     });
 });
-
-
-Route::post('/webhook/whatsapp', [WhatsAppController::class, 'handleWebhook'])->name('webhook.whatsapp');

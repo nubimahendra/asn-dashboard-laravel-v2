@@ -32,17 +32,12 @@
                     {{ number_format($globalTotals['total_pegawai']) }}</h2>
             </div>
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Ber-Golongan</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Ber-Golongan / Ber-Iuran</p>
                 <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
                     {{ number_format($globalTotals['total_ber_golongan']) }}</h2>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Non-Golongan (PPPK PW)</p>
-                <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
-                    {{ number_format($globalTotals['total_non_golongan']) }}</h2>
-            </div>
             <div
-                class="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-700 dark:to-teal-700 rounded-xl shadow-lg p-6">
+                class="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-700 dark:to-teal-700 rounded-xl shadow-lg p-6 md:col-span-2">
                 <p class="text-sm text-emerald-100 mb-1">Total Iuran KORPRI</p>
                 <h2 class="text-3xl font-bold text-white">Rp {{ number_format($globalTotals['total_iuran'], 0, ',', '.') }}
                 </h2>
@@ -50,7 +45,7 @@
         </div>
 
         <!-- Breakdown per OPD Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
+        <div id="tabel-opd" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
             <div
                 class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Rincian Iuran per OPD</h3>
@@ -81,9 +76,6 @@
                                     Gol {{ $key }}</th>
                             @endforeach
                             <th
-                                class="px-4 py-3 text-center text-xs font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider whitespace-nowrap">
-                                Non-Gol</th>
-                            <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Total</th>
                             <th
@@ -108,8 +100,6 @@
                                         {{ $opd['per_golongan'][$key] ?? 0 }}
                                     </td>
                                 @endforeach
-                                <td class="px-4 py-3 text-center text-orange-600 dark:text-orange-400 font-medium">
-                                    {{ $opd['total_non_golongan'] }}</td>
                                 <td class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">
                                     {{ number_format($opd['total_pegawai']) }}</td>
                                 <td class="px-4 py-3 text-right font-semibold text-emerald-700 dark:text-emerald-300">Rp
@@ -117,7 +107,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ count($allIuranRates) + 4 }}"
+                                <td colspan="{{ count($allIuranRates) + 3 }}"
                                     class="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
                                     Tidak ada data pegawai ditemukan
                                 </td>
@@ -135,8 +125,6 @@
                                     <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300">
                                         {{ $globalTotals['per_golongan'][$key]['count'] ?? 0 }}</td>
                                 @endforeach
-                                <td class="px-4 py-4 text-center font-bold text-orange-700 dark:text-orange-300">
-                                    {{ $globalTotals['total_non_golongan'] }}</td>
                                 <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300">
                                     {{ number_format($globalTotals['total_pegawai']) }}</td>
                                 <td class="px-4 py-4 text-right font-bold text-emerald-800 dark:text-emerald-300 text-lg">Rp
@@ -148,11 +136,11 @@
             </div>
         </div>
         <div class="mb-8">
-            {{ $opdBreakdown->links() }}
+            {{ $opdBreakdown->fragment('tabel-opd')->links() }}
         </div>
 
         <!-- Tarif Iuran (Editable) - Moved to Bottom -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
+        <div id="tabel-tarif" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Tarif Iuran per Golongan</h3>
                 <button id="btn-save-tarif"
@@ -200,16 +188,6 @@
                                 </td>
                             </tr>
                         @endforeach
-                        <!-- Non-Golongan Row -->
-                        <tr
-                            class="bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
-                            <td class="px-6 py-4 font-medium text-orange-700 dark:text-orange-300">Non-Golongan (PPPK PW)
-                            </td>
-                            <td class="px-6 py-4 text-orange-600 dark:text-orange-300">
-                                {{ number_format($globalTotals['total_non_golongan']) }}</td>
-                            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 italic">—</td>
-                            <td class="px-6 py-4 text-right text-gray-400 dark:text-gray-500 italic">—</td>
-                        </tr>
                     </tbody>
                     <tfoot class="bg-emerald-50 dark:bg-emerald-900/20">
                         <tr>
@@ -224,7 +202,7 @@
                 </table>
             </div>
             <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                {{ $iuranRatesPaginated->appends(request()->except('tarif_page'))->links() }}
+                {{ $iuranRatesPaginated->appends(request()->except('tarif_page'))->fragment('tabel-tarif')->links() }}
             </div>
         </div>
 

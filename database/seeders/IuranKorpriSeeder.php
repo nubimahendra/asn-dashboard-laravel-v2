@@ -36,6 +36,11 @@ class IuranKorpriSeeder extends Seeder
             'II' => 10000,
             'III' => 15000,
             'IV' => 20000,
+            'V' => 10000,
+            'VII' => 10000,
+            'IX' => 15000,
+            'X' => 15000,
+            'XI' => 15000,
         ];
 
         foreach ($golongan as $gol => $ruangList) {
@@ -50,6 +55,19 @@ class IuranKorpriSeeder extends Seeder
                     'updated_at' => now(),
                 ];
             }
+        }
+
+        // PPPK Golongan
+        $pppkGolongan = ['I', 'V', 'VII', 'IX', 'X', 'XI'];
+        foreach ($pppkGolongan as $gol) {
+            $data[] = [
+                'golongan_key' => $gol,
+                'ruang' => '',
+                'label' => "Golongan {$gol}",
+                'besaran' => $defaultBesaran[$gol] ?? 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
 
         foreach ($data as $item) {

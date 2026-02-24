@@ -158,20 +158,81 @@ class DashboardController extends Controller
             ->groupBy(function ($item) {
                 // Hardcode specific grouping request for III/a
                 if (in_array($item->golongan_id, ['19.8', '21.9'])) {
-                    return 'III/a';
+                    $namaGolongan = 'III/a';
+                } else {
+                    $namaGolongan = trim($item->golongan->nama ?? 'Tidak Diketahui');
                 }
 
-                $namaGolongan = trim($item->golongan->nama ?? 'Tidak Diketahui');
-                // Standardize common whitespace/case issues just in case
-                return empty($namaGolongan) ? 'Tidak Diketahui' : $namaGolongan;
+                if (empty($namaGolongan)) {
+                    $namaGolongan = 'Tidak Diketahui';
+                }
+
+                // Konversi golongan untuk PPPK Aktif (ID 71)
+                $isPppkAktif = false;
+                if (isset($item->kedudukan_hukum_id) && $item->kedudukan_hukum_id == 71) {
+                    $isPppkAktif = true;
+                } elseif (isset($item->kedudukan_hukum->nama) && strtolower(trim($item->kedudukan_hukum->nama)) == 'pppk aktif') {
+                    $isPppkAktif = true;
+                }
+
+                if ($isPppkAktif) {
+                    switch ($namaGolongan) {
+                        case 'I':
+                            $namaGolongan = 'I';
+                            break;
+                        case 'V':
+                            $namaGolongan = 'V';
+                            break;
+                        case 'II/c':
+                            $namaGolongan = 'VII';
+                            break;
+                        case 'III/a':
+                            $namaGolongan = 'IX';
+                            break;
+                        case 'III/b':
+                            $namaGolongan = 'X';
+                            break;
+                        case 'III/c':
+                            $namaGolongan = 'XI';
+                            break;
+                    }
+                }
+
+                return $namaGolongan;
             })
             ->map(function ($group) {
                 return $group->count();
             });
 
-        // Custom sort for Golongan (I, II, III, IV)
+        // Custom sort for Golongan (I, II, III, IV, V, VII, IX, X, XI)
         $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
-           return $key; // simple sort by key name 'I', 'II', 'III', 'IV' etc.
+            $romanOrder = [
+                'I' => 1,
+                'II' => 2,
+                'III' => 3,
+                'IV' => 4,
+                'V' => 5,
+                'VI' => 6,
+                'VII' => 7,
+                'VIII' => 8,
+                'IX' => 9,
+                'X' => 10,
+                'XI' => 11,
+                'XII' => 12
+            ];
+
+            // Extract the base Roman numeral before the slash (e.g., "III/a" -> "III")
+            $parts = explode('/', $key);
+            $base = trim($parts[0]);
+
+            $baseValue = $romanOrder[$base] ?? 99;
+            // For sub-levels like "/a", we add a small decimal to preserve order (a=1, b=2, etc.)
+            $subValue = 0;
+            if (isset($parts[1])) {
+                $subValue = ord(strtolower($parts[1])) / 1000;
+            }
+
+            return $baseValue + $subValue;
         });
 
         $chartGolongan = [

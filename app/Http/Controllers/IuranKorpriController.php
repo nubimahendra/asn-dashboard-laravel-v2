@@ -30,23 +30,48 @@ class IuranKorpriController extends Controller
     {
         $filterOpd = $request->input('opd');
 
-        // Get all iuran rates keyed by golongan_key
-        $allIuranRates = IuranKorpri::all()->keyBy('golongan_key');
+        // Get all iuran rates sorted by Roman Numeral logic
+        $ratesSorted = IuranKorpri::all()->sortBy(function ($rate) {
+            $romanOrder = [
+                'I' => 1,
+                'II' => 2,
+                'III' => 3,
+                'IV' => 4,
+                'V' => 5,
+                'VI' => 6,
+                'VII' => 7,
+                'VIII' => 8,
+                'IX' => 9,
+                'X' => 10,
+                'XI' => 11,
+                'XII' => 12
+            ];
+            $parts = explode('/', $rate->golongan_key);
+            $base = trim($parts[0]);
+            $baseValue = $romanOrder[$base] ?? 99;
+            $subValue = 0;
+            if (isset($parts[1])) {
+                $subValue = ord(strtolower($parts[1])) / 1000;
+            }
+            return $baseValue + $subValue;
+        });
+
+        $allIuranRates = $ratesSorted->keyBy('golongan_key');
 
         // Get list of unique OPDs for filter dropdown
-        $listOpd = RefUnor::whereNotNull('nama_opd')
-            ->where('nama_opd', '!=', '')
-            ->select('nama_opd')
+        $listOpd = RefUnor::whereNotNull('nama')
+            ->where('nama', '!=', '')
+            ->select('nama')
             ->distinct()
-            ->orderBy('nama_opd')
-            ->pluck('nama_opd');
+            ->orderBy('nama')
+            ->pluck('nama');
 
         // Build pegawai query with relationships
         $query = Pegawai::with(['golongan', 'unor']);
 
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
-                $q->where('nama_opd', $filterOpd);
+                $q->where('nama', $filterOpd);
             });
         }
 
@@ -73,8 +98,41 @@ class IuranKorpriController extends Controller
         }
 
         foreach ($pegawaiData as $pegawai) {
-            $opdName = $pegawai->unor->nama_opd ?? $pegawai->unor->nama ?? 'Tanpa OPD';
+            $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
             $golonganNama = $pegawai->golongan->nama ?? null;
+
+            // Konversi golongan untuk PPPK Aktif (ID 71)
+            $isPppkAktif = false;
+            if (isset($pegawai->kedudukan_hukum_id) && $pegawai->kedudukan_hukum_id == 71) {
+                $isPppkAktif = true;
+            } elseif (isset($pegawai->kedudukan_hukum->nama) && strtolower(trim($pegawai->kedudukan_hukum->nama)) == 'pppk aktif') {
+                $isPppkAktif = true;
+            }
+
+            if ($isPppkAktif && !empty($golonganNama)) {
+                $namaGolonganClean = trim($golonganNama);
+                switch ($namaGolonganClean) {
+                    case 'I':
+                        $golonganNama = 'I';
+                        break;
+                    case 'V':
+                        $golonganNama = 'V';
+                        break;
+                    case 'II/c':
+                        $golonganNama = 'VII';
+                        break;
+                    case 'III/a':
+                        $golonganNama = 'IX';
+                        break;
+                    case 'III/b':
+                        $golonganNama = 'X';
+                        break;
+                    case 'III/c':
+                        $golonganNama = 'XI';
+                        break;
+                }
+            }
+
             $golonganKey = $this->extractGolonganKey($golonganNama);
 
             // Initialize OPD entry if not exists
@@ -133,7 +191,18 @@ class IuranKorpriController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        $iuranRatesPaginated = IuranKorpri::orderBy('id')->paginate(5, ['*'], 'tarif_page');
+        $tarifPage = $request->input('tarif_page', 1);
+        $tarifPerPage = 5;
+        $tarifOffset = ($tarifPage - 1) * $tarifPerPage;
+        $ratesPaginatedItems = $ratesSorted->slice($tarifOffset, $tarifPerPage);
+
+        $iuranRatesPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $ratesPaginatedItems,
+            $ratesSorted->count(),
+            $tarifPerPage,
+            $tarifPage,
+            ['path' => $request->url(), 'query' => $request->query(), 'pageName' => 'tarif_page']
+        );
 
         return view('admin.iuran-korpri.index', compact(
             'allIuranRates',

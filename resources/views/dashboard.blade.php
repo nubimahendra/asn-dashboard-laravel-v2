@@ -65,84 +65,6 @@
 
 
 
-        <!-- Cards Grid - 6 cards in 3 columns -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-teal-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Laki-laki</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalLaki) }}</h2>
-                    </div>
-                    <div class="p-3 bg-teal-50 dark:bg-teal-900/30 rounded-full"><svg class="w-6 h-6 text-teal-500"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg></div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-pink-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Perempuan</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalPerempuan) }}
-                        </h2>
-                    </div>
-                    <div class="p-3 bg-pink-50 dark:bg-pink-900/30 rounded-full"><svg class="w-6 h-6 text-pink-500"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg></div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">PNS</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalPns) }}</h2>
-                    </div>
-                    <div class="p-3 bg-green-50 dark:bg-green-900/30 rounded-full"><span
-                            class="text-green-600 font-bold text-lg">PNS</span></div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-purple-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">CPNS</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalCpns) }}</h2>
-                    </div>
-                    <div class="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-full"><span
-                            class="text-purple-600 font-bold text-lg">CPNS</span></div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-orange-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">PPPK</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalPppk) }}</h2>
-                    </div>
-                    <div class="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-full"><span
-                            class="text-orange-600 font-bold text-lg">PPPK</span></div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-sky-500 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">PPPK PW</p>
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">{{ number_format($totalPppkPw) }}</h2>
-                    </div>
-                    <div class="p-3 bg-sky-50 dark:bg-sky-900/30 rounded-full"><span
-                            class="text-sky-600 font-bold text-lg">PW</span></div>
-                </div>
-            </div>
-        </div>
-
         <!-- Total Pegawai Banner - Stretched Full Width -->
         <div class="mb-8">
             <div
@@ -157,24 +79,29 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm text-blue-100 dark:text-blue-200 mb-1 font-medium">Total Pegawai</p>
+                            <p class="text-sm text-blue-100 dark:text-blue-200 mb-1 font-medium">Total ASN</p>
                             <h2 class="text-4xl font-bold text-white">{{ number_format($totalPegawai) }}</h2>
                         </div>
                     </div>
                     <div class="hidden md:flex items-center gap-8 text-white/90">
                         <div class="text-center">
-                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">Laki-laki</p>
-                            <p class="text-2xl font-semibold">{{ number_format($totalLaki) }}</p>
-                        </div>
-                        <div class="h-12 w-px bg-white/30"></div>
-                        <div class="text-center">
-                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">Perempuan</p>
-                            <p class="text-2xl font-semibold">{{ number_format($totalPerempuan) }}</p>
-                        </div>
-                        <div class="h-12 w-px bg-white/30"></div>
-                        <div class="text-center">
                             <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">PNS</p>
                             <p class="text-2xl font-semibold">{{ number_format($totalPns) }}</p>
+                        </div>
+                        <div class="h-12 w-px bg-white/30"></div>
+                        <div class="text-center">
+                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">CPNS</p>
+                            <p class="text-2xl font-semibold">{{ number_format($totalCpns) }}</p>
+                        </div>
+                        <div class="h-12 w-px bg-white/30"></div>
+                        <div class="text-center">
+                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">PPPK</p>
+                            <p class="text-2xl font-semibold">{{ number_format($totalPppk) }}</p>
+                        </div>
+                        <div class="h-12 w-px bg-white/30"></div>
+                        <div class="text-center">
+                            <p class="text-xs text-blue-100 uppercase tracking-wide mb-1">PPPK PW</p>
+                            <p class="text-2xl font-semibold">{{ number_format($totalPppkPw) }}</p>
                         </div>
                     </div>
                 </div>
