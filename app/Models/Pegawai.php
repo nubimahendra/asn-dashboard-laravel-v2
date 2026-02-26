@@ -148,6 +148,11 @@ class Pegawai extends Model
         return $this->hasMany(RiwayatJabatan::class);
     }
 
+    public function riwayatJabatanAktif()
+    {
+        return $this->hasOne(RiwayatJabatan::class)->latest('tmt');
+    }
+
     public function riwayatPendidikan()
     {
         return $this->hasMany(RiwayatPendidikan::class);

@@ -311,15 +311,39 @@
                     <!-- Iuran Korpri Menu -->
                     <nav class="space-y-1 mt-2">
                         <div>
-                            <a href="{{ route('iuran-korpri.index') }}"
-                                class="w-full flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors group {{ request()->routeIs('iuran-korpri.*') ? 'bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
-                                <svg class="mr-3 h-6 w-6 flex-shrink-0 transition-colors {{ request()->routeIs('iuran-korpri.*') ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-300' }}"
+                            <button type="button" id="menu-iurankorpri-toggle"
+                                class="w-full flex items-center justify-between px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors group">
+                                <div class="flex items-center">
+                                    <svg class="mr-3 h-6 w-6 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    <span class="sidebar-text truncate">Iuran Korpri</span>
+                                </div>
+                                <svg id="menu-iurankorpri-icon"
+                                    class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        d="M19 9l-7 7-7-7" />
                                 </svg>
-                                <span class="sidebar-text truncate">Iuran Korpri</span>
-                            </a>
+                            </button>
+                            <div id="menu-iurankorpri-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+                                <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                                    <a href="{{ route('iuran-korpri.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('iuran-korpri.index') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Laporan Iuran
+                                    </a>
+                                    <a href="{{ route('kelas-jabatan.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('kelas-jabatan.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Kelas Jabatan
+                                    </a>
+                                    <a href="{{ route('iuran-kelas-jabatan.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('iuran-kelas-jabatan.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Iuran Kelas Jabatan
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </nav>
 
@@ -515,6 +539,15 @@
                 if (isHidden) { menuPegawaiContent.classList.remove('hidden'); menuPegawaiIcon.classList.add('rotate-180'); } else { menuPegawaiContent.classList.add('hidden'); menuPegawaiIcon.classList.remove('rotate-180'); }
             });
         }
+        const menuIuranKorpriToggle = document.getElementById('menu-iurankorpri-toggle');
+        const menuIuranKorpriContent = document.getElementById('menu-iurankorpri-content');
+        const menuIuranKorpriIcon = document.getElementById('menu-iurankorpri-icon');
+        if (menuIuranKorpriToggle && menuIuranKorpriContent) {
+            menuIuranKorpriToggle.addEventListener('click', () => {
+                const isHidden = menuIuranKorpriContent.classList.contains('hidden');
+                if (isHidden) { menuIuranKorpriContent.classList.remove('hidden'); menuIuranKorpriIcon.classList.add('rotate-180'); } else { menuIuranKorpriContent.classList.add('hidden'); menuIuranKorpriIcon.classList.remove('rotate-180'); }
+            });
+        }
         function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
         // Wrap in IIFE to avoid variable name conflicts
         (function () {
@@ -553,7 +586,7 @@
         if (sidebarToggleBtn && mainSidebar) {
             sidebarToggleBtn.addEventListener('click', () => {
                 const isCollapsed = mainSidebar.classList.contains('w-20');
-                if (isCollapsed) { mainSidebar.classList.remove('w-20'); mainSidebar.classList.add('w-64'); sidebarTexts.forEach(el => el.classList.remove('hidden')); toggleIcon.classList.remove('rotate-180'); } else { mainSidebar.classList.remove('w-64'); mainSidebar.classList.add('w-20'); sidebarTexts.forEach(el => el.classList.add('hidden')); if (menuStatistikContent && !menuStatistikContent.classList.contains('hidden')) { menuStatistikContent.classList.add('hidden'); menuStatistikIcon.classList.remove('rotate-180'); } if (menuChatbotContent && !menuChatbotContent.classList.contains('hidden')) { menuChatbotContent.classList.add('hidden'); menuChatbotIcon.classList.remove('rotate-180'); } if (menuPengaturanContent && !menuPengaturanContent.classList.contains('hidden')) { menuPengaturanContent.classList.add('hidden'); menuPengaturanIcon.classList.remove('rotate-180'); } toggleIcon.classList.add('rotate-180'); }
+                if (isCollapsed) { mainSidebar.classList.remove('w-20'); mainSidebar.classList.add('w-64'); sidebarTexts.forEach(el => el.classList.remove('hidden')); toggleIcon.classList.remove('rotate-180'); } else { mainSidebar.classList.remove('w-64'); mainSidebar.classList.add('w-20'); sidebarTexts.forEach(el => el.classList.add('hidden')); if (menuStatistikContent && !menuStatistikContent.classList.contains('hidden')) { menuStatistikContent.classList.add('hidden'); menuStatistikIcon.classList.remove('rotate-180'); } if (menuChatbotContent && !menuChatbotContent.classList.contains('hidden')) { menuChatbotContent.classList.add('hidden'); menuChatbotIcon.classList.remove('rotate-180'); } if (menuPengaturanContent && !menuPengaturanContent.classList.contains('hidden')) { menuPengaturanContent.classList.add('hidden'); menuPengaturanIcon.classList.remove('rotate-180'); } if (menuIuranKorpriContent && !menuIuranKorpriContent.classList.contains('hidden')) { menuIuranKorpriContent.classList.add('hidden'); menuIuranKorpriIcon.classList.remove('rotate-180'); } toggleIcon.classList.add('rotate-180'); }
             });
         }
     </script>

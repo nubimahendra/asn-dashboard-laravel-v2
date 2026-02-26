@@ -7,9 +7,19 @@ use App\Models\Pegawai;
 use App\Models\RefUnor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\IuranKorpriGeneratorService;
 
 class IuranKorpriController extends Controller
 {
+    public function generateIuran(Request $request)
+    {
+        $bulan = $request->bulan ?? date('n');
+        $tahun = $request->tahun ?? date('Y');
+
+        app(IuranKorpriGeneratorService::class)->generate($bulan, $tahun);
+
+        return back()->with('success', "Iuran bulan $bulan tahun $tahun berhasil digenerate.");
+    }
     /**
      * Extract golongan key (roman numeral before "/") from golongan name
      * e.g. "IV/d" => "IV", "II/b" => "II"
@@ -174,6 +184,7 @@ class IuranKorpriController extends Controller
 
         // Sort OPD by name
         ksort($opdBreakdown);
+        $opdBreakdown = array_values($opdBreakdown);
 
         // Pagination Manual
         $page = $request->input('page', 1);
