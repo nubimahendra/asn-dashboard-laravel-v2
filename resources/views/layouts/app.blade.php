@@ -42,27 +42,58 @@
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+
+    <!-- Mobile Topbar -->
+    <header id="mobile-topbar" class="md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between px-4 h-14">
+        <button id="mobile-menu-btn" aria-label="Buka menu" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400 focus:outline-none">
+            <svg id="mobile-hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 text-base font-bold text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            DASHBOARD
+        </a>
+        <button id="theme-toggle-mobile" aria-label="Toggle tema" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400 focus:outline-none">
+            <svg id="theme-toggle-mobile-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+            </svg>
+            <svg id="theme-toggle-mobile-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 z-40 bg-black/50 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
     <div id="wrapper" class="flex w-full items-stretch gap-0 md:gap-0 lg:gap-0">
         <aside id="main-sidebar"
-            class="w-64 bg-white dark:bg-gray-800 shadow-md flex-col h-screen sticky top-0 z-20 flex-shrink-0 border-r border-gray-100 dark:border-gray-700 hidden md:flex transition-all duration-300">
-            <div
-                class="p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
+            class="fixed md:sticky inset-y-0 left-0 z-50 md:z-20 w-64 bg-white dark:bg-gray-800 shadow-md flex-col h-screen flex-shrink-0 border-r border-gray-100 dark:border-gray-700 flex transition-transform duration-300 -translate-x-full md:translate-x-0">
+            <div class="p-4 md:p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
                 <a href="{{ route('dashboard') }}"
                     class="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden transition-all duration-300 hover:text-blue-600 dark:hover:text-blue-400">
-                    <svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
                         </path>
                     </svg>
                     <span class="sidebar-text">DASHBOARD</span>
                 </a>
+                <!-- Close button (mobile) / Collapse button (desktop) -->
+                <button id="sidebar-close-mobile" aria-label="Tutup menu"
+                    class="md:hidden p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
                 <button id="sidebar-toggle"
-                    class="p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none ml-auto">
+                    class="hidden md:block p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none ml-auto">
                     <svg id="toggle-icon" class="w-6 h-6 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
             </div>
@@ -408,7 +439,9 @@
 
         <main id="main-content"
             class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 w-full">
-            <div class="px-6 py-4">
+            <!-- Mobile spacer for fixed topbar -->
+            <div class="h-14 md:hidden"></div>
+            <div class="px-3 py-3 md:px-6 md:py-4">
                 @if (session('success'))
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
                         role="alert">
@@ -583,12 +616,67 @@
         const mainSidebar = document.getElementById('main-sidebar');
         const sidebarTexts = document.querySelectorAll('.sidebar-text');
         const toggleIcon = document.getElementById('toggle-icon');
+        // Desktop collapse toggle
         if (sidebarToggleBtn && mainSidebar) {
             sidebarToggleBtn.addEventListener('click', () => {
                 const isCollapsed = mainSidebar.classList.contains('w-20');
                 if (isCollapsed) { mainSidebar.classList.remove('w-20'); mainSidebar.classList.add('w-64'); sidebarTexts.forEach(el => el.classList.remove('hidden')); toggleIcon.classList.remove('rotate-180'); } else { mainSidebar.classList.remove('w-64'); mainSidebar.classList.add('w-20'); sidebarTexts.forEach(el => el.classList.add('hidden')); if (menuStatistikContent && !menuStatistikContent.classList.contains('hidden')) { menuStatistikContent.classList.add('hidden'); menuStatistikIcon.classList.remove('rotate-180'); } if (menuChatbotContent && !menuChatbotContent.classList.contains('hidden')) { menuChatbotContent.classList.add('hidden'); menuChatbotIcon.classList.remove('rotate-180'); } if (menuPengaturanContent && !menuPengaturanContent.classList.contains('hidden')) { menuPengaturanContent.classList.add('hidden'); menuPengaturanIcon.classList.remove('rotate-180'); } if (menuIuranKorpriContent && !menuIuranKorpriContent.classList.contains('hidden')) { menuIuranKorpriContent.classList.add('hidden'); menuIuranKorpriIcon.classList.remove('rotate-180'); } toggleIcon.classList.add('rotate-180'); }
             });
         }
+        // Mobile sidebar open/close
+        (function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const sidebarCloseMobile = document.getElementById('sidebar-close-mobile');
+            function openMobileSidebar() {
+                mainSidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden', 'opacity-0');
+                requestAnimationFrame(() => sidebarOverlay.classList.add('opacity-100'));
+                document.body.classList.add('overflow-hidden');
+            }
+            function closeMobileSidebar() {
+                mainSidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.remove('opacity-100');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+                document.body.classList.remove('overflow-hidden');
+            }
+            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileSidebar);
+            if (sidebarCloseMobile) sidebarCloseMobile.addEventListener('click', closeMobileSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+            // Close mobile sidebar on link click inside it
+            if (mainSidebar) {
+                mainSidebar.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (window.innerWidth < 768) closeMobileSidebar();
+                    });
+                });
+            }
+        })();
+        // Mobile theme toggle
+        (function() {
+            const mobileToggle = document.getElementById('theme-toggle-mobile');
+            const mobileDarkIcon = document.getElementById('theme-toggle-mobile-dark-icon');
+            const mobileLightIcon = document.getElementById('theme-toggle-mobile-light-icon');
+            if (mobileToggle && mobileDarkIcon && mobileLightIcon) {
+                if (document.documentElement.classList.contains('dark')) { mobileLightIcon.classList.remove('hidden'); } else { mobileDarkIcon.classList.remove('hidden'); }
+                mobileToggle.addEventListener('click', function() {
+                    mobileDarkIcon.classList.toggle('hidden');
+                    mobileLightIcon.classList.toggle('hidden');
+                    // Sync with desktop icons too
+                    const desktopDark = document.getElementById('theme-toggle-dark-icon');
+                    const desktopLight = document.getElementById('theme-toggle-light-icon');
+                    if (localStorage.getItem('color-theme')) {
+                        if (localStorage.getItem('color-theme') === 'light') { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); if(desktopDark) desktopDark.classList.add('hidden'); if(desktopLight) desktopLight.classList.remove('hidden'); }
+                        else { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); if(desktopDark) desktopDark.classList.remove('hidden'); if(desktopLight) desktopLight.classList.add('hidden'); }
+                    } else {
+                        if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); if(desktopDark) desktopDark.classList.remove('hidden'); if(desktopLight) desktopLight.classList.add('hidden'); }
+                        else { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); if(desktopDark) desktopDark.classList.add('hidden'); if(desktopLight) desktopLight.classList.remove('hidden'); }
+                    }
+                    if (typeof updateChartTheme === 'function') updateChartTheme();
+                });
+            }
+        })();
     </script>
     <script>
         // Auto-hide alerts after 3 seconds

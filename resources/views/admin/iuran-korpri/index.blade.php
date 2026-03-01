@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Laporan Iuran KORPRI</h1>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Besaran Iuran KORPRI berdasar Golongan</h1>
                 <p class="text-gray-500 dark:text-gray-400 mt-1">
                     @if($filterOpd)
                         <span
