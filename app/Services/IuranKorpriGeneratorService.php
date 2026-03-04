@@ -6,6 +6,8 @@ use App\Models\Pegawai;
 use App\Models\RefIuranKorpri;
 use App\Models\RefJabatanKelas;
 use App\Models\IuranKorpriTransaksi;
+use App\Models\RefJabatanMapping;
+use App\Models\RefJabatanDefault;
 use Illuminate\Support\Facades\DB;
 
 class IuranKorpriGeneratorService
@@ -71,18 +73,41 @@ class IuranKorpriGeneratorService
 
     private function getKelasJabatan($jabatanId, $unorId)
     {
-        $mapping = RefJabatanKelas::where('jabatan_id', $jabatanId)
+        // 1. Cek di tabel mapping baru (ref_jabatan_mapping -> ref_kelas_perbup)
+        $mappingPerbup = RefJabatanMapping::with('kelasPerbup')
+            ->where('jabatan_siasn_id', $jabatanId)
+            ->where('status_validasi', 'valid') // Opsional: Pastikan mappingnya valid
+            ->first();
+
+        if ($mappingPerbup && $mappingPerbup->kelasPerbup) {
+            return $mappingPerbup->kelasPerbup->kelas_jabatan;
+        }
+
+        // 2. Fallback 1: Cek di tabel default jabatan baru (ref_jabatan_default)
+        $defaultKelas = RefJabatanDefault::where('jabatan_id', $jabatanId)->first();
+        if ($defaultKelas) {
+            return $defaultKelas->kelas_jabatan;
+        }
+
+        // 3. Fallback 2: Cek di tabel mapping lama (ref_jabatan_kelas) -> prioritas unor_id
+        $mappingLama = RefJabatanKelas::where('jabatan_id', $jabatanId)
             ->where('unor_id', $unorId)
             ->first();
 
-        if ($mapping) {
-            return $mapping->kelas_jabatan;
+        if ($mappingLama) {
+            return $mappingLama->kelas_jabatan;
         }
 
-        $global = RefJabatanKelas::where('jabatan_id', $jabatanId)
+        // 4. Fallback 3: Cek di tabel mapping lama (ref_jabatan_kelas) -> global tanpa unor
+        $globalLama = RefJabatanKelas::where('jabatan_id', $jabatanId)
             ->whereNull('unor_id')
             ->first();
 
-        return $global?->kelas_jabatan;
+        if ($globalLama) {
+            return $globalLama->kelas_jabatan;
+        }
+
+        // Log::warning("Kelas jabatan tidak ditemukan untuk pegawai dengan jabatan_id: {$jabatanId}, unor_id: {$unorId}");
+        return null;
     }
 }

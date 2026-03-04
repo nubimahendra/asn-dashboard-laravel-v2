@@ -367,7 +367,19 @@
                                     </a>
                                     <a href="{{ route('kelas-jabatan.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('kelas-jabatan.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
-                                        Kelas Jabatan
+                                        Kelas Jabatan (Lama)
+                                    </a>
+                                    <a href="{{ route('kelas-jabatan-perbup.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('kelas-jabatan-perbup.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Master Kelas Perbup
+                                    </a>
+                                    <a href="{{ route('jabatan-mapping.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('jabatan-mapping.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Mapping Jabatan
+                                    </a>
+                                    <a href="{{ route('jabatan-default.index') }}"
+                                        class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('jabatan-default.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                                        Kelas Jabatan Default
                                     </a>
                                     <a href="{{ route('iuran-kelas-jabatan.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('iuran-kelas-jabatan.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">

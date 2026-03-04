@@ -89,6 +89,19 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/iuran-korpri/kelas-jabatan/tarif', [App\Http\Controllers\KelasJabatanController::class, 'updateTarif'])->name('kelas-jabatan.update-tarif');
         Route::delete('/iuran-korpri/kelas-jabatan/{id}', [App\Http\Controllers\KelasJabatanController::class, 'destroy'])->name('kelas-jabatan.destroy');
 
+        // New Routes for Kelas Jabatan Perbup & Mapping
+        Route::get('/iuran-korpri/kelas-jabatan-perbup', [App\Http\Controllers\KelasJabatanPerbupController::class, 'index'])->name('kelas-jabatan-perbup.index');
+        Route::post('/iuran-korpri/kelas-jabatan-perbup/import', [App\Http\Controllers\KelasJabatanPerbupController::class, 'import'])->name('kelas-jabatan-perbup.import');
+        Route::delete('/iuran-korpri/kelas-jabatan-perbup/{id}', [App\Http\Controllers\KelasJabatanPerbupController::class, 'destroy'])->name('kelas-jabatan-perbup.destroy');
+
+        Route::get('/iuran-korpri/jabatan-mapping', [App\Http\Controllers\JabatanMappingController::class, 'index'])->name('jabatan-mapping.index');
+        Route::post('/iuran-korpri/jabatan-mapping', [App\Http\Controllers\JabatanMappingController::class, 'store'])->name('jabatan-mapping.store');
+        Route::delete('/iuran-korpri/jabatan-mapping/{id}', [App\Http\Controllers\JabatanMappingController::class, 'destroy'])->name('jabatan-mapping.destroy');
+
+        Route::get('/iuran-korpri/jabatan-default', [App\Http\Controllers\JabatanDefaultController::class, 'index'])->name('jabatan-default.index');
+        Route::post('/iuran-korpri/jabatan-default', [App\Http\Controllers\JabatanDefaultController::class, 'store'])->name('jabatan-default.store');
+        Route::delete('/iuran-korpri/jabatan-default/{id}', [App\Http\Controllers\JabatanDefaultController::class, 'destroy'])->name('jabatan-default.destroy');
+
         Route::get('/iuran-korpri/iuran-kelas-jabatan', [App\Http\Controllers\IuranKelasJabatanController::class, 'index'])->name('iuran-kelas-jabatan.index');
         Route::post('/iuran-korpri/iuran-kelas-jabatan/generate', [App\Http\Controllers\IuranKelasJabatanController::class, 'generate'])->name('iuran-kelas-jabatan.generate');
     });
