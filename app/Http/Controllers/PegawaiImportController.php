@@ -308,18 +308,19 @@ class PegawaiImportController extends Controller
 
                 $batch = \App\Models\ImportBatch::find($batchId);
                 if ($batch) {
+                    $status = ($invalid > 0 && $valid == 0) ? 'failed' : (($invalid > 0) ? 'partial' : 'ready');
                     $batch->update([
                         'total_rows' => $total,
                         'valid_rows' => $valid,
                         'invalid_rows' => $invalid,
-                        'status' => $invalid > 0 ? 'failed' : 'ready'
+                        'status' => $status
                     ]);
 
                     $batchSummary = [
                         'total' => $total,
                         'valid' => $valid,
                         'invalid' => $invalid,
-                        'status' => $invalid > 0 ? 'failed' : 'ready'
+                        'status' => $status
                     ];
                 }
             }
@@ -584,11 +585,12 @@ class PegawaiImportController extends Controller
 
         $batch = \App\Models\ImportBatch::find($batchId);
         if ($batch) {
+            $status = ($invalid > 0 && $valid == 0) ? 'failed' : (($invalid > 0) ? 'partial' : 'ready');
             $batch->update([
                 'total_rows' => $total,
                 'valid_rows' => $valid,
                 'invalid_rows' => $invalid,
-                'status' => $invalid > 0 ? 'failed' : 'ready'
+                'status' => $status
             ]);
 
             return response()->json([
@@ -598,7 +600,7 @@ class PegawaiImportController extends Controller
                     'total' => $total,
                     'valid' => $valid,
                     'invalid' => $invalid,
-                    'status' => $invalid > 0 ? 'failed' : 'ready'
+                    'status' => $status
                 ]
             ]);
         }

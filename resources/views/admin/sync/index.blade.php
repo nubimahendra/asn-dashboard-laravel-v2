@@ -383,7 +383,19 @@
                 confirmSyncBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
                 confirmSyncBtn.classList.add('bg-red-600', 'opacity-50', 'cursor-not-allowed');
                 confirmSyncBtn.textContent = 'Tidak dapat dilanjutkan';
-                confirmSyncBtn.title = 'Perbaiki error terlebih dahulu sebelum melanjutkan';
+                confirmSyncBtn.title = 'Semua baris gagal divalidasi, perbaiki error terlebih dahulu sebelum melanjutkan';
+            } else if (summary.status === 'partial') {
+                batchStatusBadge.innerHTML = '<span class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 uppercase tracking-wider">PARTIAL (ADVISORY)</span>';
+
+                // Show actions (so user can still download/check errors for those invalid rows)
+                batchErrorActions.classList.remove('hidden');
+                downloadErrorsBtn.href = `{{ url('sync-data/batch') }}/${currentBatchId}/errors`;
+
+                // Give back Confirm Sync button state based on diff summary
+                confirmSyncBtn.classList.remove('bg-red-600');
+                confirmSyncBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                confirmSyncBtn.textContent = 'Konfirmasi & Sinkronisasi (Sebagian)';
+                confirmSyncBtn.title = 'Ditemukan row yang error, namun Anda masih bisa melanjutkan proses untuk row yang valid!';
             } else {
                 batchStatusBadge.innerHTML = '<span class="px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 uppercase tracking-wider">READY</span>';
 
@@ -395,6 +407,7 @@
                 confirmSyncBtn.classList.remove('bg-red-600');
                 confirmSyncBtn.classList.add('bg-green-600', 'hover:bg-green-700');
                 confirmSyncBtn.textContent = 'Konfirmasi & Sinkronisasi';
+                confirmSyncBtn.title = '';
             }
         }
 
