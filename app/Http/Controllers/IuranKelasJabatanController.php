@@ -17,13 +17,41 @@ class IuranKelasJabatanController extends Controller
 
         $filterOpd = $request->input('opd');
 
+        $bagianList = [
+            'Bagian umum',
+            'Bagian Tata Pemerintahan',
+            'Bagian Protokol dan Kepemimpinan',
+            'Bagian Perencanaan dan Keuangan',
+            'Bagian Hukum',
+            'Bagian Kesejahteraan Rakyat',
+            'Bagian Organisasi',
+            'Bagian Pengadaan Barang dan Jasa',
+            'Bagian Administrasi Pembangunan'
+        ];
+
         // Get list of unique OPDs for filter dropdown
-        $listOpd = RefUnor::whereNotNull('nama')
+        $dbOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
             ->select('nama')
             ->distinct()
             ->orderBy('nama')
-            ->pluck('nama');
+            ->pluck('nama')->toArray();
+
+        // Process listOpd to group selected units into Sekretariat Daerah
+        $listOpdData = [];
+        $hasBagian = false;
+        foreach ($dbOpd as $opd) {
+            if (in_array(trim($opd), $bagianList) || in_array(trim(ucwords(strtolower($opd))), array_map('ucwords', array_map('strtolower', $bagianList)))) {
+                $hasBagian = true;
+            } else {
+                $listOpdData[] = $opd;
+            }
+        }
+        if ($hasBagian && !in_array('Sekretariat Daerah', $listOpdData)) {
+            $listOpdData[] = 'Sekretariat Daerah';
+        }
+        sort($listOpdData);
+        $listOpd = collect($listOpdData);
 
         // Build query
         $query = IuranKorpriTransaksi::with(['pegawai.unor'])
@@ -31,9 +59,16 @@ class IuranKelasJabatanController extends Controller
             ->where('tahun', $tahun);
 
         if ($filterOpd) {
-            $query->whereHas('pegawai.unor', function ($q) use ($filterOpd) {
-                $q->where('nama', $filterOpd);
-            });
+            if ($filterOpd === 'Sekretariat Daerah') {
+                $query->whereHas('pegawai.unor', function ($q) use ($bagianList) {
+                    $q->whereIn('nama', $bagianList)
+                        ->orWhere('nama', 'Sekretariat Daerah'); // just in case
+                });
+            } else {
+                $query->whereHas('pegawai.unor', function ($q) use ($filterOpd) {
+                    $q->where('nama', $filterOpd);
+                });
+            }
         }
 
         $transaksiData = $query->get();
@@ -46,7 +81,17 @@ class IuranKelasJabatanController extends Controller
         ];
 
         foreach ($transaksiData as $transaksi) {
-            $opdName = $transaksi->pegawai->unor->nama ?? 'Tanpa OPD';
+            $rawOpdName = $transaksi->pegawai->unor->nama ?? 'Tanpa OPD';
+
+            // Check if OPD is one of the "Bagian" to be grouped into "Sekretariat Daerah"
+            $opdNameSearch = trim(ucwords(strtolower($rawOpdName)));
+            $bagianListSearch = array_map('ucwords', array_map('strtolower', $bagianList));
+
+            if (in_array($rawOpdName, $bagianList) || in_array($opdNameSearch, $bagianListSearch)) {
+                $opdName = 'Sekretariat Daerah';
+            } else {
+                $opdName = $rawOpdName;
+            }
 
             if (!isset($opdBreakdown[$opdName])) {
                 $opdBreakdown[$opdName] = [

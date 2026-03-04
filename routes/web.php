@@ -94,6 +94,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/iuran-korpri/kelas-jabatan-perbup/import', [App\Http\Controllers\KelasJabatanPerbupController::class, 'import'])->name('kelas-jabatan-perbup.import');
         Route::delete('/iuran-korpri/kelas-jabatan-perbup/{id}', [App\Http\Controllers\KelasJabatanPerbupController::class, 'destroy'])->name('kelas-jabatan-perbup.destroy');
 
+        Route::get('/iuran-korpri/jabatan-mapping/find-similar', [App\Http\Controllers\JabatanMappingController::class, 'findSimilarPerbup'])->name('jabatan-mapping.find-similar');
+        Route::get('/iuran-korpri/jabatan-mapping/generate-bulk', [App\Http\Controllers\JabatanMappingController::class, 'generateBulkSuggestions'])->name('jabatan-mapping.generate-bulk');
+        Route::post('/iuran-korpri/jabatan-mapping/bulk-store', [App\Http\Controllers\JabatanMappingController::class, 'storeBulk'])->name('jabatan-mapping.bulk-store');
         Route::get('/iuran-korpri/jabatan-mapping', [App\Http\Controllers\JabatanMappingController::class, 'index'])->name('jabatan-mapping.index');
         Route::post('/iuran-korpri/jabatan-mapping', [App\Http\Controllers\JabatanMappingController::class, 'store'])->name('jabatan-mapping.store');
         Route::delete('/iuran-korpri/jabatan-mapping/{id}', [App\Http\Controllers\JabatanMappingController::class, 'destroy'])->name('jabatan-mapping.destroy');

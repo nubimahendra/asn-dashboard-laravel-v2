@@ -19,7 +19,7 @@ class JabatanMappingController extends Controller
                 $q->where('nama', 'like', "%{$search}%");
             })->orWhereHas('kelasPerbup', function ($q) use ($search) {
                 $q->where('nama_jabatan_perbup', 'like', "%{$search}%")
-                  ->orWhere('nama_opd_perbup', 'like', "%{$search}%");
+                    ->orWhere('nama_opd_perbup', 'like', "%{$search}%");
             });
         }
 
@@ -69,5 +69,119 @@ class JabatanMappingController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menghapus mapping jabatan.');
         }
+    }
+
+    public function generateBulkSuggestions(Request $request)
+    {
+        $mappedJabatanIds = RefJabatanMapping::pluck('jabatan_siasn_id');
+        $siasnList = RefJabatan::whereNotIn('id', $mappedJabatanIds)->get();
+        $perbups = RefKelasPerbup::all();
+
+        $suggestions = [];
+
+        foreach ($siasnList as $siasn) {
+            $searchName = strtolower(trim($siasn->nama));
+            $bestMatch = null;
+            $highestSimilarity = -1;
+
+            foreach ($perbups as $perbup) {
+                $perbupName = strtolower(trim($perbup->nama_jabatan_perbup));
+                similar_text($searchName, $perbupName, $percent);
+
+                if ($percent > $highestSimilarity) {
+                    $highestSimilarity = $percent;
+                    $bestMatch = $perbup;
+                }
+            }
+
+            if ($bestMatch && $highestSimilarity >= 20) { // suggest if similarity >= 20%
+                $suggestions[] = [
+                    'siasn_id' => $siasn->id,
+                    'siasn_nama' => $siasn->nama,
+                    'perbup_id' => $bestMatch->id,
+                    'perbup_nama' => $bestMatch->nama_opd_perbup . ' - ' . $bestMatch->nama_jabatan_perbup . ' (Kelas ' . $bestMatch->kelas_jabatan . ')',
+                    'similarity' => round($highestSimilarity, 2),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($suggestions, function ($a, $b) {
+            return $b['similarity'] <=> $a['similarity'];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $suggestions
+        ]);
+    }
+
+    public function storeBulk(Request $request)
+    {
+        $mappings = $request->input('mappings', []);
+        if (empty($mappings)) {
+            return redirect()->back()->with('error', 'Tidak ada data saran mapping yang diproses.');
+        }
+
+        $count = 0;
+        foreach ($mappings as $map) {
+            // Only process if the checkbox was checked
+            if (!empty($map['process']) && !empty($map['siasn_id']) && !empty($map['perbup_id'])) {
+                $similarity = floatval($map['similarity'] ?? 0);
+                $status = $similarity >= 60 ? 'valid' : 'unvalidated';
+
+                RefJabatanMapping::updateOrCreate(
+                    ['jabatan_siasn_id' => $map['siasn_id']],
+                    [
+                        'kelas_perbup_id' => $map['perbup_id'],
+                        'status_validasi' => $status,
+                        'catatan' => 'Auto-mapped (' . $similarity . '%)'
+                    ]
+                );
+                $count++;
+            }
+        }
+
+        return redirect()->back()->with('success', "$count mapping berhasil diproses dan disimpan.");
+    }
+
+    public function findSimilarPerbup(Request $request)
+    {
+        $jabatanSiasnId = $request->get('jabatan_siasn_id');
+        if (!$jabatanSiasnId) {
+            return response()->json(['success' => false, 'message' => 'ID Jabatan SIASN tidak diberikan']);
+        }
+
+        $jabatanSiasn = RefJabatan::find($jabatanSiasnId);
+        if (!$jabatanSiasn) {
+            return response()->json(['success' => false, 'message' => 'Jabatan SIASN tidak ditemukan']);
+        }
+
+        $searchName = strtolower(trim($jabatanSiasn->nama));
+
+        $perbups = RefKelasPerbup::all();
+        $bestMatch = null;
+        $highestSimilarity = -1;
+
+        foreach ($perbups as $perbup) {
+            $perbupName = strtolower(trim($perbup->nama_jabatan_perbup));
+
+            similar_text($searchName, $perbupName, $percent);
+
+            if ($percent > $highestSimilarity) {
+                $highestSimilarity = $percent;
+                $bestMatch = $perbup;
+            }
+        }
+
+        if ($bestMatch && $highestSimilarity >= 30) { // Set a reasonable threshold
+            return response()->json([
+                'success' => true,
+                'perbup_id' => $bestMatch->id,
+                'similarity' => round($highestSimilarity, 2)
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Kemiripan terlalu rendah']);
     }
 }
