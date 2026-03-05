@@ -414,8 +414,10 @@
                                     <a href="{{ route('sync.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors">Sync
                                         Data</a>
-                                    
-                                    <div class="mt-2 mb-1 px-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Data Master Tarif</div>
+
+                                    <div
+                                        class="mt-2 mb-1 px-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                                        Data Master Tarif</div>
                                     <a href="{{ route('kelas-jabatan-perbup.index') }}"
                                         class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('kelas-jabatan-perbup.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
                                         Master Kelas Perbup
@@ -459,7 +461,7 @@
         </aside>
 
         <main id="main-content"
-            class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 w-full">
+            class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 w-full min-w-0">
             <!-- Mobile spacer for fixed topbar -->
             <div class="h-14 md:hidden"></div>
             <div class="px-3 py-3 md:px-6 md:py-4">

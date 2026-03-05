@@ -170,4 +170,48 @@ class Pegawai extends Model
 
         return implode(' ', $nama);
     }
+
+    // Helper method to get golongan converted for PPPK
+    public function getGolonganPppkAttribute()
+    {
+        $namaGolongan = trim($this->golongan->nama ?? '');
+
+        $isPppkAktif = false;
+        if (isset($this->kedudukan_hukum_id) && $this->kedudukan_hukum_id == 71) {
+            $isPppkAktif = true;
+        } elseif (isset($this->kedudukanHukum->nama) && strtolower(trim($this->kedudukanHukum->nama)) == 'pppk aktif') {
+            $isPppkAktif = true;
+        }
+
+        if ($isPppkAktif && !empty($namaGolongan)) {
+            switch ($namaGolongan) {
+                case 'I':
+                    $namaGolongan = 'I';
+                    break;
+                case 'V':
+                    $namaGolongan = 'V';
+                    break;
+                case 'II/a': // Tambahan
+                    $namaGolongan = 'V';
+                    break;
+                case 'II/b': // Asumsi II/b ke VI jika ada
+                    $namaGolongan = 'VI';
+                    break;
+                case 'II/c':
+                    $namaGolongan = 'VII';
+                    break;
+                case 'III/a':
+                    $namaGolongan = 'IX';
+                    break;
+                case 'III/b':
+                    $namaGolongan = 'X';
+                    break;
+                case 'III/c':
+                    $namaGolongan = 'XI';
+                    break;
+            }
+        }
+
+        return empty($namaGolongan) ? null : $namaGolongan;
+    }
 }

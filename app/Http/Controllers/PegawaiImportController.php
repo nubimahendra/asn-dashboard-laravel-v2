@@ -103,7 +103,7 @@ class PegawaiImportController extends Controller
                 'jenis_kawin' => $employee->jenisKawin?->nama,
                 'jenis_pegawai' => $employee->jenisPegawai?->nama,
                 'kedudukan_hukum' => $employee->kedudukanHukum?->nama,
-                'golongan' => $employee->golongan?->nama,
+                'golongan' => $employee->golongan_pppk,
                 'jabatan' => $employee->jabatan?->nama,
                 'jenis_jabatan' => $employee->jenisJabatan?->nama,
                 'pendidikan' => $employee->pendidikan?->nama,
@@ -408,8 +408,9 @@ class PegawaiImportController extends Controller
         $anomalies = tap(StgPegawaiImport::where('source_file', $filename)
             ->where('is_anomali', true)
             ->select('id', 'pns_id', 'nama', 'nip_baru', 'catatan_anomali')
-            ->paginate(15))->map(function ($q) { return $q; });
-            
+            ->paginate(15))->map(function ($q) {
+                return $q; });
+
         return response()->json($anomalies);
     }
 

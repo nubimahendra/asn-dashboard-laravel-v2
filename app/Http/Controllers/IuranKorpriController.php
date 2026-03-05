@@ -109,40 +109,7 @@ class IuranKorpriController extends Controller
 
         foreach ($pegawaiData as $pegawai) {
             $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
-            $golonganNama = $pegawai->golongan->nama ?? null;
-
-            // Konversi golongan untuk PPPK Aktif (ID 71)
-            $isPppkAktif = false;
-            if (isset($pegawai->kedudukan_hukum_id) && $pegawai->kedudukan_hukum_id == 71) {
-                $isPppkAktif = true;
-            } elseif (isset($pegawai->kedudukan_hukum->nama) && strtolower(trim($pegawai->kedudukan_hukum->nama)) == 'pppk aktif') {
-                $isPppkAktif = true;
-            }
-
-            if ($isPppkAktif && !empty($golonganNama)) {
-                $namaGolonganClean = trim($golonganNama);
-                switch ($namaGolonganClean) {
-                    case 'I':
-                        $golonganNama = 'I';
-                        break;
-                    case 'V':
-                        $golonganNama = 'V';
-                        break;
-                    case 'II/c':
-                        $golonganNama = 'VII';
-                        break;
-                    case 'III/a':
-                        $golonganNama = 'IX';
-                        break;
-                    case 'III/b':
-                        $golonganNama = 'X';
-                        break;
-                    case 'III/c':
-                        $golonganNama = 'XI';
-                        break;
-                }
-            }
-
+            $golonganNama = $pegawai->golongan_pppk;
             $golonganKey = $this->extractGolonganKey($golonganNama);
 
             // Initialize OPD entry if not exists

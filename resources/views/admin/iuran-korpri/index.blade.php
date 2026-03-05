@@ -29,12 +29,14 @@
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Pegawai</p>
                 <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
-                    {{ number_format($globalTotals['total_pegawai']) }}</h2>
+                    {{ number_format($globalTotals['total_pegawai']) }}
+                </h2>
             </div>
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500">
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Ber-Golongan / Ber-Iuran</p>
                 <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
-                    {{ number_format($globalTotals['total_ber_golongan']) }}</h2>
+                    {{ number_format($globalTotals['total_ber_golongan']) }}
+                </h2>
             </div>
             <div
                 class="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-700 dark:to-teal-700 rounded-xl shadow-lg p-6 md:col-span-2">
@@ -85,15 +87,16 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700" id="opd-breakdown-body">
                         @php $no = ($opdBreakdown->currentPage() - 1) * 10 + 1; @endphp
-                        @forelse($opdBreakdown as $opdName => $opd)
+                        @forelse($opdBreakdown as $index => $opd)
                             <tr class="opd-row hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                data-name="{{ strtolower($opdName) }}">
+                                data-name="{{ strtolower($opd['nama_opd']) }}">
                                 <td
                                     class="px-4 py-3 text-gray-500 dark:text-gray-400 sticky left-0 bg-white dark:bg-gray-800 z-10">
-                                    {{ $no++ }}</td>
+                                    {{ $no++ }}
+                                </td>
                                 <td
                                     class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 sticky left-10 bg-white dark:bg-gray-800 z-10">
-                                    {{ $opdName }}
+                                    {{ $opd['nama_opd'] }}
                                 </td>
                                 @foreach($allIuranRates as $key => $rate)
                                     <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
@@ -101,9 +104,11 @@
                                     </td>
                                 @endforeach
                                 <td class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">
-                                    {{ number_format($opd['total_pegawai']) }}</td>
+                                    {{ number_format($opd['total_pegawai']) }}
+                                </td>
                                 <td class="px-4 py-3 text-right font-semibold text-emerald-700 dark:text-emerald-300">Rp
-                                    {{ number_format($opd['total_iuran'], 0, ',', '.') }}</td>
+                                    {{ number_format($opd['total_iuran'], 0, ',', '.') }}
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -123,12 +128,15 @@
                                     GRAND TOTAL</td>
                                 @foreach($allIuranRates as $key => $rate)
                                     <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300">
-                                        {{ $globalTotals['per_golongan'][$key]['count'] ?? 0 }}</td>
+                                        {{ $globalTotals['per_golongan'][$key]['count'] ?? 0 }}
+                                    </td>
                                 @endforeach
                                 <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300">
-                                    {{ number_format($globalTotals['total_pegawai']) }}</td>
+                                    {{ number_format($globalTotals['total_pegawai']) }}
+                                </td>
                                 <td class="px-4 py-4 text-right font-bold text-emerald-800 dark:text-emerald-300 text-lg">Rp
-                                    {{ number_format($globalTotals['total_iuran'], 0, ',', '.') }}</td>
+                                    {{ number_format($globalTotals['total_iuran'], 0, ',', '.') }}
+                                </td>
                             </tr>
                         </tfoot>
                     @endif
@@ -193,10 +201,12 @@
                         <tr>
                             <td class="px-6 py-4 font-bold text-emerald-800 dark:text-emerald-300">TOTAL</td>
                             <td class="px-6 py-4 font-bold text-emerald-800 dark:text-emerald-300">
-                                {{ number_format($globalTotals['total_pegawai']) }}</td>
+                                {{ number_format($globalTotals['total_pegawai']) }}
+                            </td>
                             <td class="px-6 py-4"></td>
                             <td class="px-6 py-4 text-right font-bold text-emerald-800 dark:text-emerald-300 text-lg">Rp
-                                {{ number_format($globalTotals['total_iuran'], 0, ',', '.') }}</td>
+                                {{ number_format($globalTotals['total_iuran'], 0, ',', '.') }}
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
@@ -212,21 +222,21 @@
 
 @section('scripts')
     <script>
-    // Filter OPD search (Breakdown Table)
-    const breakdownSearch = document.getElementById('opd-breakdown-search');
-    if (breakdownSearch) {
-        breakdownSearch.addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            document.querySelectorAll('.opd-row').forEach(row => {
-                const name = row.getAttribute('data-name');
-                if (name.includes(term)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+        // Filter OPD search (Breakdown Table)
+        const breakdownSearch = document.getElementById('opd-breakdown-search');
+        if (breakdownSearch) {
+            breakdownSearch.addEventListener('input', function (e) {
+                const term = e.target.value.toLowerCase();
+                document.querySelectorAll('.opd-row').forEach(row => {
+                    const name = row.getAttribute('data-name');
+                    if (name.includes(term)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
             });
-        });
-    }
+        }
 
         // Tarif edit detection
         const tarifInputs = document.querySelectorAll('.tarif-input');

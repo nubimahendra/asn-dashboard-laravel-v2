@@ -101,58 +101,99 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                         <tr
                             class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">No</th>
-                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">NIP / Nama
-                            </th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 sticky left-0 z-20 w-12 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">No</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 sticky left-[4.5rem] z-20 w-64 min-w-[16rem] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">NIP / Nama</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Tempat/Tgl Lahir</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Jenis Kelamin</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Agama</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Status Kawin</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Golongan</th>
                             <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Jabatan</th>
-                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Unit Kerja
-                            </th>
-                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Status</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Jenis Jabatan</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Unit Kerja</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Pendidikan</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Status ASN</th>
+                            <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">TMT ASN</th>
                             @if($isHistory)
-                                <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Tanggal
-                                    Snapshot</th>
+                                <th class="px-6 py-4 font-semibold border-b border-gray-100 dark:border-gray-600">Tanggal Snapshot</th>
                             @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse($pegawai as $index => $item)
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 w-12">
-                                                {{ $pegawai->firstItem() + $index }}
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->nama_pegawai }}
-                                                </div>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item->nip_baru ?? '-' }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $item->jabatan ?? '-' }}</td>
-                                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                                <div class="font-medium">{{ $item->pd ?? '-' }}</div>
-                                                <div class="text-xs text-gray-500">{{ $item->sub_pd ?? '' }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm">
-                                                <span
-                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                                                                                                                                                                                                                                                        {{ str_contains($item->sts_peg, 'PNS') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                            (str_contains($item->sts_peg, 'PPPK') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300') }}">
-                                                    {{ $item->sts_peg ?? '-' }}
-                                                </span>
-                                            </td>
-                                            @if($isHistory)
-                                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                                    {{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}
-                                                </td>
-                                            @endif
-                                        </tr>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 w-12 border-r border-gray-100 dark:border-gray-600 bg-white dark:bg-gray-800 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] z-10">
+                                    {{ $pegawai->firstItem() + $index }}
+                                </td>
+                                <td class="px-6 py-4 border-r border-gray-100 dark:border-gray-600 bg-white dark:bg-gray-800 sticky left-[4.5rem] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] z-10 w-64 min-w-[16rem]">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate" title="{{ $item->nama_pegawai }}">{{ $item->nama_pegawai }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item->nip_baru ?? '-' }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    {{ $item->tempat_lahir ?: '-' }}<br/>
+                                    <span class="text-xs text-gray-500">{{ $item->tgl_lahir ? \Carbon\Carbon::parse($item->tgl_lahir)->format('d-m-Y') : '-' }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $item->jenis_kelamin ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $item->agama ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $item->jenis_kawin ?: '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                                        {{ $item->golongan ?: '-' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate" title="{{ $item->jabatan ?? '-' }}">
+                                    {{ $item->jabatan ?? '-' }}
+                                    @if($item->eselon) <div class="text-xs text-gray-500 mt-1">Eselon: {{ $item->eselon }}</div> @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $item->jenis_jabatan ?? '-' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate" title="{{ $item->unor_nama ?? $item->pd ?? '-' }}">
+                                    <div class="font-medium">{{ $item->unor_nama ?? $item->pd ?? '-' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $item->unor_opd ?? $item->sub_pd ?? '' }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    {{ $item->pendidikan ?: '-' }}<br/>
+                                    <span class="text-xs text-gray-500">{{ $item->tingkat_pendidikan ?: '-' }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    @php
+                                        $stsPeg = $item->sts_peg ?? '';
+                                        $badgeClass = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+                                        if ($stsPeg === 'PNS') {
+                                            $badgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                                        } elseif ($stsPeg === 'CPNS') {
+                                            $badgeClass = 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200';
+                                        } elseif ($stsPeg === 'PPPK') {
+                                            $badgeClass = 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+                                        } elseif ($stsPeg === 'PPPK PW') {
+                                            $badgeClass = 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+                                        }
+                                    @endphp
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $badgeClass }}">
+                                        {{ $stsPeg ?: '-' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    <div title="TMT CPNS: {{ $item->tmt_cpns ? \Carbon\Carbon::parse($item->tmt_cpns)->format('d-m-Y') : '-' }}">CPNS: {{ $item->tmt_cpns ? \Carbon\Carbon::parse($item->tmt_cpns)->format('Y') : '-' }}</div>
+                                    <div title="TMT PNS: {{ $item->tmt_pns ? \Carbon\Carbon::parse($item->tmt_pns)->format('d-m-Y') : '-' }}">PNS: {{ $item->tmt_pns ? \Carbon\Carbon::parse($item->tmt_pns)->format('Y') : '-' }}</div>
+                                </td>
+                                @if($isHistory)
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}
+                                    </td>
+                                @endif
+                            </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $isHistory ? 6 : 5 }}"
-                                    class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 italic">
-                                    Data pegawai kosong.
+                                <td colspan="{{ $isHistory ? 15 : 14 }}" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <svg class="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                        <p class="text-base font-medium">Data pegawai tidak ditemukan.</p>
+                                        <p class="text-sm mt-1">Belum ada data snapshot untuk filter ini.</p>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
