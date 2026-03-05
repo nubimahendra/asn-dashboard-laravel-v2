@@ -114,6 +114,125 @@ php artisan queue:work
 
 ---
 
+## 🚀 Panduan Deploy / Instalasi di VPS (Production)
+
+Untuk melakukan instalasi aplikasi di VPS (Virtual Private Server) berbasis Linux (Ubuntu/Debian), ikuti langkah-langkah berikut:
+
+### 1. Persiapan Server
+Pastikan server Anda sudah terinstal:
+- **Web Server:** Nginx atau Apache
+- **PHP:** Versi 8.2 atau lebih baru beserta ekstensi yang dibutuhkan (pdo_mysql, mbstring, xml, ctype, json, zip, dom, dll)
+- **Database:** MySQL 8.0+ atau MariaDB
+- **Composer** & **Node.js (NPM)**
+- **Supervisor** (untuk menjalankan Queue Worker di background)
+
+### 2. Upload / Clone Source Code
+Anda bisa melakukan `git clone` atau meng-upload file ZIP dari project ke direktori web server (misalnya: `/var/www/asn-dashboard`).
+
+```bash
+cd /var/www/
+git clone https://github.com/nubimahendra/asn-dashboard-laravel-v2.git asn-dashboard
+cd asn-dashboard
+```
+
+### 3. Install Dependencies
+```bash
+# Install PHP dependencies (tanpa package dev)
+composer install --optimize-autoloader --no-dev
+
+# Install Node.js dependencies
+npm install
+```
+
+### 4. Konfigurasi Environment & Zona Waktu
+```bash
+cp .env.example .env
+nano .env
+```
+Sesuaikan konfigurasi berikut di file `.env`:
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://domain-anda.com       # Ganti dengan domain VPS Anda (Penting agar UI/Sidebar berfungsi)
+
+APP_TIMEZONE="Asia/Jakarta"           # Sesuaikan zona waktu (opsional)
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nama_database_vps
+DB_USERNAME=user_database
+DB_PASSWORD=password_database
+
+QUEUE_CONNECTION=database             # Wajib untuk fitur import background
+```
+
+### 5. Setup Database & Key
+```bash
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+```
+
+### 6. Build Frontend (Sangat Penting)
+Agar tampilan UI, CSS (Tailwind), dan JavaScript (termasuk fitur klik pada Sidebar) berfungsi normal di VPS, **wajib** melakukan *build* aset untuk *production*:
+```bash
+npm run build
+```
+
+> **⚠️ PERHATIAN PENTING (Masalah Sidebar Tidak Bisa Diklik):**
+> Jika Anda menggunakan *Laravel Vite* dan menyalin seluruh file dari komputer lokal ke VPS secara menimpa, pastikan file bernama **`hot`** di dalam folder `public/` (yaitu `public/hot`) **DIHAPUS**. Jika file tersebut ada di VPS, Laravel akan mencari dev server lokal sehingga aset JavaScript tidak termuat.
+> ```bash
+> rm -f public/hot
+> ```
+
+### 7. Atur Hak Akses (Permissions)
+Berikan hak akses (RW) pada folder `storage` dan `bootstrap/cache` untuk *user web server* (biasanya `www-data` atau `nginx`).
+```bash
+sudo chown -R www-data:www-data /var/www/asn-dashboard
+sudo chmod -R 775 /var/www/asn-dashboard/storage
+sudo chmod -R 775 /var/www/asn-dashboard/bootstrap/cache
+```
+
+### 8. Optimasi Laravel Cache
+Jalankan perintah ini di akhir setup untuk mempercepat kinerja dan mengatasi *cache* yang nyangkut:
+```bash
+php artisan optimize:clear
+php artisan config:cache
+php artisan event:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### 9. Setup Supervisor (Untuk Background Process)
+Aplikasi ini membutuhkan *Queue Worker* agar fitur Export/Import Excel berjalan. Buat file konfigurasi Supervisor:
+```bash
+sudo nano /etc/supervisor/conf.d/asn-dashboard-worker.conf
+```
+Isi dengan:
+```ini
+[program:asn-dashboard-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/asn-dashboard/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/www/asn-dashboard/storage/logs/worker.log
+stopwaitsecs=3600
+```
+Update & Start Supervisor:
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start asn-dashboard-worker:*
+```
+
+---
+
 ## 📂 Project Structure
 
 - `app/Http/Controllers/PegawaiImportController.php` - Handles file upload and history logic.

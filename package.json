@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "build": "vite build",
         "serve": "php artisan serve",
         "queue": "php artisan queue:work --timeout=600 --sleep=3 --tries=3",
         "queue-listen": "php artisan queue:listen --timeout=600",
