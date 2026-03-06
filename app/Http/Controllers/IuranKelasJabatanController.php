@@ -157,4 +157,87 @@ class IuranKelasJabatanController extends Controller
                 ->with('error', "Gagal generate Iuran: " . $e->getMessage());
         }
     }
+
+    public function opdDetail(Request $request)
+    {
+        $opd = $request->input('opd');
+        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', date('Y'));
+
+        if (!$opd) {
+            return redirect()->route('iuran-kelas-jabatan.index')->with('error', 'OPD tidak ditemukan');
+        }
+
+        $bagianList = [
+            'Bagian umum',
+            'Bagian Tata Pemerintahan',
+            'Bagian Protokol dan Kepemimpinan',
+            'Bagian Perencanaan dan Keuangan',
+            'Bagian Hukum',
+            'Bagian Kesejahteraan Rakyat',
+            'Bagian Organisasi',
+            'Bagian Pengadaan Barang dan Jasa',
+            'Bagian Administrasi Pembangunan'
+        ];
+
+        // Build query for specific OPD inside month and year
+        $query = IuranKorpriTransaksi::with(['pegawai.unor'])
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun);
+
+        if ($opd === 'Sekretariat Daerah') {
+            $query->whereHas('pegawai.unor', function ($q) use ($bagianList) {
+                $q->whereIn('nama', $bagianList)
+                    ->orWhere('nama', 'Sekretariat Daerah');
+            });
+        } else {
+            $query->whereHas('pegawai.unor', function ($q) use ($opd) {
+                $q->where('nama', $opd);
+            });
+        }
+
+        $transaksiData = $query->get();
+
+        // Calculate iuran breakdown per kelas jabatan
+        $breakdownKelas = [];
+        $totalPegawai = 0;
+        $totalIuran = 0;
+
+        foreach ($transaksiData as $transaksi) {
+            $kelas = $transaksi->kelas_jabatan ?? 'Tanpa Kelas';
+            $nominal = (float) $transaksi->nominal;
+            
+            if (!isset($breakdownKelas[$kelas])) {
+                $breakdownKelas[$kelas] = [
+                    'kelas_jabatan' => $kelas,
+                    'jumlah_pegawai' => 0,
+                    'nominal_per_orang' => $nominal, // Assumes nominal is the same per kelas
+                    'subtotal' => 0,
+                ];
+            }
+            
+            // Adjust to the max nominal if there are different nominals within the same class occasionally
+            if ($nominal > $breakdownKelas[$kelas]['nominal_per_orang']) {
+                $breakdownKelas[$kelas]['nominal_per_orang'] = $nominal;
+            }
+
+            $breakdownKelas[$kelas]['jumlah_pegawai']++;
+            $breakdownKelas[$kelas]['subtotal'] += $nominal;
+            
+            $totalPegawai++;
+            $totalIuran += $nominal;
+        }
+
+        // Sort array naturally by key (Class number)
+        uksort($breakdownKelas, 'strnatcmp');
+
+        return view('admin.iuran-kelas-jabatan.opd-detail', compact(
+            'opd',
+            'bulan',
+            'tahun',
+            'breakdownKelas',
+            'totalPegawai',
+            'totalIuran'
+        ));
+    }
 }

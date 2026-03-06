@@ -121,7 +121,12 @@
                                 class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
                                 <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                     {{ $opdBreakdownPaginated->firstItem() + $index }}</td>
-                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $item['nama_opd'] }}</td>
+                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                    <a href="{{ route('iuran-kelas-jabatan.opd-detail', ['opd' => $item['nama_opd'], 'bulan' => $bulan, 'tahun' => $tahun]) }}"
+                                       class="text-blue-600 dark:text-blue-400 hover:underline font-semibold">
+                                        {{ $item['nama_opd'] }}
+                                    </a>
+                                </td>
                                 <td class="px-6 py-4 text-center">
                                     <span
                                         class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded dark:bg-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800">

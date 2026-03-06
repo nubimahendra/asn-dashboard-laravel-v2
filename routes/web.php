@@ -108,6 +108,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/iuran-korpri/jabatan-default/{id}', [App\Http\Controllers\JabatanDefaultController::class, 'destroy'])->name('jabatan-default.destroy');
 
         Route::get('/iuran-korpri/iuran-kelas-jabatan', [App\Http\Controllers\IuranKelasJabatanController::class, 'index'])->name('iuran-kelas-jabatan.index');
+        Route::get('/iuran-korpri/iuran-kelas-jabatan/opd-detail', [App\Http\Controllers\IuranKelasJabatanController::class, 'opdDetail'])->name('iuran-kelas-jabatan.opd-detail');
         Route::post('/iuran-korpri/iuran-kelas-jabatan/generate', [App\Http\Controllers\IuranKelasJabatanController::class, 'generate'])->name('iuran-kelas-jabatan.generate');
     });
 });
