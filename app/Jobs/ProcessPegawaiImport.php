@@ -16,13 +16,15 @@ class ProcessPegawaiImport implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $sourceFile;
+    protected $deleteRemoved;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($sourceFile)
+    public function __construct($sourceFile, $deleteRemoved = false)
     {
         $this->sourceFile = $sourceFile;
+        $this->deleteRemoved = $deleteRemoved;
     }
 
     /**
@@ -70,6 +72,22 @@ class ProcessPegawaiImport implements ShouldQueue
 
                 // Continue processing other records even if one fails
                 continue;
+            }
+        }
+
+        // Handle soft-delete if requested
+        if ($this->deleteRemoved) {
+            $importedPnsIds = StgPegawaiImport::where('source_file', $this->sourceFile)
+                ->whereNotNull('pns_id')
+                ->pluck('pns_id')
+                ->toArray();
+
+            if (!empty($importedPnsIds)) {
+                $deletedCount = \App\Models\Pegawai::whereNotNull('pns_id')
+                    ->whereNotIn('pns_id', $importedPnsIds)
+                    ->delete(); // Soft delete
+
+                Log::info("Soft-deleted {$deletedCount} pegawai not found in import file {$this->sourceFile}");
             }
         }
 

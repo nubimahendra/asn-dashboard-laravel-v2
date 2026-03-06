@@ -15,18 +15,58 @@
 
             <form id="upload-form" enctype="multipart/form-data">
                 @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Pilih File CSV
-                    </label>
-                    <input type="file" id="excel-file" name="file" accept=".csv"
-                        class="block w-full text-sm text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Format: File CSV (.csv) dengan pemisah kolom (delimiter) berupa karakter pipa <code>|</code>.
-                        Maksimal 50MB.
-                    </p>
+                <!-- Hidden file inputs (digunakan oleh drop zones dan JS submit) -->
+                <input type="file" id="file-pns" accept=".csv" class="hidden">
+                <input type="file" id="file-pppk" accept=".csv" class="hidden">
+                <input type="file" id="file-pppkpw" accept=".csv" class="hidden">
+
+                <!-- 3 Drop Zone Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+                    <!-- Kartu PNS -->
+                    <div id="drop-pns"
+                        class="drop-zone flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 mb-3" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="font-semibold text-gray-700 dark:text-gray-300">PNS.csv</p>
+                        <p class="text-xs text-gray-400 mt-1">Wajib &bull; Seret ke sini atau klik</p>
+                        <p id="pns-label"
+                            class="hidden text-xs mt-2 text-green-600 dark:text-green-400 font-medium truncate w-full"></p>
+                    </div>
+
+                    <!-- Kartu PPPK -->
+                    <div id="drop-pppk"
+                        class="drop-zone flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 mb-3" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="font-semibold text-gray-700 dark:text-gray-300">PPPK.csv</p>
+                        <p class="text-xs text-gray-400 mt-1">Opsional &bull; Seret ke sini atau klik</p>
+                        <p id="pppk-label"
+                            class="hidden text-xs mt-2 text-green-600 dark:text-green-400 font-medium truncate w-full"></p>
+                    </div>
+
+                    <!-- Kartu PPPK PW -->
+                    <div id="drop-pppkpw"
+                        class="drop-zone flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 mb-3" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="font-semibold text-gray-700 dark:text-gray-300">PPPK PW.csv</p>
+                        <p class="text-xs text-gray-400 mt-1">Opsional &bull; Seret ke sini atau klik</p>
+                        <p id="pppkpw-label"
+                            class="hidden text-xs mt-2 text-green-600 dark:text-green-400 font-medium truncate w-full"></p>
+                    </div>
                 </div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                    Format: File CSV (.csv) dengan pemisah karakter pipa <code>|</code>. Maksimal 50MB per file.
+                </p>
 
                 <button type="submit" id="upload-btn"
                     class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -151,25 +191,31 @@
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Detail Anomali Data</h2>
-                    <p class="text-sm font-normal text-gray-500 mt-1">File: <span id="anomaly-section-filename" class="font-medium text-gray-700 dark:text-gray-300"></span></p>
+                    <p class="text-sm font-normal text-gray-500 mt-1">File: <span id="anomaly-section-filename"
+                            class="font-medium text-gray-700 dark:text-gray-300"></span></p>
                 </div>
                 <button id="close-anomaly-btn" onclick="closeAnomalySection()"
                     class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors">
                     Tutup
                 </button>
             </div>
-            
+
             <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PNS ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama / NIP</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catatan Anomali</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rekomendasi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PNS
+                                ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama
+                                / NIP</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Catatan Anomali</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Rekomendasi</th>
                         </tr>
                     </thead>
-                    <tbody id="anomaly-section-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody id="anomaly-section-body"
+                        class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <!-- Content loaded via JS -->
                     </tbody>
                 </table>
@@ -208,6 +254,9 @@
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Progress</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body"
@@ -247,11 +296,75 @@
         let detailsPage = 1;
         let currentHistoryPage = 1;
 
+        // Setup Drop Zones
+        function setupDropZone(dropId, inputId, labelId) {
+            const drop = document.getElementById(dropId);
+            const input = document.getElementById(inputId);
+            const label = document.getElementById(labelId);
+
+            // Click to open file picker
+            drop.addEventListener('click', () => input.click());
+
+            // Drag over events
+            drop.addEventListener('dragover', e => {
+                e.preventDefault();
+                drop.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30');
+            });
+
+            // Drag leave events
+            drop.addEventListener('dragleave', () => {
+                drop.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30');
+            });
+
+            // Drop events
+            drop.addEventListener('drop', e => {
+                e.preventDefault();
+                drop.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30');
+
+                const file = e.dataTransfer.files[0];
+                if (file && file.name.endsWith('.csv')) {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    input.files = dt.files;
+                    label.textContent = file.name;
+                    label.classList.remove('hidden');
+                    drop.classList.add('border-green-500');
+                }
+            });
+
+            // Input change (file picker)
+            input.addEventListener('change', () => {
+                if (input.files.length > 0) {
+                    label.textContent = input.files[0].name;
+                    label.classList.remove('hidden');
+                    drop.classList.add('border-green-500');
+                }
+            });
+        }
+
+        setupDropZone('drop-pns', 'file-pns', 'pns-label');
+        setupDropZone('drop-pppk', 'file-pppk', 'pppk-label');
+        setupDropZone('drop-pppkpw', 'file-pppkpw', 'pppkpw-label');
+
         // Handle file upload
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const formData = new FormData(uploadForm);
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+
+            const filePns = document.getElementById('file-pns').files[0];
+            const filePppk = document.getElementById('file-pppk').files[0];
+            const filePppkpw = document.getElementById('file-pppkpw').files[0];
+
+            if (!filePns && !filePppk && !filePppkpw) {
+                alert('Harap pilih minimal satu file CSV.');
+                return;
+            }
+
+            if (filePns) formData.append('files[]', filePns);
+            if (filePppk) formData.append('files[]', filePppk);
+            if (filePppkpw) formData.append('files[]', filePppkpw);
 
             // Show loading state
             uploadBtn.disabled = true;
@@ -283,6 +396,21 @@
                 if (response.ok && (data.success === true || data.success === undefined)) {
                     showStatus('success', data.message || 'File berhasil diupload');
                     uploadForm.reset();
+
+                    // Reset Drop Zones Display
+                    ['pns', 'pppk', 'pppkpw'].forEach(key => {
+                        const input = document.getElementById(`file-${key}`);
+                        const label = document.getElementById(`${key}-label`);
+                        const drop = document.getElementById(`drop-${key}`);
+
+                        if (input) input.value = '';
+                        if (label) {
+                            label.textContent = '';
+                            label.classList.add('hidden');
+                        }
+                        if (drop) drop.classList.remove('border-green-500');
+                    });
+
                     loadHistory();
 
                     // Show Diff Summary if available
@@ -468,9 +596,9 @@
             try {
                 if (reset) {
                     diffDetailsBody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">
-                        <svg class="animate-spin h-6 w-6 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Memuat detail...
-                    </td></tr>`;
+                                        <svg class="animate-spin h-6 w-6 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        Memuat detail...
+                                    </td></tr>`;
                     detailsPage = 1;
                 }
 
@@ -494,9 +622,9 @@
                         changesHtml = '<ul class="list-disc list-inside text-xs">';
                         for (const [field, change] of Object.entries(item.changes)) {
                             changesHtml += `<li><span class="font-semibold">${change.label || field}:</span> 
-                                    <span class="text-red-500 line-through">${change.old || '(kosong)'}</span> 
-                                    <span class="text-gray-400">→</span> 
-                                    <span class="text-green-600 font-medium">${change.new || '(kosong)'}</span></li>`;
+                                                    <span class="text-red-500 line-through">${change.old || '(kosong)'}</span> 
+                                                    <span class="text-gray-400">→</span> 
+                                                    <span class="text-green-600 font-medium">${change.new || '(kosong)'}</span></li>`;
                         }
                         changesHtml += '</ul>';
                     } else {
@@ -508,15 +636,15 @@
                         : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Berubah</span>';
 
                     const row = `
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td class="px-4 py-3">
-                                     <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
-                                     <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
-                                </td>
-                                <td class="px-4 py-3">${statusBadge}</td>
-                                <td class="px-4 py-3">${changesHtml}</td>
-                            </tr>
-                        `;
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                <td class="px-4 py-3">
+                                                     <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
+                                                     <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
+                                                </td>
+                                                <td class="px-4 py-3">${statusBadge}</td>
+                                                <td class="px-4 py-3">${changesHtml}</td>
+                                            </tr>
+                                        `;
                     diffDetailsBody.insertAdjacentHTML('beforeend', row);
                 });
 
@@ -597,50 +725,53 @@
 
                 if (imports.length === 0) {
                     historyTableBody.innerHTML = `
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                            Belum ada riwayat import
-                                        </td>
-                                    </tr>
-                                `;
+                                                    <tr>
+                                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                                            Belum ada riwayat import
+                                                        </td>
+                                                    </tr>
+                                                `;
                     historyPagination.innerHTML = '';
                     return;
                 }
 
                 historyTableBody.innerHTML = imports.map(item => `
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                                        ${item.filename}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        ${item.uploaded_at}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        ${item.total_rows}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        ${getAnomaliBadge(item.filename, item.anomaly_rows || 0)}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        ${getStatusBadge(item.status)}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        ${getProgressBar(item.progress, item.status)}
-                                    </td>
-                                </tr>
-                            `).join('');
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                                                        ${item.filename}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                        ${item.uploaded_at}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                        ${item.total_rows}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                        ${getAnomaliBadge(item.filename, item.anomaly_rows || 0)}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        ${getStatusBadge(item.status)}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        ${getProgressBar(item.progress, item.status)}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                        ${item.status === 'Menunggu' ? `<button onclick="cancelImport('${item.filename}')" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">Batalkan</button>` : '-'}
+                                                    </td>
+                                                </tr>
+                                            `).join('');
 
                 renderHistoryPagination(data);
 
             } catch (error) {
                 console.error('Error loading history:', error);
                 historyTableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
-                                        Gagal memuat riwayat import
-                                    </td>
-                                </tr>
-                            `;
+                                                <tr>
+                                                    <td colspan="6" class="px-6 py-4 text-center text-red-500 dark:text-red-400">
+                                                        Gagal memuat riwayat import
+                                                    </td>
+                                                </tr>
+                                            `;
             }
         }
 
@@ -662,7 +793,7 @@
 
             return `<button onclick="openAnomalyModal('${filename}')" class="text-yellow-600 dark:text-yellow-400 font-semibold hover:underline" title="Klik untuk melihat detail anomali">${totalErrors} Anomali</button>`;
         }
-        
+
         // Anomaly Section functions
         const anomalySection = document.getElementById('anomaly-section');
         const anomalySectionFilename = document.getElementById('anomaly-section-filename');
@@ -675,7 +806,7 @@
             anomalySectionFilename.textContent = filename;
             anomalySection.classList.remove('hidden');
             loadAnomalyDetails(1);
-            
+
             // Scroll to the section smoothly
             setTimeout(() => {
                 anomalySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -689,41 +820,41 @@
 
         async function loadAnomalyDetails(page = 1) {
             if (!currentAnomalyFilename) return;
-            
+
             anomalySectionBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                Memuat data anomali...
-            </td></tr>`;
+                                <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Memuat data anomali...
+                            </td></tr>`;
             anomalyPagination.innerHTML = '';
-            
+
             try {
                 const response = await fetch(`{{ url('sync-data/anomaly-details') }}/${currentAnomalyFilename}?page=${page}`);
                 const data = await response.json();
-                
+
                 if (data.data.length === 0) {
                     anomalySectionBody.innerHTML = '<tr><td colspan="4" class="px-6 py-6 text-center text-gray-500">Tidak ada anomali.</td></tr>';
                     return;
                 }
-                
+
                 anomalySectionBody.innerHTML = data.data.map(item => `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${item.pns_id || '-'}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
-                            <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-red-600 dark:text-red-400 font-semibold">${item.catatan_anomali ? item.catatan_anomali.replace('Referensi tidak valid/ditemukan: ', '<span class="px-2 py-1 text-xs rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">') + '</span>' : '-'}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">Silakan melengkapi data master yang tercatat diatas sebelum melakukan sinkronisasi selanjutnya.</td>
-                    </tr>
-                `).join('');
-                
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${item.pns_id || '-'}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="font-medium text-gray-900 dark:text-gray-100">${item.nama || '-'}</div>
+                                            <div class="text-xs text-gray-500">${item.nip_baru || '-'}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-red-600 dark:text-red-400 font-semibold">${item.catatan_anomali ? item.catatan_anomali.replace('Referensi tidak valid/ditemukan: ', '<span class="px-2 py-1 text-xs rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">') + '</span>' : '-'}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">Silakan melengkapi data master yang tercatat diatas sebelum melakukan sinkronisasi selanjutnya.</td>
+                                    </tr>
+                                `).join('');
+
                 renderAnomalyPagination(data);
             } catch (error) {
                 console.error('Error loading anomalies:', error);
                 anomalySectionBody.innerHTML = '<tr><td colspan="4" class="px-6 py-6 text-center text-red-500">Gagal memuat detail anomali.</td></tr>';
             }
         }
-        
+
         function renderAnomalyPagination(meta) {
             if (meta.last_page <= 1) {
                 anomalyPagination.innerHTML = '';
@@ -734,14 +865,14 @@
 
             // Previous Button
             html += `
-                <button ${meta.current_page === 1 ? 'disabled' : `onclick="loadAnomalyDetails(${meta.current_page - 1})"`} 
-                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                    <span class="sr-only">Previous</span>
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            `;
+                                <button ${meta.current_page === 1 ? 'disabled' : `onclick="loadAnomalyDetails(${meta.current_page - 1})"`} 
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            `;
 
             // Page Numbers
             for (let i = 1; i <= meta.last_page; i++) {
@@ -751,11 +882,11 @@
                         : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600';
 
                     html += `
-                        <button onclick="loadAnomalyDetails(${i})" 
-                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${activeClass}">
-                            ${i}
-                        </button>
-                    `;
+                                        <button onclick="loadAnomalyDetails(${i})" 
+                                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${activeClass}">
+                                            ${i}
+                                        </button>
+                                    `;
                 } else if (i === meta.current_page - 2 || i === meta.current_page + 2) {
                     html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">...</span>`;
                 }
@@ -763,14 +894,14 @@
 
             // Next Button
             html += `
-                <button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadAnomalyDetails(${meta.current_page + 1})"`} 
-                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                    <span class="sr-only">Next</span>
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            `;
+                                <button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadAnomalyDetails(${meta.current_page + 1})"`} 
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            `;
 
             html += '</nav>';
             anomalyPagination.innerHTML = html;
@@ -784,11 +915,11 @@
                 return '<span class="text-sm text-red-600 dark:text-red-400">-</span>';
             }
             return `
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
-                            </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
-                        `;
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
+                                        `;
         }
 
         function renderHistoryPagination(meta) {
@@ -800,14 +931,14 @@
             let html = '<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">';
 
             html += `
-                    <button ${meta.current_page === 1 ? 'disabled' : `onclick="loadHistory(${meta.current_page - 1})"`} 
-                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                        <span class="sr-only">Previous</span>
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                `;
+                                    <button ${meta.current_page === 1 ? 'disabled' : `onclick="loadHistory(${meta.current_page - 1})"`} 
+                                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === 1 ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                                        <span class="sr-only">Previous</span>
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                `;
 
             for (let i = 1; i <= meta.last_page; i++) {
                 if (i === 1 || i === meta.last_page || (i >= meta.current_page - 1 && i <= meta.current_page + 1)) {
@@ -816,25 +947,25 @@
                         : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600';
 
                     html += `
-                            <button onclick="loadHistory(${i})" 
-                                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${activeClass}">
-                                ${i}
-                            </button>
-                        `;
+                                            <button onclick="loadHistory(${i})" 
+                                                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${activeClass}">
+                                                ${i}
+                                            </button>
+                                        `;
                 } else if (i === meta.current_page - 2 || i === meta.current_page + 2) {
                     html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">...</span>`;
                 }
             }
 
             html += `
-                    <button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadHistory(${meta.current_page + 1})"`} 
-                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                        <span class="sr-only">Next</span>
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                `;
+                                    <button ${meta.current_page === meta.last_page ? 'disabled' : `onclick="loadHistory(${meta.current_page + 1})"`} 
+                                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium ${meta.current_page === meta.last_page ? 'text-gray-300 dark:text-gray-500 cursor-not-allowed' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                                        <span class="sr-only">Next</span>
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                `;
 
             html += '</nav>';
             historyPagination.innerHTML = html;
@@ -843,5 +974,33 @@
         refreshBtn.addEventListener('click', () => loadHistory(currentHistoryPage));
         setInterval(() => loadHistory(currentHistoryPage), 5000);
         loadHistory(1);
+
+        async function cancelImport(filename) {
+            if (!confirm(`Batalkan import "${filename}"? Data staging yang belum diproses akan dihapus.`)) return;
+
+            try {
+                const response = await fetch('{{ route("pegawai.import.cancel") }}', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ filename })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus('success', data.message || 'Import berhasil dibatalkan.');
+                    loadHistory();
+                } else {
+                    showStatus('error', data.message || 'Gagal membatalkan import.');
+                }
+            } catch (error) {
+                showStatus('error', 'Terjadi kesalahan saat membatalkan import: ' + error.message);
+                console.error('Cancel Error:', error);
+            }
+        }
     </script>
 @endsection
