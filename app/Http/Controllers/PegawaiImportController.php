@@ -103,7 +103,7 @@ class PegawaiImportController extends Controller
                 'jenis_kawin' => $employee->jenisKawin?->nama,
                 'jenis_pegawai' => $employee->jenisPegawai?->nama,
                 'kedudukan_hukum' => $employee->kedudukanHukum?->nama,
-                'golongan' => $employee->golongan?->nama,
+                'golongan' => $employee->golongan_pppk,
                 'jabatan' => $employee->jabatan?->nama,
                 'jenis_jabatan' => $employee->jenisJabatan?->nama,
                 'pendidikan' => $employee->pendidikan?->nama,
@@ -181,7 +181,7 @@ class PegawaiImportController extends Controller
     public function upload(Request $request)
     {
         // Check if file was uploaded
-        if (!$request->hasFile('file')) {
+        if (!$request->hasFile('files') || empty($request->file('files'))) {
             $message = 'Tidak ada file yang diupload.';
             $fileError = $_FILES['file']['error'] ?? null;
 
@@ -227,48 +227,76 @@ class PegawaiImportController extends Controller
             ], 422);
         }
 
-        // Check if file upload was successful
-        if (!$request->file('file')->isValid()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'File gagal diupload. Periksa ukuran file (max 10MB) dan format file.',
-            ], 422);
+        // Validate that each uploaded file is valid
+        $files = $request->file('files');
+        foreach ($files as $file) {
+            if (!$file->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Salah satu file gagal diupload. Periksa kembali ukuran (max 10MB) dan format file.',
+                ], 422);
+            }
         }
 
         $request->validate([
-            'file' => 'required|file|mimetypes:text/plain,text/csv,application/csv|max:51200', // Max 50MB
+            'files.*' => 'required|file|mimetypes:text/plain,text/csv,application/csv|max:51200', // Max 50MB per file
         ]);
 
         try {
-            $file = $request->file('file');
-            $originalName = $file->getClientOriginalName();
-            $filename = time() . '_' . $originalName;
-
-            // Store file
-            $path = $file->storeAs('imports/pegawai', $filename);
-            $fullPath = \Illuminate\Support\Facades\Storage::path($path);
-
-            // Sanitize the CSV first (Fix UTF-8 and line endings)
+            $sharedFilename = time() . '_merged_import';
             $sanitizer = new \App\Services\CsvSanitizerService();
-            $sanitizer->sanitize($fullPath);
-
-            // Process the CSV Import
             $csvService = new \App\Services\CsvImportService();
-            $result = $csvService->import($fullPath, $filename);
 
-            if ($result['inserted'] === 0) {
+            $batchCreated = false;
+            $batchId = null;
+            $totalInserted = 0;
+            $totalSkipped = 0;
+            $fileSummaries = [];
+
+            // 1. Process each file
+            foreach ($files as $file) {
+                $originalName = $file->getClientOriginalName();
+                $filename = time() . '_' . $originalName; // unique stored name
+
+                // Store file
+                $path = $file->storeAs('imports/pegawai', $filename);
+                $fullPath = \Illuminate\Support\Facades\Storage::path($path);
+
+                // Sanitize the CSV first
+                $sanitizer->sanitize($fullPath);
+
+                // If this is the very first file being inserted, create the batch using the generic import()
+                if (!$batchCreated) {
+                    $result = $csvService->import($fullPath, $sharedFilename);
+                    $batchId = $result['batch_id'];
+                    $batchCreated = true;
+                } else {
+                    // Subsequent files append to the same batch and use the same $sharedFilename
+                    $result = $csvService->importIntoSharedBatch($fullPath, $sharedFilename, $batchId);
+                }
+
+                $totalInserted += $result['inserted'];
+                $totalSkipped += $result['skipped'];
+
+                $fileSummaries[] = [
+                    'filename' => $originalName,
+                    'inserted' => $result['inserted'],
+                    'skipped' => $result['skipped']
+                ];
+            }
+
+            if ($totalInserted === 0) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada data yang berhasil diimport. Periksa format file, pastikan menggunakan delimiter pipa (|) dan berisi data minimal 1 baris selain header.',
-                    'skipped' => $result['skipped']
+                    'skipped' => $totalSkipped
                 ], 422);
             }
 
-            // Reference to total records needed for the response
-            $recordCount = $result['inserted'];
-            $batchId = $result['batch_id'] ?? null;
+            $recordCount = $totalInserted;
+            $filename = $sharedFilename; // Diff service runs based on this shared name
 
-            // DIFF ANALYSIS START
+            // DIFFERENCE ANALYSIS START
             $diffService = new \App\Services\PegawaiDiffService();
             $stagingRows = StgPegawaiImport::where('source_file', $filename)->get();
             $counts = ['new' => 0, 'changed' => 0, 'unchanged' => 0];
@@ -308,18 +336,19 @@ class PegawaiImportController extends Controller
 
                 $batch = \App\Models\ImportBatch::find($batchId);
                 if ($batch) {
+                    $status = ($invalid > 0 && $valid == 0) ? 'failed' : (($invalid > 0) ? 'partial' : 'ready');
                     $batch->update([
                         'total_rows' => $total,
                         'valid_rows' => $valid,
                         'invalid_rows' => $invalid,
-                        'status' => $invalid > 0 ? 'failed' : 'ready'
+                        'status' => $status
                     ]);
 
                     $batchSummary = [
                         'total' => $total,
                         'valid' => $valid,
                         'invalid' => $invalid,
-                        'status' => $invalid > 0 ? 'failed' : 'ready'
+                        'status' => $status
                     ];
                 }
             }
@@ -407,8 +436,10 @@ class PegawaiImportController extends Controller
         $anomalies = tap(StgPegawaiImport::where('source_file', $filename)
             ->where('is_anomali', true)
             ->select('id', 'pns_id', 'nama', 'nip_baru', 'catatan_anomali')
-            ->paginate(15))->map(function ($q) { return $q; });
-            
+            ->paginate(15))->map(function ($q) {
+                return $q;
+            });
+
         return response()->json($anomalies);
     }
 
@@ -497,15 +528,66 @@ class PegawaiImportController extends Controller
     }
 
     /**
+     * Preview sync to show how many will be added/updated/deleted
+     */
+    public function syncPreview(Request $request, $filename)
+    {
+        $count = StgPegawaiImport::where('source_file', $filename)->count();
+        if ($count == 0) {
+            return response()->json(['success' => false, 'message' => 'File tidak ditemukan'], 404);
+        }
+
+        $diffService = new \App\Services\PegawaiDiffService();
+        $toBeDeleted = $diffService->getToBeDeletedPegawai($filename);
+
+        $totalDb = Pegawai::count();
+        $summary = StgPegawaiImport::where('source_file', $filename)
+            ->selectRaw('sync_status, COUNT(*) as total')
+            ->groupBy('sync_status')
+            ->pluck('total', 'sync_status');
+
+        $toAdd = $summary['new'] ?? 0;
+        $toUpdate = $summary['changed'] ?? 0;
+        $unchanged = $summary['unchanged'] ?? 0;
+        $totalImport = $toAdd + $toUpdate + $unchanged;
+
+        // Map the deleted employees for preview
+        $deletedPreview = $toBeDeleted->map(function ($pegawai) {
+            return [
+                'id' => $pegawai->id,
+                'nama' => $pegawai->nama_lengkap,
+                'nip_baru' => $pegawai->nip_baru,
+                'jabatan' => $pegawai->jabatan ? $pegawai->jabatan->nama : '-',
+                'unor' => $pegawai->unor ? $pegawai->unor->nama : '-',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'summary' => [
+                'total_db' => $totalDb,
+                'total_import' => $totalImport,
+                'to_add' => $toAdd,
+                'to_update' => $toUpdate,
+                'unchanged' => $unchanged,
+                'to_delete' => $toBeDeleted->count(),
+            ],
+            'to_be_deleted' => $deletedPreview
+        ]);
+    }
+
+    /**
      * Confirm synchronization
      */
     public function confirmSync(Request $request)
     {
         $request->validate([
             'filename' => 'required|string',
+            'delete_removed' => 'nullable|boolean'
         ]);
 
         $filename = $request->input('filename');
+        $deleteRemoved = $request->boolean('delete_removed', false);
 
         // Check if file exists in staging
         $count = StgPegawaiImport::where('source_file', $filename)->count();
@@ -513,11 +595,43 @@ class PegawaiImportController extends Controller
             return response()->json(['success' => false, 'message' => 'File tidak ditemukan'], 404);
         }
 
-        ProcessPegawaiImport::dispatch($filename);
+        ProcessPegawaiImport::dispatch($filename, $deleteRemoved);
 
         return response()->json([
             'success' => true,
             'message' => 'Sinkronisasi sedang berjalan di background',
+        ]);
+    }
+
+    /**
+     * Cancel an import batch containing staged data
+     */
+    public function cancelImport(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'filename' => 'required|string'
+        ]);
+
+        $filename = $request->input('filename');
+
+        $batch = \App\Models\ImportBatch::where('source_file', $filename)
+            ->whereIn('status', ['uploaded', 'ready', 'partial', 'failed'])
+            ->first();
+
+        if (!$batch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batch tidak ditemukan atau sudah diproses.'
+            ], 404);
+        }
+
+        // Hapus staging records & batch
+        StgPegawaiImport::where('batch_id', $batch->id)->delete();
+        $batch->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Import \"{$filename}\" berhasil dibatalkan."
         ]);
     }
 
@@ -584,11 +698,12 @@ class PegawaiImportController extends Controller
 
         $batch = \App\Models\ImportBatch::find($batchId);
         if ($batch) {
+            $status = ($invalid > 0 && $valid == 0) ? 'failed' : (($invalid > 0) ? 'partial' : 'ready');
             $batch->update([
                 'total_rows' => $total,
                 'valid_rows' => $valid,
                 'invalid_rows' => $invalid,
-                'status' => $invalid > 0 ? 'failed' : 'ready'
+                'status' => $status
             ]);
 
             return response()->json([
@@ -598,7 +713,7 @@ class PegawaiImportController extends Controller
                     'total' => $total,
                     'valid' => $valid,
                     'invalid' => $invalid,
-                    'status' => $invalid > 0 ? 'failed' : 'ready'
+                    'status' => $status
                 ]
             ]);
         }

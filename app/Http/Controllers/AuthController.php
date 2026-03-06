@@ -17,10 +17,18 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|min:8',
         ]);
 
+        // Rate limiting: max 5 attempts per minute per IP
+        $key = 'login_attempts_' . $request->ip();
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+            return back()->with('error', "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.");
+        }
+
         if (Auth::attempt($credentials)) {
+            \Illuminate\Support\Facades\RateLimiter::clear($key);
             $request->session()->regenerate();
 
             // Clear NIP to force re-verification for new chat session
@@ -28,6 +36,8 @@ class AuthController extends Controller
 
             return redirect()->intended('/')->with('success', 'Login berhasil!');
         }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($key, 60); // 60 second decay
 
         return back()->with('error', 'Login gagal! Periksa email dan password.');
     }

@@ -169,4 +169,33 @@ class PegawaiDiffService
 
         return $value;
     }
+
+    /**
+     * Get list of employees that exist in DB but are not in the current import staging
+     * 
+     * @param string $filename The source filename
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getToBeDeletedPegawai($filename)
+    {
+        // Get all PNS IDs from the import file that are valid (not null)
+        $importedPnsIds = DB::table('stg_pegawai_import')
+            ->where('source_file', $filename)
+            ->whereNotNull('pns_id')
+            ->pluck('pns_id')
+            ->toArray();
+
+        if (empty($importedPnsIds)) {
+            return collect([]);
+        }
+
+        // Get employees from main table that:
+        // 1. Have a valid PNS ID
+        // 2. Are not in the imported list
+        // 3. Are not already soft deleted (handled by Eloquent automatically)
+        return Pegawai::whereNotNull('pns_id')
+            ->whereNotIn('pns_id', $importedPnsIds)
+            ->with(['jabatan', 'unor'])
+            ->get();
+    }
 }

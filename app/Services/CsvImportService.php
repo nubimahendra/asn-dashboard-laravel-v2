@@ -124,6 +124,47 @@ class CsvImportService
         ]);
         $batchId = $batch->id;
 
+        $result = $this->processCsvLines($handle, $filename, $batchId, $this->expectedColumns);
+
+        // Append the created batch_id for the controller
+        $result['batch_id'] = $batchId;
+
+        return $result;
+    }
+
+    /**
+     * Parse the CSV file and load it into an EXISTING staging batch.
+     * 
+     * @param string $path Absolute path to the CSV file
+     * @param string $sharedFilename Shared source filename (e.g., timestamp_merged)
+     * @param int $batchId The existing ImportBatch ID
+     * @param int $expectedCols Optional, override expected column count
+     * @return array Array containing counts of 'inserted' and 'skipped'
+     */
+    public function importIntoSharedBatch(string $path, string $sharedFilename, int $batchId, int $expectedCols = 67): array
+    {
+        $handle = fopen($path, 'r');
+
+        if (!$handle) {
+            throw new \Exception("Cannot open CSV file: {$path}");
+        }
+
+        return $this->processCsvLines($handle, $sharedFilename, $batchId, $expectedCols);
+    }
+
+    /**
+     * Core logic to read lines and insert into DB.
+     * extracted to allow reuse across single and multi-file imports.
+     */
+    protected function processCsvLines($handle, string $filename, int $batchId, int $expectedCols): array
+    {
+        $rowNumber = 0;
+        $inserted = 0;
+        $skipped = 0;
+        $batchData = [];
+        $batchSize = 250;
+        $now = now();
+
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle, 0, '|', '"', "\\")) !== false) {
@@ -131,16 +172,16 @@ class CsvImportService
 
                 // 1. Header Validation (Row 1)
                 if ($rowNumber === 1) {
-                    if (count($row) !== $this->expectedColumns) {
+                    if (count($row) !== $expectedCols) {
                         fclose($handle);
                         DB::rollBack();
-                        throw new \Exception("Header column mismatch. Expected {$this->expectedColumns} columns, got " . count($row) . ". Ensure the file is pipe-delimited (|).");
+                        throw new \Exception("Header column mismatch. Expected {$expectedCols} columns, got " . count($row) . ". Ensure the file is pipe-delimited (|).");
                     }
                     continue; // Skip the header row
                 }
 
                 // 2. Column Count Validation (Data Rows)
-                if (count($row) !== $this->expectedColumns) {
+                if (count($row) !== $expectedCols) {
                     Log::warning("Row {$rowNumber} invalid column count: " . count($row), [
                         'file' => $filename,
                         'excerpt' => array_slice($row, 0, 3)

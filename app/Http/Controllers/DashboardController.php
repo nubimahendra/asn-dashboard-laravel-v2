@@ -153,49 +153,19 @@ class DashboardController extends Controller
         // Then sort them properly by parsing their values, or just let string sort handle it (or use custom sort if string sort isn't enough, but usually string sort keys is fine, or we can just sortDesc to show the highest populated).
         $dataGolongan = (clone $query)
             ->whereHas('golongan')
-            ->with('golongan')
+            ->with(['golongan', 'kedudukanHukum'])
             ->get()
             ->groupBy(function ($item) {
-                // Hardcode specific grouping request for III/a
+                // Konversi golongan untuk PPPK Aktif otomatis dibantu Accessor model Pegawai
+                $namaGolongan = $item->golongan_pppk ?? 'Tidak Diketahui';
+
+                // Hardcode specific grouping request for III/a (jika ada pengecualian ID custom)
                 if (in_array($item->golongan_id, ['19.8', '21.9'])) {
                     $namaGolongan = 'III/a';
-                } else {
-                    $namaGolongan = trim($item->golongan->nama ?? 'Tidak Diketahui');
                 }
 
                 if (empty($namaGolongan)) {
                     $namaGolongan = 'Tidak Diketahui';
-                }
-
-                // Konversi golongan untuk PPPK Aktif (ID 71)
-                $isPppkAktif = false;
-                if (isset($item->kedudukan_hukum_id) && $item->kedudukan_hukum_id == 71) {
-                    $isPppkAktif = true;
-                } elseif (isset($item->kedudukan_hukum->nama) && strtolower(trim($item->kedudukan_hukum->nama)) == 'pppk aktif') {
-                    $isPppkAktif = true;
-                }
-
-                if ($isPppkAktif) {
-                    switch ($namaGolongan) {
-                        case 'I':
-                            $namaGolongan = 'I';
-                            break;
-                        case 'V':
-                            $namaGolongan = 'V';
-                            break;
-                        case 'II/c':
-                            $namaGolongan = 'VII';
-                            break;
-                        case 'III/a':
-                            $namaGolongan = 'IX';
-                            break;
-                        case 'III/b':
-                            $namaGolongan = 'X';
-                            break;
-                        case 'III/c':
-                            $namaGolongan = 'XI';
-                            break;
-                    }
                 }
 
                 return $namaGolongan;

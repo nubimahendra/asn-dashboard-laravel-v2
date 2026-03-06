@@ -73,7 +73,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/diff-summary/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffSummary'])->name('diff-summary');
                 Route::get('/diff-details/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'diffDetails'])->name('diff-details');
                 Route::get('/anomaly-details/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'anomalyDetails'])->name('anomaly-details');
+                Route::get('/sync-preview/{filename}', [\App\Http\Controllers\PegawaiImportController::class, 'syncPreview'])->name('sync-preview');
                 Route::post('/sync-confirm', [\App\Http\Controllers\PegawaiImportController::class, 'confirmSync'])->name('confirm-sync');
+                Route::delete('/cancel', [\App\Http\Controllers\PegawaiImportController::class, 'cancelImport'])->name('cancel');
 
                 // Batch Validation Routes
                 Route::get('/batch/{batchId}/errors', [\App\Http\Controllers\PegawaiImportController::class, 'downloadErrors'])->name('batch.errors');
