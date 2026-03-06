@@ -81,6 +81,23 @@ class JabatanMappingController extends Controller
 
         foreach ($siasnList as $siasn) {
             $searchName = strtolower(trim($siasn->nama));
+
+            // Jika jabatan adalah Sekretaris, tambahkan nama unor untuk meningkatkan akurasi mapping
+            if (str_starts_with($searchName, 'sekretaris')) {
+                $pegawai = \App\Models\Pegawai::with('unor')
+                    ->where('jabatan_id', $siasn->id)
+                    ->first();
+                
+                if ($pegawai && $pegawai->unor) {
+                    $unorName = trim($pegawai->unor->nama);
+                    $firstWord = explode(' ', $unorName)[0];
+                    if (strtolower($firstWord) === 'sekretariat' && stripos($unorName, 'dprd') !== false) {
+                        $firstWord = 'Dewan';
+                    }
+                    $searchName .= ' ' . strtolower($firstWord);
+                }
+            }
+
             $bestMatch = null;
             $highestSimilarity = -1;
 
@@ -95,9 +112,14 @@ class JabatanMappingController extends Controller
             }
 
             if ($bestMatch && $highestSimilarity >= 20) { // suggest if similarity >= 20%
+                $displayNama = $siasn->nama;
+                if (str_starts_with(strtolower(trim($siasn->nama)), 'sekretaris')) {
+                    $displayNama = ucwords($searchName);
+                }
+
                 $suggestions[] = [
                     'siasn_id' => $siasn->id,
-                    'siasn_nama' => $siasn->nama,
+                    'siasn_nama' => $displayNama,
                     'perbup_id' => $bestMatch->id,
                     'perbup_nama' => $bestMatch->nama_opd_perbup . ' - ' . $bestMatch->nama_jabatan_perbup . ' (Kelas ' . $bestMatch->kelas_jabatan . ')',
                     'similarity' => round($highestSimilarity, 2),
@@ -158,6 +180,22 @@ class JabatanMappingController extends Controller
         }
 
         $searchName = strtolower(trim($jabatanSiasn->nama));
+
+        // Jika jabatan adalah Sekretaris, tambahkan nama unor
+        if (str_starts_with($searchName, 'sekretaris')) {
+            $pegawai = \App\Models\Pegawai::with('unor')
+                ->where('jabatan_id', $jabatanSiasn->id)
+                ->first();
+            
+            if ($pegawai && $pegawai->unor) {
+                $unorName = trim($pegawai->unor->nama);
+                $firstWord = explode(' ', $unorName)[0];
+                if (strtolower($firstWord) === 'sekretariat' && stripos($unorName, 'dprd') !== false) {
+                    $firstWord = 'Dewan';
+                }
+                $searchName .= ' ' . strtolower($firstWord);
+            }
+        }
 
         $perbups = RefKelasPerbup::all();
         $bestMatch = null;
