@@ -77,14 +77,14 @@ class ProcessPegawaiImport implements ShouldQueue
 
         // Handle soft-delete if requested
         if ($this->deleteRemoved) {
-            $importedPnsIds = StgPegawaiImport::where('source_file', $this->sourceFile)
-                ->whereNotNull('pns_id')
-                ->pluck('pns_id')
+            $importedNips = StgPegawaiImport::where('source_file', $this->sourceFile)
+                ->whereNotNull('nip_baru')
+                ->pluck('nip_baru')
                 ->toArray();
 
-            if (!empty($importedPnsIds)) {
-                $deletedCount = \App\Models\Pegawai::whereNotNull('pns_id')
-                    ->whereNotIn('pns_id', $importedPnsIds)
+            if (!empty($importedNips)) {
+                $deletedCount = \App\Models\Pegawai::whereNotNull('nip_baru')
+                    ->whereNotIn('nip_baru', $importedNips)
                     ->delete(); // Soft delete
 
                 Log::info("Soft-deleted {$deletedCount} pegawai not found in import file {$this->sourceFile}");

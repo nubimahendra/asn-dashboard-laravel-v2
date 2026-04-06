@@ -149,6 +149,64 @@
                     </div>
                 </div>
 
+                <div class="mt-4 mb-4 p-4 border border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800 rounded-lg">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="delete-removed-checkbox" class="mt-1 w-4 h-4 text-orange-600 border-orange-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                        <div>
+                            <span class="font-semibold text-orange-800 dark:text-orange-300">Hapus pegawai yang tidak ditemukan dalam file import ini</span>
+                            <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">Cocok untuk pegawai yang sudah pensiun, meninggal, atau tidak aktif lagi. Data tidak dihapus permanen (soft-delete).</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="delete-preview-section" class="mb-4 hidden border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 p-3 rounded mb-4 flex items-start gap-2">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>Pegawai berikut akan di-nonaktifkan dari sistem (soft-delete). Data tidak hilang permanen dan dapat dipulihkan jika diperlukan.</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded text-center">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Total di DB</div>
+                            <div class="font-bold text-gray-700 dark:text-gray-200" id="del-total-db">0</div>
+                        </div>
+                        <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-center">
+                            <div class="text-xs text-blue-500 dark:text-blue-400">Di File Import</div>
+                            <div class="font-bold text-blue-700 dark:text-blue-300" id="del-total-import">0</div>
+                        </div>
+                        <div class="bg-green-50 dark:bg-green-900/30 p-3 rounded text-center">
+                            <div class="text-xs text-green-500 dark:text-green-400">Akan Ditambah</div>
+                            <div class="font-bold text-green-700 dark:text-green-300" id="del-to-add">0</div>
+                        </div>
+                        <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded text-center">
+                            <div class="text-xs text-yellow-500 dark:text-yellow-400">Akan Diupdate</div>
+                            <div class="font-bold text-yellow-700 dark:text-yellow-300" id="del-to-update">0</div>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 p-3 rounded text-center">
+                            <div class="text-xs text-red-600 dark:text-red-400 font-semibold">Akan Dihapus</div>
+                            <div class="font-bold text-red-700 dark:text-red-300 text-lg" id="del-to-delete">0</div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-medium uppercase">No</th>
+                                    <th class="px-3 py-2 text-left font-medium uppercase">Nama</th>
+                                    <th class="px-3 py-2 text-left font-medium uppercase">NIP</th>
+                                    <th class="px-3 py-2 text-left font-medium uppercase">Jabatan</th>
+                                    <th class="px-3 py-2 text-left font-medium uppercase">Unit Kerja</th>
+                                </tr>
+                            </thead>
+                            <tbody id="delete-preview-body" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="delete-preview-pagination" class="mt-3 flex justify-between items-center text-xs dark:text-gray-400">
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button id="confirm-sync-btn"
                         class="flex-1 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
@@ -290,11 +348,13 @@
         const showDetailsBtn = document.getElementById('show-details-btn');
         const diffDetailsContainer = document.getElementById('diff-details-container');
         const diffDetailsBody = document.getElementById('diff-details-body');
-        const loadMoreDetailsBtn = document.getElementById('load-more-details-btn');
 
         let currentUploadFilename = null;
         let detailsPage = 1;
         let currentHistoryPage = 1;
+        let deletePreviewData = [];
+        let currentDeletePage = 1;
+        const deletePerPage = 15;
 
         // Setup Drop Zones
         function setupDropZone(dropId, inputId, labelId) {
@@ -481,6 +541,101 @@
                 confirmSyncBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 confirmSyncBtn.title = "";
             }
+            
+            // Toggle check delete preview if checkbox is checked
+            const deleteCb = document.getElementById('delete-removed-checkbox');
+            if (deleteCb.checked) {
+                loadDeletePreview(currentUploadFilename);
+            }
+        }
+
+        // Delete Preview Handlers
+        document.getElementById('delete-removed-checkbox').addEventListener('change', function() {
+            const section = document.getElementById('delete-preview-section');
+            if (this.checked) {
+                if (currentUploadFilename) {
+                    loadDeletePreview(currentUploadFilename);
+                }
+            } else {
+                section.classList.add('hidden');
+                
+                // Keep Confirm button disabled if we uncheck and there are 0 changes
+                const isDiffZero = countNew.textContent === '0' && countChanged.textContent === '0';
+                if (isDiffZero && document.getElementById('batch-status-badge')?.textContent !== 'FAILED') {
+                    confirmSyncBtn.disabled = true;
+                    confirmSyncBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        });
+
+        async function loadDeletePreview(filename) {
+            try {
+                document.getElementById('delete-preview-section').classList.remove('hidden');
+                document.getElementById('delete-preview-body').innerHTML = '<tr><td colspan="5" class="py-4 text-center">Memuat data...</td></tr>';
+                
+                const response = await fetch(`{{ url('sync-data/sync-preview') }}/${filename}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                
+                document.getElementById('del-total-db').textContent = data.total_in_db;
+                document.getElementById('del-total-import').textContent = data.total_in_import;
+                document.getElementById('del-to-add').textContent = data.to_add;
+                document.getElementById('del-to-update').textContent = data.to_update;
+                document.getElementById('del-to-delete').textContent = data.to_delete;
+                
+                deletePreviewData = data.preview_deletions || [];
+                currentDeletePage = 1;
+                renderDeleteTable();
+
+                // If check box is checked and we are deleting, ensure submit is enabled
+                if (data.to_delete > 0 && document.getElementById('batch-status-badge')?.textContent !== 'FAILED') {
+                    confirmSyncBtn.disabled = false;
+                    confirmSyncBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('delete-preview-body').innerHTML = '<tr><td colspan="5" class="py-4 text-center text-red-500">Gagal memuat preview data</td></tr>';
+            }
+        }
+        
+        function renderDeleteTable() {
+            const tbody = document.getElementById('delete-preview-body');
+            const total = deletePreviewData.length;
+            
+            if (total === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center">Tidak ada pegawai yang akan dihapus</td></tr>';
+                document.getElementById('delete-preview-pagination').innerHTML = '';
+                return;
+            }
+            
+            const start = (currentDeletePage - 1) * deletePerPage;
+            const end = Math.min(start + deletePerPage, total);
+            const pageData = deletePreviewData.slice(start, end);
+            
+            tbody.innerHTML = pageData.map((item, index) => `
+                <tr class="hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <td class="px-3 py-2">${start + index + 1}</td>
+                    <td class="px-3 py-2 font-medium">${item.nama || '-'}</td>
+                    <td class="px-3 py-2">${item.nip_baru || '-'}</td>
+                    <td class="px-3 py-2 text-gray-500 dark:text-gray-400">${item.jabatan || '-'}</td>
+                    <td class="px-3 py-2 text-gray-500 dark:text-gray-400">${item.unor_nama || '-'}</td>
+                </tr>
+            `).join('');
+            
+            const totalPages = Math.ceil(total / deletePerPage);
+            
+            let btnHtml = `<div class="text-gray-500 dark:text-gray-400">Menampilkan ${start + 1}-${end} dari ${total} pegawai</div><div class="space-x-1">`;
+            btnHtml += `<button type="button" ${currentDeletePage === 1 ? 'disabled class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded"' : 'class="px-2 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded" onclick="changeDeletePage(-1)"'}>Prev</button>`;
+            btnHtml += `<button type="button" ${currentDeletePage === totalPages ? 'disabled class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded"' : 'class="px-2 py-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded" onclick="changeDeletePage(1)"'}>Next</button>`;
+            btnHtml += `</div>`;
+            
+            document.getElementById('delete-preview-pagination').innerHTML = btnHtml;
+        }
+
+        function changeDeletePage(delta) {
+            currentDeletePage += delta;
+            renderDeleteTable();
         }
 
         let currentBatchId = null;
@@ -610,7 +765,6 @@
 
                 if (data.data.length === 0) {
                     if (reset) diffDetailsBody.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-gray-500">Tidak ada detail perubahan yang ditampilkan.</td></tr>';
-                    loadMoreDetailsBtn.classList.add('hidden');
                     return;
                 }
 
@@ -649,11 +803,18 @@
                 });
 
                 // Handle pagination
+                const existingLoadMore = document.getElementById('dynamic-load-more-tr');
+                if (existingLoadMore) existingLoadMore.remove();
+
                 if (data.next_page_url) {
-                    loadMoreDetailsBtn.classList.remove('hidden');
-                    loadMoreDetailsBtn.onclick = () => loadDiffDetails(page + 1, false);
-                } else {
-                    loadMoreDetailsBtn.classList.add('hidden');
+                    const loadMoreRow = `
+                        <tr id="dynamic-load-more-tr">
+                            <td colspan="3" class="px-4 py-3 text-center bg-gray-50 dark:bg-gray-800">
+                                <button type="button" onclick="loadDiffDetails(${page + 1}, false)" class="text-blue-500 hover:text-blue-700 font-medium text-sm">Muat Lebih Banyak...</button>
+                            </td>
+                        </tr>
+                    `;
+                    diffDetailsBody.insertAdjacentHTML('beforeend', loadMoreRow);
                 }
 
             } catch (error) {
@@ -676,7 +837,10 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ filename: currentUploadFilename })
+                    body: JSON.stringify({ 
+                        filename: currentUploadFilename,
+                        delete_removed: document.getElementById('delete-removed-checkbox').checked
+                    })
                 });
 
                 const data = await response.json();
@@ -781,6 +945,7 @@
                 'Menunggu': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300">Menunggu</span>',
                 'Diproses': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">Diproses</span>',
                 'Selesai': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">Selesai</span>',
+                'Sebagian': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300">Sebagian</span>',
                 'Gagal': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">Gagal</span>'
             };
             return badges[status] || status;

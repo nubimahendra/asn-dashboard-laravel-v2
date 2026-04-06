@@ -398,11 +398,13 @@ class PegawaiImportController extends Controller
             ->paginate(5);
 
         $imports->getCollection()->transform(function ($import) {
-            $totalErrors = $import->processing_error_rows + $import->import_error_rows;
+            $totalErrors = $import->processing_error_rows;
 
             $status = 'Menunggu';
-            if ($totalErrors > 0) {
+            if ($totalErrors > 0 && $import->processed_rows == 0) {
                 $status = 'Gagal';
+            } elseif ($totalErrors > 0 && $import->processed_rows > 0) {
+                $status = 'Sebagian';
             } elseif ($import->processed_rows == $import->total_rows) {
                 $status = 'Selesai';
             } elseif ($import->processed_rows > 0) {
@@ -459,8 +461,10 @@ class PegawaiImportController extends Controller
         }
 
         $status = 'Menunggu';
-        if ($import->error_rows > 0) {
+        if ($import->error_rows > 0 && $import->processed_rows == 0) {
             $status = 'Gagal';
+        } elseif ($import->error_rows > 0 && $import->processed_rows > 0) {
+            $status = 'Sebagian';
         } elseif ($import->processed_rows == $import->total_rows) {
             $status = 'Selesai';
         } elseif ($import->processed_rows > 0) {
@@ -558,21 +562,19 @@ class PegawaiImportController extends Controller
                 'nama' => $pegawai->nama_lengkap,
                 'nip_baru' => $pegawai->nip_baru,
                 'jabatan' => $pegawai->jabatan ? $pegawai->jabatan->nama : '-',
-                'unor' => $pegawai->unor ? $pegawai->unor->nama : '-',
+                'unor_nama' => $pegawai->unor ? $pegawai->unor->nama : '-',
             ];
         });
 
         return response()->json([
             'success' => true,
-            'summary' => [
-                'total_db' => $totalDb,
-                'total_import' => $totalImport,
-                'to_add' => $toAdd,
-                'to_update' => $toUpdate,
-                'unchanged' => $unchanged,
-                'to_delete' => $toBeDeleted->count(),
-            ],
-            'to_be_deleted' => $deletedPreview
+            'total_in_db' => $totalDb,
+            'total_in_import' => $totalImport,
+            'to_add' => $toAdd,
+            'to_update' => $toUpdate,
+            'unchanged' => $unchanged,
+            'to_delete' => $toBeDeleted->count(),
+            'preview_deletions' => $deletedPreview
         ]);
     }
 

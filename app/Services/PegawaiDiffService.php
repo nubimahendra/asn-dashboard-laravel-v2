@@ -178,23 +178,23 @@ class PegawaiDiffService
      */
     public function getToBeDeletedPegawai($filename)
     {
-        // Get all PNS IDs from the import file that are valid (not null)
-        $importedPnsIds = DB::table('stg_pegawai_import')
+        // Get all NIPs from the import file that are valid (not null)
+        $importedNips = DB::table('stg_pegawai_import')
             ->where('source_file', $filename)
-            ->whereNotNull('pns_id')
-            ->pluck('pns_id')
+            ->whereNotNull('nip_baru')
+            ->pluck('nip_baru')
             ->toArray();
 
-        if (empty($importedPnsIds)) {
+        if (empty($importedNips)) {
             return collect([]);
         }
 
         // Get employees from main table that:
-        // 1. Have a valid PNS ID
+        // 1. Have a valid NIP
         // 2. Are not in the imported list
         // 3. Are not already soft deleted (handled by Eloquent automatically)
-        return Pegawai::whereNotNull('pns_id')
-            ->whereNotIn('pns_id', $importedPnsIds)
+        return Pegawai::whereNotNull('nip_baru')
+            ->whereNotIn('nip_baru', $importedNips)
             ->with(['jabatan', 'unor'])
             ->get();
     }

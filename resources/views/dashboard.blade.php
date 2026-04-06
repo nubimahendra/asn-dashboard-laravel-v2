@@ -119,6 +119,14 @@
                 <div id="chart-sts-peg"></div>
             </div>
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Kedudukan Hukum</h3>
+                <div id="chart-kedudukan-hukum"></div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Jenis Jabatan Pegawai</h3>
+                <div id="chart-jenis-jabatan"></div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Pegawai per Pendidikan</h3>
                 <div id="chart-pendidikan"></div>
             </div>
@@ -175,6 +183,12 @@
         var optionsStsPeg = { series: @json($chartStsPeg['series']), labels: @json($chartStsPeg['labels']), chart: { type: 'pie', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, colors: ['#10B981', '#8B5CF6', '#F59E0B', '#0EA5E9'], legend: { position: 'right', formatter: function (seriesName, opts) { return seriesName + ": " + opts.w.globals.series[opts.seriesIndex] } } };
         chartInstances.stsPeg = new ApexCharts(document.querySelector("#chart-sts-peg"), optionsStsPeg);
         chartInstances.stsPeg.render();
+        var optionsKedudukan = { series: @json($chartKedudukanHukum['series']), labels: @json($chartKedudukanHukum['labels']), chart: { type: 'pie', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, colors: ['#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#64748B'], legend: { position: 'right', formatter: function (seriesName, opts) { return seriesName + ": " + opts.w.globals.series[opts.seriesIndex] } } };
+        chartInstances.kedudukanHukum = new ApexCharts(document.querySelector("#chart-kedudukan-hukum"), optionsKedudukan);
+        chartInstances.kedudukanHukum.render();
+        var optionsJenisJabatan = { series: @json($chartJenisJabatan['series']), labels: @json($chartJenisJabatan['labels']), chart: { type: 'pie', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, colors: ['#6366F1', '#EC4899', '#14B8A6'], legend: { position: 'right', formatter: function (seriesName, opts) { return seriesName + ": " + opts.w.globals.series[opts.seriesIndex] } } };
+        chartInstances.jenisJabatan = new ApexCharts(document.querySelector("#chart-jenis-jabatan"), optionsJenisJabatan);
+        chartInstances.jenisJabatan.render();
         var optionsPendidikan = { series: [{ name: 'Jumlah', data: @json($chartPendidikan['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartPendidikan['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: true } }, colors: ['#10B981'] };
         chartInstances.pendidikan = new ApexCharts(document.querySelector("#chart-pendidikan"), optionsPendidikan);
         chartInstances.pendidikan.render();

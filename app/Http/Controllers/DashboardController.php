@@ -50,21 +50,48 @@ class DashboardController extends Controller
         // Status pegawai kombinasi kedudukan_hukum_id dan status_cpns_pns
         // PNS: kedudukan_hukum_id IN (1,2,3,4,15) AND status_cpns_pns = 'P'
         $totalPns = (clone $query)
-            ->whereIn('kedudukan_hukum_id', [1, 2, 3, 4, 15])
             ->where('status_cpns_pns', 'P')
+            ->where(function ($q) {
+                $q->whereIn('kedudukan_hukum_id', ['01', '02', '03', '04', '15'])
+                  ->orWhereNull('kedudukan_hukum_id');
+            })
             ->count();
 
         // CPNS: kedudukan_hukum_id IN (1,2,3,4,15) AND status_cpns_pns = 'C'
         $totalCpns = (clone $query)
-            ->whereIn('kedudukan_hukum_id', [1, 2, 3, 4, 15])
             ->where('status_cpns_pns', 'C')
+            ->where(function ($q) {
+                $q->whereIn('kedudukan_hukum_id', ['01', '02', '03', '04', '15'])
+                  ->orWhereNull('kedudukan_hukum_id');
+            })
             ->count();
 
         // PPPK: kedudukan_hukum_id IN (71, 73)
-        $totalPppk = (clone $query)->whereIn('kedudukan_hukum_id', [71, 73])->count();
+        $totalPppk = (clone $query)
+            ->where(function ($q) {
+                $q->whereIn('kedudukan_hukum_id', ['71', '73'])
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('kedudukan_hukum_id')
+                         ->whereHas('jenisPegawai', function ($q3) {
+                             $q3->where('nama', 'like', '%PPPK%')
+                                ->where('nama', 'not like', '%Paruh%');
+                         });
+                  });
+            })
+            ->count();
 
         // PPPK PW: kedudukan_hukum_id = 101
-        $totalPppkPw = (clone $query)->where('kedudukan_hukum_id', 101)->count();
+        $totalPppkPw = (clone $query)
+            ->where(function ($q) {
+                $q->where('kedudukan_hukum_id', '101')
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('kedudukan_hukum_id')
+                         ->whereHas('jenisPegawai', function ($q3) {
+                             $q3->where('nama', 'like', '%Paruh%');
+                         });
+                  });
+            })
+            ->count();
 
         // 2. Charts Data
 
@@ -251,6 +278,66 @@ class DashboardController extends Controller
             'series' => array_values($statsGenerasi),
         ];
 
+        // Chart 8: Kedudukan Hukum (Pie) - Pool PNS/CPNS aktif
+        $kdLabels = [
+            '01' => 'Aktif',
+            '02' => 'CLTN',
+            '03' => 'Tugas Belajar',
+            '04' => 'Pemberhentian Sementara',
+            '15' => 'Hukuman Disiplin',
+        ];
+        
+        $dataKedudukanHukum = collect();
+        foreach ($kdLabels as $id => $label) {
+            $count = (clone $query)
+                ->whereIn('status_cpns_pns', ['P', 'C'])
+                ->where('kedudukan_hukum_id', $id)
+                ->count();
+            if ($count > 0) {
+                $dataKedudukanHukum->put($label, $count);
+            }
+        }
+        
+        $countBlank = (clone $query)
+            ->whereIn('status_cpns_pns', ['P', 'C'])
+            ->whereNull('kedudukan_hukum_id')
+            ->count();
+        if ($countBlank > 0) {
+            $dataKedudukanHukum->put('Tidak Terdaftar', $countBlank);
+        }
+        
+        $chartKedudukanHukum = [
+            'labels' => $dataKedudukanHukum->keys()->toArray(),
+            'series' => $dataKedudukanHukum->values()->toArray(),
+        ];
+
+        // Chart 9: Jenis Jabatan Pegawai (Pie)
+        $allJenisJabatan = \App\Models\RefJenisJabatan::all()->keyBy('id');
+        $jjCategories = ['Struktural' => 0, 'Fungsional' => 0, 'Pelaksana' => 0];
+        
+        $jenisJabatanCounts = (clone $query)
+            ->whereNotNull('jenis_jabatan_id')
+            ->selectRaw('jenis_jabatan_id, COUNT(*) as total')
+            ->groupBy('jenis_jabatan_id')
+            ->pluck('total', 'jenis_jabatan_id');
+            
+        foreach ($jenisJabatanCounts as $jjId => $count) {
+            $nama = strtolower($allJenisJabatan[$jjId]->nama ?? '');
+            if (str_contains($nama, 'struktural')) {
+                $jjCategories['Struktural'] += $count;
+            } elseif (str_contains($nama, 'fungsional')) {
+                $jjCategories['Fungsional'] += $count;
+            } else {
+                $jjCategories['Pelaksana'] += $count;
+            }
+        }
+        
+        $jjCategories = array_filter($jjCategories, fn($v) => $v > 0);
+        $chartJenisJabatan = [
+            'labels' => array_keys($jjCategories),
+            'series' => array_values($jjCategories),
+        ];
+
         // 6. Paginated Table Data
         $pegawaiQuery = (clone $query)->select('pegawai.*');
 
@@ -284,10 +371,11 @@ class DashboardController extends Controller
             'chartStsPeg',
             'chartPendidikan',
             'chartEselon',
-            'chartEselon',
-            'chartOpd',
             'chartGolongan',
+            'chartOpd',
             'chartGenerasi',
+            'chartKedudukanHukum',
+            'chartJenisJabatan',
             'pegawai',
             'lastSync'
         ));

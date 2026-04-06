@@ -31,7 +31,7 @@
 
             <div class="flex gap-1">
                 <!-- Export Buttons -->
-                <a href="{{ route('snapshot.export.pdf', ['month' => $filterMonth]) }}"
+                <a href="{{ route('snapshot.export.pdf', ['month' => $filterMonth, 'search' => $search]) }}"
                     class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-1 shadow-sm"
                     style="background-color: #dc2626; color: white;">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@
                     </svg>
                     PDF
                 </a>
-                <a href="{{ route('snapshot.export.excel', ['month' => $filterMonth]) }}"
+                <a href="{{ route('snapshot.export.excel', ['month' => $filterMonth, 'search' => $search]) }}"
                     class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-1 shadow-sm"
                     style="background-color: #16a34a; color: white;">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

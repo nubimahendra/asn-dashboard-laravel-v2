@@ -8,6 +8,9 @@ use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Exports\SnapshotExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SnapshotController extends Controller
 {
@@ -140,16 +143,27 @@ class SnapshotController extends Controller
 
     public function downloadPdf(Request $request)
     {
-        // Placeholder for PDF generation
-        // In a real app, uses DomPDF or snappy
-        return back()->with('error', 'Fitur export PDF belum dikonfigurasi.');
+        $filterMonth = $request->input('month');
+        $search = $request->input('search');
+
+        // Use SnapshotExport to resolve data logic
+        $exporter = new SnapshotExport($filterMonth, $search);
+        $pegawai = $exporter->collection();
+
+        $pdf = Pdf::loadView('admin.snapshot.pdf', compact('pegawai', 'filterMonth'))
+                  ->setPaper('a4', 'landscape');
+                  
+        $filename = 'Snapshot_Pegawai_' . ($filterMonth ?? date('Y-m')) . '.pdf';
+        return $pdf->download($filename);
     }
 
     public function downloadExcel(Request $request)
     {
-        // Placeholder for Excel export
-        // In a real app, uses Laravel Excel
-        return back()->with('error', 'Fitur export Excel belum dikonfigurasi.');
+        $filterMonth = $request->input('month');
+        $search = $request->input('search');
+        $filename = 'Snapshot_Pegawai_' . ($filterMonth ?? date('Y-m')) . '.xlsx';
+        
+        return Excel::download(new SnapshotExport($filterMonth, $search), $filename);
     }
 
     public function store()
