@@ -77,7 +77,7 @@ class IuranKorpriController extends Controller
             ->pluck('nama');
 
         // Build pegawai query with relationships
-        $query = Pegawai::with(['golongan', 'unor']);
+        $query = Pegawai::aktif()->with(['golongan', 'unor']);
 
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {

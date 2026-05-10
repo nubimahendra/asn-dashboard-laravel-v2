@@ -14,6 +14,7 @@ class ImportBatch extends Model
         'total_rows',
         'valid_rows',
         'invalid_rows',
+        'deactivated_count',
         'status',
     ];
 

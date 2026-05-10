@@ -22,7 +22,7 @@ class DashboardController extends Controller
             ->orderBy('nama')
             ->pluck('nama');
 
-        $query = Pegawai::with([
+        $query = Pegawai::aktif()->with([
             'golongan',
             'jabatan',
             'tingkatPendidikan',
@@ -66,31 +66,14 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // PPPK: kedudukan_hukum_id IN (71, 73)
+        // PPPK: kedudukan_hukum_id IN (71, 73) — tanpa fallback NULL/jenisPegawai
         $totalPppk = (clone $query)
-            ->where(function ($q) {
-                $q->whereIn('kedudukan_hukum_id', ['71', '73'])
-                  ->orWhere(function ($q2) {
-                      $q2->whereNull('kedudukan_hukum_id')
-                         ->whereHas('jenisPegawai', function ($q3) {
-                             $q3->where('nama', 'like', '%PPPK%')
-                                ->where('nama', 'not like', '%Paruh%');
-                         });
-                  });
-            })
+            ->whereIn('kedudukan_hukum_id', ['71', '73'])
             ->count();
 
-        // PPPK PW: kedudukan_hukum_id = 101
+        // PPPK PW: kedudukan_hukum_id = 101 — tanpa fallback NULL/jenisPegawai
         $totalPppkPw = (clone $query)
-            ->where(function ($q) {
-                $q->where('kedudukan_hukum_id', '101')
-                  ->orWhere(function ($q2) {
-                      $q2->whereNull('kedudukan_hukum_id')
-                         ->whereHas('jenisPegawai', function ($q3) {
-                             $q3->where('nama', 'like', '%Paruh%');
-                         });
-                  });
-            })
+            ->where('kedudukan_hukum_id', '101')
             ->count();
 
         // 2. Charts Data

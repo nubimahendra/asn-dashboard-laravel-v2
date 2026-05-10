@@ -153,8 +153,8 @@
                     <label class="flex items-start gap-3 cursor-pointer">
                         <input type="checkbox" id="delete-removed-checkbox" class="mt-1 w-4 h-4 text-orange-600 border-orange-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                         <div>
-                            <span class="font-semibold text-orange-800 dark:text-orange-300">Hapus pegawai yang tidak ditemukan dalam file import ini</span>
-                            <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">Cocok untuk pegawai yang sudah pensiun, meninggal, atau tidak aktif lagi. Data tidak dihapus permanen (soft-delete).</p>
+                            <span class="font-semibold text-orange-800 dark:text-orange-300">Nonaktifkan pegawai yang tidak ditemukan dalam file import ini</span>
+                            <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">Cocok untuk pegawai yang sudah pensiun, meninggal, atau tidak aktif lagi. Kedudukan hukum akan diubah ke 'ASN Non Aktif' (kode 17).</p>
                         </div>
                     </label>
                 </div>
@@ -162,7 +162,7 @@
                 <div id="delete-preview-section" class="mb-4 hidden border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <div class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 p-3 rounded mb-4 flex items-start gap-2">
                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <span>Pegawai berikut akan di-nonaktifkan dari sistem (soft-delete). Data tidak hilang permanen dan dapat dipulihkan jika diperlukan.</span>
+                        <span>Pegawai berikut akan diubah kedudukan hukumnya menjadi 'ASN Non Aktif' (kode 17). Data tidak hilang permanen dan dapat dipulihkan jika diperlukan.</span>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
@@ -312,6 +312,9 @@
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Progress</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Dinonaktifkan</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Aksi</th>
@@ -918,6 +921,11 @@
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap">
                                                         ${getProgressBar(item.progress, item.status)}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                        ${item.deactivated_count > 0 
+                                                            ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">${item.deactivated_count} Dinonaktifkan</span>` 
+                                                            : '<span class="text-gray-400">-</span>'}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                         ${item.status === 'Menunggu' ? `<button onclick="cancelImport('${item.filename}')" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">Batalkan</button>` : '-'}

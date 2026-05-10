@@ -195,6 +195,10 @@ class PegawaiDiffService
         // 3. Are not already soft deleted (handled by Eloquent automatically)
         return Pegawai::whereNotNull('nip_baru')
             ->whereNotIn('nip_baru', $importedNips)
+            ->where(function ($q) {
+                $q->whereNotIn('kedudukan_hukum_id', ['17'])
+                  ->orWhereNull('kedudukan_hukum_id');
+            })
             ->with(['jabatan', 'unor'])
             ->get();
     }

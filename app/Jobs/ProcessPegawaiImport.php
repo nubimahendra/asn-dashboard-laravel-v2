@@ -76,6 +76,7 @@ class ProcessPegawaiImport implements ShouldQueue
         }
 
         // Handle soft-delete if requested
+        $deactivatedCount = 0;
         if ($this->deleteRemoved) {
             $importedNips = StgPegawaiImport::where('source_file', $this->sourceFile)
                 ->whereNotNull('nip_baru')
@@ -83,12 +84,25 @@ class ProcessPegawaiImport implements ShouldQueue
                 ->toArray();
 
             if (!empty($importedNips)) {
-                $deletedCount = \App\Models\Pegawai::whereNotNull('nip_baru')
+                $deactivatedCount = \App\Models\Pegawai::whereNotNull('nip_baru')
                     ->whereNotIn('nip_baru', $importedNips)
-                    ->delete(); // Soft delete
+                    ->where(function ($q) {
+                        $q->whereNotIn('kedudukan_hukum_id', ['17'])
+                          ->orWhereNull('kedudukan_hukum_id');
+                    })
+                    ->update(['kedudukan_hukum_id' => '17']);
 
-                Log::info("Soft-deleted {$deletedCount} pegawai not found in import file {$this->sourceFile}");
+                Log::info("Deactivated {$deactivatedCount} pegawai (kedudukan_hukum_id -> 17) not found in import file {$this->sourceFile}");
             }
+        }
+
+        // Update batch record with deactivation count
+        $batch = \App\Models\ImportBatch::where('source_file', $this->sourceFile)->first();
+        if ($batch) {
+            $batch->update([
+                'deactivated_count' => $deactivatedCount,
+                'status' => 'synced',
+            ]);
         }
 
         Log::info("Import completed. Processed: {$processedCount}, Errors: {$errorCount}");

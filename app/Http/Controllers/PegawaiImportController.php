@@ -399,6 +399,9 @@ class PegawaiImportController extends Controller
 
         $imports->getCollection()->transform(function ($import) {
             $totalErrors = $import->processing_error_rows;
+            
+            $batch = \App\Models\ImportBatch::where('source_file', $import->source_file)->first();
+            $deactivatedCount = $batch?->deactivated_count ?? 0;
 
             $status = 'Menunggu';
             if ($totalErrors > 0 && $import->processed_rows == 0) {
@@ -420,6 +423,7 @@ class PegawaiImportController extends Controller
                 'processing_error_rows' => $import->processing_error_rows,
                 'anomaly_rows' => $import->anomaly_rows,
                 'total_error_rows' => $totalErrors,
+                'deactivated_count' => $deactivatedCount,
                 'status' => $status,
                 'progress' => $import->total_rows > 0
                     ? round(($import->processed_rows / $import->total_rows) * 100, 2)

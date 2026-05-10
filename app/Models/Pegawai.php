@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -14,7 +13,23 @@ use Illuminate\Support\Carbon;
  */
 class Pegawai extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+
+    /**
+     * Kedudukan hukum IDs that indicate an active ASN employee.
+     */
+    const ACTIVE_KEDUDUKAN_HUKUM = ['01', '02', '03', '04', '101', '15', '71', '73'];
+
+    /**
+     * Scope: Only active employees (not kedudukan_hukum_id = 17/Non Aktif)
+     */
+    public function scopeAktif($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereIn('kedudukan_hukum_id', self::ACTIVE_KEDUDUKAN_HUKUM)
+              ->orWhereNull('kedudukan_hukum_id');
+        });
+    }
 
     protected $table = 'pegawai';
 
