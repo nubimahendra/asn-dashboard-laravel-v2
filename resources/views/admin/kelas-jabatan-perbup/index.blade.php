@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.mari')
 
 @section('content')
 <div class="container mx-auto px-10 py-8">
@@ -37,7 +37,7 @@
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8 p-6">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Import Data Master Perbup</h3>
-        <form action="{{ route('kelas-jabatan-perbup.import') }}" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <form action="{{ route('mari.kelas-jabatan-perbup.import') }}" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             @csrf
             <div class="flex-1">
                 <input type="file" name="file" accept=".xlsx,.csv,.xls" required class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
@@ -52,7 +52,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-900/50">
             <h3 class="font-semibold text-gray-700 dark:text-gray-200">Data Master Perbup Tersimpan</h3>
-            <form method="GET" action="{{ route('kelas-jabatan-perbup.index') }}" class="relative w-full sm:w-auto">
+            <form method="GET" action="{{ route('mari.kelas-jabatan-perbup.index') }}" class="relative w-full sm:w-auto">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Jabatan / OPD..." class="w-full sm:w-64 pl-4 pr-10 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                 <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-400 hover:text-gray-600">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,7 +83,7 @@
                                 <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">{{ $item->kelas_jabatan }}</span>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <form action="{{ route('kelas-jabatan-perbup.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data ini?');" class="inline-block">
+                                <form action="{{ route('mari.kelas-jabatan-perbup.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin menghapus data ini?');" class="inline-block">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-500 hover:text-red-700 p-1.5 rounded-md hover:bg-red-50">
                                         Hapus

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.mari')
 
 @section('content')
     <div class="container mx-auto px-10 py-8">
@@ -29,7 +29,7 @@
         <!-- Import Card -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8 p-6">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Import Data Referensi</h3>
-            <form action="{{ route('kelas-jabatan.import') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('mari.kelas-jabatan.import') }}" method="POST" enctype="multipart/form-data"
                 class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 @csrf
                 <div class="flex-1">
@@ -56,7 +56,7 @@
                 class="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-900/50">
                 <h3 class="font-semibold text-gray-700 dark:text-gray-200">Data Kelas Jabatan Tersimpan</h3>
 
-                <form method="GET" action="{{ route('kelas-jabatan.index') }}" class="relative w-full sm:w-auto">
+                <form method="GET" action="{{ route('mari.kelas-jabatan.index') }}" class="relative w-full sm:w-auto">
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Jabatan / OPD..."
                         class="w-full sm:w-64 pl-4 pr-10 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors">
                     <button type="submit"
@@ -97,7 +97,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <form action="{{ route('kelas-jabatan.destroy', $item->id) }}" method="POST"
+                                    <form action="{{ route('mari.kelas-jabatan.destroy', $item->id) }}" method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus mapping jabatan ini?');"
                                         class="inline-block">
                                         @csrf
@@ -150,7 +150,7 @@
                     masing-masing kelas jabatan.</p>
             </div>
 
-            <form action="{{ route('kelas-jabatan.update-tarif') }}" method="POST">
+            <form action="{{ route('mari.kelas-jabatan.update-tarif') }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="p-6">

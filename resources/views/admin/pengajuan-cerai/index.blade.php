@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.mesra')
 
 @section('content')
     <div class="px-6 py-4">
@@ -17,7 +17,7 @@
             <!-- Form Section -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Form Pengajuan</h3>
-                <form action="{{ route('admin.pengajuan-cerai.store') }}" method="POST">
+                <form action="{{ route('mesra.pengajuan-cerai.store') }}" method="POST">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- NIP Autocomplete -->
@@ -129,7 +129,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $item->unit_kerja }}</td>
                                 <td class="px-6 py-4 text-center text-sm">
-                                    <form action="{{ route('admin.pengajuan-cerai.destroy', $item->id) }}" method="POST"
+                                    <form action="{{ route('mesra.pengajuan-cerai.destroy', $item->id) }}" method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus data ini?');" class="inline">
                                         @csrf
                                         @method('DELETE')
@@ -214,7 +214,7 @@
             }
 
             timeoutId = setTimeout(() => {
-                fetch(`{{ route('admin.pengajuan-cerai.search') }}?term=${term}`)
+                fetch(`{{ route('mesra.pengajuan-cerai.search') }}?term=${term}`)
                     .then(response => response.json())
                     .then(data => {
                         suggestionsBox.innerHTML = '';
@@ -267,11 +267,11 @@
         }
 
         function printReport() {
-            window.open(`{{ route('admin.pengajuan-cerai.print') }}${getParams()}`, '_blank');
+            window.open(`{{ route('mesra.pengajuan-cerai.print') }}${getParams()}`, '_blank');
         }
 
         function exportExcel() {
-            window.location.href = `{{ route('admin.pengajuan-cerai.export.excel') }}${getParams()}`;
+            window.location.href = `{{ route('mesra.pengajuan-cerai.export.excel') }}${getParams()}`;
         }
     </script>
 @endsection

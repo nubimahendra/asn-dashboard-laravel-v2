@@ -1,11 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.mari')
 
 @section('content')
     <div class="container mx-auto px-10 py-8">
         <!-- Print Warning / Header Container -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 print:hidden">
             <div>
-                <a href="{{ route('iuran-kelas-jabatan.index', ['bulan' => $bulan, 'tahun' => $tahun]) }}" 
+                <a href="{{ route('mari.iuran-kelas-jabatan.index', ['bulan' => $bulan, 'tahun' => $tahun]) }}" 
                    class="inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline mb-2">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.mari')
 
 @section('content')
 <div class="container mx-auto px-10 py-8">
@@ -23,7 +23,7 @@
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 mb-8 p-6">
         <h3 class="text-lg font-semibold mb-4">Set Kelas Default</h3>
-        <form action="{{ route('jabatan-default.store') }}" method="POST" class="flex flex-col sm:flex-row gap-4 items-end">
+        <form action="{{ route('mari.jabatan-default.store') }}" method="POST" class="flex flex-col sm:flex-row gap-4 items-end">
             @csrf
             <div class="flex-1">
                 <label class="block text-sm font-medium mb-1">Jabatan SIASN</label>
@@ -45,7 +45,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
             <h3 class="font-semibold text-gray-700">Daftar Kelas Default</h3>
-            <form method="GET" action="{{ route('jabatan-default.index') }}">
+            <form method="GET" action="{{ route('mari.jabatan-default.index') }}">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari..." class="border rounded-lg p-2 text-sm">
             </form>
         </div>
@@ -64,7 +64,7 @@
                             <td class="px-6 py-4 font-medium">{{ optional($item->jabatan)->nama }}</td>
                             <td class="px-6 py-4 text-center font-bold text-blue-600">{{ $item->kelas_jabatan }}</td>
                             <td class="px-6 py-4 text-center">
-                                <form action="{{ route('jabatan-default.destroy', $item->jabatan_id) }}" method="POST" onsubmit="return confirm('Hapus default?');">
+                                <form action="{{ route('mari.jabatan-default.destroy', $item->jabatan_id) }}" method="POST" onsubmit="return confirm('Hapus default?');">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-500 hover:text-red-700">Hapus</button>
                                 </form>

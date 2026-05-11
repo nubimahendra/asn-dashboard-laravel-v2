@@ -145,7 +145,7 @@ class IuranKelasJabatanController extends Controller
 
         try {
             app(IuranKorpriGeneratorService::class)->generate($bulan, $tahun);
-            return redirect()->route('iuran-kelas-jabatan.index', ['bulan' => $bulan, 'tahun' => $tahun])
+            return redirect()->route('mari.iuran-kelas-jabatan.index', ['bulan' => $bulan, 'tahun' => $tahun])
                 ->with('success', "Iuran Kelas Jabatan bulan $bulan tahun $tahun berhasil digenerate.");
         } catch (\TypeError $e) {
             \Log::error("TypeError in Generate Iuran Korpri: " . $e->getMessage() . "\n" . $e->getTraceAsString());
@@ -165,7 +165,7 @@ class IuranKelasJabatanController extends Controller
         $tahun = $request->input('tahun', date('Y'));
 
         if (!$opd) {
-            return redirect()->route('iuran-kelas-jabatan.index')->with('error', 'OPD tidak ditemukan');
+            return redirect()->route('mari.iuran-kelas-jabatan.index')->with('error', 'OPD tidak ditemukan');
         }
 
         $bagianList = [

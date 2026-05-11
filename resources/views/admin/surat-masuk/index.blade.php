@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.mesra')
 
 @section('content')
     <div class="container mx-auto px-4 py-8">
@@ -6,7 +6,7 @@
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Inbox (Surat Masuk)</h1>
 
             <div class="flex gap-2">
-                <a href="{{ route('surat-masuk.create') }}"
+                <a href="{{ route('mesra.surat-masuk.create') }}"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
                     + Tambah Surat
                 </a>
@@ -15,7 +15,7 @@
 
         <!-- Filter & Print Section -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-            <form action="{{ route('surat-masuk.index') }}" method="GET" class="flex flex-col md:flex-row gap-4 items-end">
+            <form action="{{ route('mesra.surat-masuk.index') }}" method="GET" class="flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full md:w-auto">
                     <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bulan</label>
                     <select name="month" id="month"
@@ -47,7 +47,7 @@
                         Filter
                     </button>
 
-                    <a href="{{ route('surat-masuk.print', request()->all()) }}" target="_blank"
+                    <a href="{{ route('mesra.surat-masuk.print', request()->all()) }}" target="_blank"
                         style="background-color: #16a34a; color: white;"
                         class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@
                                 <td class="px-6 py-4">{{ Str::limit($surat->disposisi, 20) }}</td>
                                 <td class="px-6 py-4">{{ Str::limit($surat->keterangan, 20) }}</td>
                                 <td class="px-6 py-4 flex justify-center gap-2">
-                                    <a href="{{ route('surat-masuk.edit', $surat->id) }}"
+                                    <a href="{{ route('mesra.surat-masuk.edit', $surat->id) }}"
                                         class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                         title="Edit">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +100,7 @@
                                             </path>
                                         </svg>
                                     </a>
-                                    <form action="{{ route('surat-masuk.destroy', $surat->id) }}" method="POST"
+                                    <form action="{{ route('mesra.surat-masuk.destroy', $surat->id) }}" method="POST"
                                         onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');"
                                         class="inline">
                                         @csrf

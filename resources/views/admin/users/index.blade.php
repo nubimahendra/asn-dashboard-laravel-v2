@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.masn')
 
 @section('content')
     <div class="container mx-auto px-10 py-8">
@@ -41,7 +41,7 @@
                         </svg>
                     </button>
                 </form>
-                <a href="{{ route('users.create') }}"
+                <a href="{{ route('masn.users.create') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors font-medium">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -89,7 +89,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-center text-sm">
                                     <div class="flex items-center justify-center gap-2">
-                                        <a href="{{ route('users.edit', $user) }}"
+                                        <a href="{{ route('masn.users.edit', $user) }}"
                                             class="p-1.5 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
                                             title="Edit">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@
                                             </svg>
                                         </a>
                                         @if($user->id !== auth()->id())
-                                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline"
+                                            <form action="{{ route('masn.users.destroy', $user) }}" method="POST" class="inline"
                                                 onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?');">
                                                 @csrf
                                                 @method('DELETE')

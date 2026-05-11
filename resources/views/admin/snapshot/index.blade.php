@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.masn')
 
 @section('content')
     <div class="px-6 py-4">
@@ -17,7 +17,7 @@
         <div
             class="mb-4 bg-white dark:bg-gray-800 rounded-lg px-4 py-2 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
             <!-- Filter Month -->
-            <form action="{{ route('snapshot.index') }}" method="GET" class="flex gap-2 items-center w-full md:w-auto">
+            <form action="{{ route('masn.snapshot.index') }}" method="GET" class="flex gap-2 items-center w-full md:w-auto">
                 <select name="snapshot_month" onchange="this.form.submit()"
                     class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">-- Data Live (Saat Ini) --</option>
@@ -31,7 +31,7 @@
 
             <div class="flex gap-1">
                 <!-- Export Buttons -->
-                <a href="{{ route('snapshot.export.pdf', ['month' => $filterMonth, 'search' => $search]) }}"
+                <a href="{{ route('masn.snapshot.export.pdf', ['month' => $filterMonth, 'search' => $search]) }}"
                     class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-1 shadow-sm"
                     style="background-color: #dc2626; color: white;">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@
                     </svg>
                     PDF
                 </a>
-                <a href="{{ route('snapshot.export.excel', ['month' => $filterMonth, 'search' => $search]) }}"
+                <a href="{{ route('masn.snapshot.export.excel', ['month' => $filterMonth, 'search' => $search]) }}"
                     class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center gap-1 shadow-sm"
                     style="background-color: #16a34a; color: white;">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@
                 </a>
 
                 @if(!$isHistory)
-                    <form action="{{ route('snapshot.store') }}" method="POST"
+                    <form action="{{ route('masn.snapshot.store') }}" method="POST"
                         onsubmit="return confirm('Apakah Anda yakin ingin menyimpan Snapshot data pegawai? Aksi ini hanya bisa dilakukan sekali per bulan.');">
                         @csrf
                         <button type="submit"
@@ -85,7 +85,7 @@
                 </div>
 
                 <!-- Search -->
-                <form action="{{ route('snapshot.index') }}" method="GET" class="relative w-full md:w-64">
+                <form action="{{ route('masn.snapshot.index') }}" method="GET" class="relative w-full md:w-64">
                     @if($filterMonth)
                         <input type="hidden" name="snapshot_month" value="{{ $filterMonth }}">
                     @endif

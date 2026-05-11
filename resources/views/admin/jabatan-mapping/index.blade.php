@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.mari')
 
 @section('content')
     <div class="container mx-auto px-10 py-8">
@@ -20,7 +20,7 @@
 
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 mb-8 p-6">
             <h3 class="text-lg font-semibold mb-4">Tambah / Update Mapping</h3>
-            <form action="{{ route('jabatan-mapping.store') }}" method="POST"
+            <form action="{{ route('mari.jabatan-mapping.store') }}" method="POST"
                 class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                 @csrf
                 <div class="md:col-span-3">
@@ -72,7 +72,7 @@
                 </svg>
             </button>
 
-            <form action="{{ route('jabatan-mapping.bulk-store') }}" method="POST" id="form-bulk-mapping" class="hidden mt-4">
+            <form action="{{ route('mari.jabatan-mapping.bulk-store') }}" method="POST" id="form-bulk-mapping" class="hidden mt-4">
                 @csrf
                 <div class="overflow-x-auto max-h-96 overflow-y-auto mb-4 border rounded-lg">
                     <table class="w-full text-sm text-left text-gray-500">
@@ -103,7 +103,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
                 <h3 class="font-semibold text-gray-700">Daftar Mapping</h3>
-                <form method="GET" action="{{ route('jabatan-mapping.index') }}">
+                <form method="GET" action="{{ route('mari.jabatan-mapping.index') }}">
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari..."
                         class="border rounded-lg p-2 text-sm w-64">
                 </form>
@@ -143,7 +143,7 @@
                                 <td class="px-6 py-4 text-center font-bold text-blue-600">
                                     {{ optional($item->kelasPerbup)->kelas_jabatan ?? '-' }}</td>
                                 <td class="px-6 py-4 text-center">
-                                    <form action="{{ route('jabatan-mapping.destroy', $item->id) }}" method="POST"
+                                    <form action="{{ route('mari.jabatan-mapping.destroy', $item->id) }}" method="POST"
                                         onsubmit="return confirm('Hapus mapping?');">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-red-500 hover:text-red-700">Hapus</button>
@@ -186,7 +186,7 @@
                     const helpText = document.getElementById('similarity-help-text');
                     if (helpText) helpText.innerHTML = '<span class="text-blue-500 text-xs">Mencari kemiripan...</span>';
 
-                    fetch(`{{ route('jabatan-mapping.find-similar') }}?jabatan_siasn_id=${value}`)
+                    fetch(`{{ route('mari.jabatan-mapping.find-similar') }}?jabatan_siasn_id=${value}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.success && data.perbup_id) {
@@ -233,7 +233,7 @@
                     tbodyBulk.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Menganalisis kemiripan dari seluruh data, mohon tunggu...</td></tr>';
                     formBulk.classList.remove('hidden');
 
-                    fetch(`{{ route('jabatan-mapping.generate-bulk') }}`)
+                    fetch(`{{ route('mari.jabatan-mapping.generate-bulk') }}`)
                         .then(res => res.json())
                         .then(data => {
                             btnGenerate.disabled = false;

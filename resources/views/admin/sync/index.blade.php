@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.masn')
 
 @section('content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -437,7 +437,7 @@
             diffSection.classList.add('hidden'); // Hide diff section on new upload
 
             try {
-                const response = await fetch('{{ route('pegawai.import.upload') }}', {
+                const response = await fetch('{{ route('masn.pegawai.import.upload') }}', {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -834,7 +834,7 @@
             confirmSyncBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...';
 
             try {
-                const response = await fetch('{{ route('pegawai.import.confirm-sync') }}', {
+                const response = await fetch('{{ route('masn.pegawai.import.confirm-sync') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -885,7 +885,7 @@
         async function loadHistory(page = 1) {
             try {
                 currentHistoryPage = page;
-                const response = await fetch(`{{ route('pegawai.import.history') }}?page=${page}`);
+                const response = await fetch(`{{ route('masn.pegawai.import.history') }}?page=${page}`);
                 const data = await response.json();
 
                 const imports = data.data;

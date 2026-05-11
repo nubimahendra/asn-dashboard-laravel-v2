@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.masn')
 
 @section('content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -355,7 +355,7 @@
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    const response = await fetch(`{{ route('pegawai.import.search-employee') }}?query=${encodeURIComponent(query)}`);
+                    const response = await fetch(`{{ route('masn.pegawai.import.search-employee') }}?query=${encodeURIComponent(query)}`);
                     const employees = await response.json();
 
                     if (employees.length === 0) {
@@ -393,7 +393,7 @@
         // Load employee profile
         async function loadEmployeeProfile(employeeId) {
             try {
-                const response = await fetch(`{{ route('pegawai.import.index') }}/profile/${employeeId}`);
+                const response = await fetch(`{{ route('masn.pegawai.import.index') }}/profile/${employeeId}`);
                 const data = await response.json();
 
                 if (data.error) {
