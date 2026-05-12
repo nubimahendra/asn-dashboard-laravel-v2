@@ -45,6 +45,12 @@
         </div>
     </div>
 
+    <!-- Chart Top 10 OPD -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Top 10 OPD Iuran Terbesar</h2>
+        <div id="chart-top-opd" class="w-full" style="height: 350px;"></div>
+    </div>
+
     <!-- Quick Links -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
         <div class="p-6 border-b border-gray-100 dark:border-gray-700">
@@ -77,4 +83,75 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const chartData = @json($chartTopOpdIuran);
+        const opdNames = Object.keys(chartData);
+        const opdValues = Object.values(chartData);
+
+        const options = {
+            series: [{
+                name: 'Total Iuran',
+                data: opdValues
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: { show: false },
+                fontFamily: 'inherit'
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                    barHeight: '60%',
+                    dataLabels: {
+                        position: 'top',
+                    },
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                offsetX: 20,
+                formatter: function (val) {
+                    if (val >= 1000000) {
+                        return "Rp " + (val / 1000000).toFixed(1) + "jt";
+                    }
+                    return "Rp " + new Intl.NumberFormat('id-ID').format(val);
+                },
+                style: {
+                    colors: ['#374151']
+                }
+            },
+            xaxis: {
+                categories: opdNames,
+                labels: {
+                    formatter: function (val) {
+                        return "Rp " + new Intl.NumberFormat('id-ID').format(val);
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    maxWidth: 300
+                }
+            },
+            colors: ['#10b981'],
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return "Rp " + new Intl.NumberFormat('id-ID').format(val);
+                    }
+                }
+            }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#chart-top-opd"), options);
+        chart.render();
+    });
+</script>
 @endsection

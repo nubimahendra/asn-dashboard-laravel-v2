@@ -1,0 +1,364 @@
+# Restrukturisasi Iuran Korpri: Dual-Parameter (Eselon + Golongan) — Opsi C (Hybrid)
+
+## Latar Belakang
+
+Saat ini sistem iuran korpri menggunakan **satu parameter saja**: `golongan_key` dari tabel `iuran_korpri`. Semua pegawai dikenai iuran berdasarkan golongan yang sama.
+
+**Kebutuhan baru**: Besaran iuran ditentukan oleh **2 parameter**:
+1. **Pejabat Struktural** (`jenis_jabatan_id = 1`): Iuran per **eselon** (IV/b=25rb, IV/a=30rb, III/b=35rb, III/a=40rb, II/b=50rb, II/a=75rb)
+2. **Non-Struktural** (Fungsional & Pelaksana): Iuran per **golongan** (seperti sekarang)
+
+Tambahan: pembeda PNS vs PPPK pada UI, menu Rincian Iuran baru, dan chart Top 10 OPD di dashboard.
+
+## Kondisi Saat Ini
+
+### Data Pegawai
+| Kategori | Jumlah |
+|---|---|
+| Total pegawai aktif | 12.489 |
+| Struktural (`jenis_jabatan_id = 1`) | 576 |
+| Non-struktural (Fungsional + Pelaksana) | 11.913 |
+
+### Masalah: Tidak Ada Kolom Eselon
+
+> [!WARNING]
+> Tabel `pegawai` **tidak memiliki kolom `eselon`**. CSV import SIDAWAI (67 kolom) juga tidak menyertakan data eselon. Oleh karena itu digunakan **pendekatan Hybrid (Opsi C)**: derivasi eselon dari nama jabatan sekarang, siap migrasi ke data eksplisit di masa depan.
+
+### Tabel Relevan Saat Ini
+| Tabel | Kolom Kunci | Fungsi |
+|---|---|---|
+| `iuran_korpri` | `golongan_key`, `ruang`, `label`, `besaran` | Tarif iuran per golongan |
+| `ref_iuran_korpri` | `kelas_jabatan`, `nominal`, `tahun_berlaku` | Tarif iuran per kelas jabatan (generator) |
+| `iuran_korpri_transaksi` | `pegawai_id`, `kelas_jabatan`, `nominal`, `bulan`, `tahun` | Hasil generate iuran per pegawai |
+| `ref_jenis_jabatan` | `id`, `nama` | 1=Struktural, 2=Fungsional, 4=Pelaksana |
+
+### Referensi Jenis Jabatan
+| ID | Nama |
+|----|------|
+| 1 | Jabatan Struktural |
+| 2 | Jabatan Fungsional |
+| 4 | Jabatan Pelaksana |
+
+---
+
+## Ringkasan Perubahan (4 Fitur Utama)
+
+### Fitur 1 — Dual-Parameter Iuran (Eselon + Golongan) + PNS/PPPK Toggle
+### Fitur 2 — Laporan Iuran (Golongan): Tampilkan Nominal Langsung  
+### Fitur 3 — Menu Baru: Rincian Iuran (per OPD, by Golongan/Eselon)
+### Fitur 4 — Chart Top 10 OPD Iuran Terbesar di Dashboard MARI
+
+---
+
+## Fitur 1: Dual-Parameter Iuran + PNS/PPPK Toggle
+
+### Pendekatan: Derivasi Eselon dari Nama Jabatan (Pattern Matching)
+
+Karena data eselon tidak tersedia di tabel `pegawai`, eselon ditentukan dari **pola nama jabatan** di `ref_jabatan`:
+
+| Pola Nama Jabatan | Eselon | Contoh |
+|---|---|---|
+| `Bupati`, `Wakil Bupati` | I (opsional) | — |
+| `Sekretaris Daerah`, `Asisten` | II/a | Asisten Administrasi Umum |
+| `Kepala Dinas`, `Kepala Badan`, `Inspektur`, `Staf Ahli` | II/b | Kepala Dinas Lingkungan Hidup |
+| `Sekretaris` (OPD-level), `Kepala Bidang`, `Camat` | III/a | Kepala Bidang Mutasi |
+| `Kepala Sub Bagian`, `Kepala Seksi`, `Kepala UPT`, `Lurah` | III/b | Kepala Seksi Pemerintahan |
+| `Sekretaris Kecamatan`, `Sekretaris Kelurahan` | IV/a | — |
+| *Struktural lain yang tidak cocok pattern* | IV/b (default) | — |
+
+### Tarif Iuran Eselon (Seeder)
+| Eselon | Besaran |
+|--------|---------|
+| IV/b | Rp 25.000 |
+| IV/a | Rp 30.000 |
+| III/b | Rp 35.000 |
+| III/a | Rp 40.000 |
+| II/b | Rp 50.000 |
+| II/a | Rp 75.000 |
+
+### PNS / PPPK Toggle di UI
+
+Di halaman **Laporan Iuran (Golongan)** dan **Rincian Iuran**, tambahkan toggle switch / checkbox:
+
+```
+[ ✓ ] PNS   [ ✓ ] PPPK
+```
+
+- **Default**: Kedua toggle aktif (PNS + PPPK dihitung)
+- **PNS saja**: Filter `kedudukan_hukum_id IN ('01','02','03','04','15')` dan `status_cpns_pns IN ('P','C')`
+- **PPPK saja**: Filter `kedudukan_hukum_id IN ('71','73')`
+- **PPPK PW** (`kedudukan_hukum_id = '101'`) **selalu diexclude** dari perhitungan iuran
+- Toggle ini dikirim sebagai query parameter `?pns=1&pppk=1` agar halaman bisa di-bookmark
+
+---
+
+## Fitur 2: Laporan Iuran (Golongan) — Tampilkan Nominal Langsung
+
+### Perubahan pada Halaman Existing [index.blade.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/resources/views/admin/iuran-korpri/index.blade.php)
+
+Pada tabel **Rincian Iuran per OPD**, saat ini setiap sel kolom golongan menampilkan **jumlah pegawai** saja (angka `3`, `5`, dst). Ubah agar menampilkan **nominal iuran langsung**:
+
+**Sebelum:**
+| OPD | Gol I/a | Gol II/a | ... | Total | Total Iuran |
+|-----|---------|----------|-----|-------|-------------|
+| Dinas A | 3 | 5 | ... | 20 | Rp 300.000 |
+
+**Sesudah:**
+| OPD | Gol I/a | Gol II/a | ... | Total Pegawai | Total Iuran |
+|-----|---------|----------|-----|---------------|-------------|
+| Dinas A | Rp 15.000 | Rp 50.000 | ... | 20 | Rp 300.000 |
+
+> [!NOTE]
+> Nominal per sel = jumlah pegawai golongan tsb di OPD × besaran iuran golongan tsb.
+> Header kolom tetap `Gol I/a`, `Gol II/a`, dll (sudah jelas).
+
+### Perubahan Controller
+
+#### [MODIFY] [IuranKorpriController.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/app/Http/Controllers/IuranKorpriController.php)
+
+- Modifikasi `index()`:
+  - Tambah filter PNS/PPPK berdasarkan query parameter `pns` dan `pppk`
+  - Ubah `per_golongan` di `$opdBreakdown` agar menyimpan **nominal** (count × besaran), bukan hanya count
+  - Pisahkan perhitungan antara struktural (per eselon) dan non-struktural (per golongan)
+
+---
+
+## Fitur 3: Menu Baru — Rincian Iuran
+
+### Lokasi di Sidebar
+
+Di sidebar MARI, tambahkan menu **Rincian Iuran** di bawah sub-menu "Iuran Korpri":
+
+```
+📊 Iuran Korpri
+   ├── Laporan Iuran (Golongan)      ← existing
+   ├── Rincian Iuran                  ← NEW
+   └── Iuran Kelas Jabatan           ← existing
+```
+
+### Tampilan Halaman
+
+Halaman **Rincian Iuran** menampilkan breakdown pegawai per OPD dengan detail golongan/eselon:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Rincian Iuran Pegawai                              │
+│                                                     │
+│  OPD: [ Dropdown Pilih OPD        ▾ ]               │
+│  [ ✓ ] PNS  [ ✓ ] PPPK                             │
+│                                                     │
+│  ┌── Pegawai Struktural (Eselon) ────────────────┐  │
+│  │ Eselon  │ Jumlah │ Tarif     │ Subtotal       │  │
+│  │ II/a    │ 1      │ Rp 75.000 │ Rp 75.000      │  │
+│  │ II/b    │ 2      │ Rp 50.000 │ Rp 100.000     │  │
+│  │ III/a   │ 5      │ Rp 40.000 │ Rp 200.000     │  │
+│  │ III/b   │ 8      │ Rp 35.000 │ Rp 280.000     │  │
+│  │ TOTAL   │ 16     │           │ Rp 655.000     │  │
+│  └──────────────────────────────────────────────┘   │
+│                                                     │
+│  ┌── Pegawai Non-Struktural (Golongan) ──────────┐  │
+│  │ Golongan │ Jumlah │ Tarif     │ Subtotal      │  │
+│  │ I/a      │ 3      │ Rp 5.000  │ Rp 15.000     │  │
+│  │ II/a     │ 10     │ Rp 10.000 │ Rp 100.000    │  │
+│  │ III/a    │ 25     │ Rp 15.000 │ Rp 375.000    │  │
+│  │ IV/a     │ 12     │ Rp 20.000 │ Rp 240.000    │  │
+│  │ TOTAL    │ 50     │           │ Rp 730.000    │  │
+│  └──────────────────────────────────────────────┘   │
+│                                                     │
+│  ┌── Grand Total ────────────────────────────────┐  │
+│  │ Total Pegawai: 66  │  Total Iuran: Rp 1.385.000│  │
+│  └──────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+> [!NOTE]
+> - Dropdown OPD berisi semua unit kerja (dari `ref_unor`), default "Semua OPD"
+> - Jika "Semua OPD" dipilih, tampilkan total keseluruhan
+> - Jika OPD spesifik dipilih, tampilkan hanya pegawai OPD tersebut
+> - Bagian "Sekretariat Daerah" tetap di-group dari bagian-bagian (sama seperti logika existing di `IuranKelasJabatanController`)
+
+---
+
+## Fitur 4: Chart Top 10 OPD Iuran Terbesar di Dashboard MARI
+
+### Posisi di Layout Dashboard
+
+Letakkan chart **di antara** summary cards dan section "Layanan MARI":
+
+```
+┌─ Summary Cards ─────────────────────────────────────┐
+│ [Total Pegawai] [Ber-Golongan] [OPD] [Total Iuran]  │
+└──────────────────────────────────────────────────────┘
+
+┌─ Chart: Top 10 OPD Iuran Terbesar ──────────────────┐  ← NEW
+│                                                       │
+│  Dinas Pendidikan          ████████████████ Rp 2.1jt  │
+│  Dinas Kesehatan           ██████████████   Rp 1.8jt  │
+│  RSUD                      ████████████     Rp 1.5jt  │
+│  Dinas PUPR                ██████████       Rp 1.2jt  │
+│  ...                                                  │
+│                                                       │
+│  (Horizontal Bar Chart — ApexCharts / Chart.js)       │
+└───────────────────────────────────────────────────────┘
+
+┌─ Layanan MARI ───────────────────────────────────────┐
+│ [Laporan Iuran Korpri] [Iuran Kelas Jabatan] [...]   │
+└──────────────────────────────────────────────────────┘
+```
+
+### Data Source
+
+Dari tabel `iuran_korpri` (golongan-based), hitung total iuran per OPD:
+- Query: Pegawai aktif → group by `unor.nama` → sum(iuran berdasarkan golongan)
+- Sort descending → take top 10
+- Format: horizontal bar chart dengan label OPD di sumbu Y dan nominal iuran di sumbu X
+
+> [!NOTE]
+> Data chart ini dihitung dari tarif golongan saat ini (bukan dari tabel transaksi). Ini memastikan chart selalu mencerminkan tarif terbaru meskipun belum di-generate transaksinya.
+
+---
+
+## Proposed Changes — Daftar File
+
+### Database Migrations & Seeders
+
+#### [NEW] `database/migrations/xxxx_create_ref_iuran_eselon_table.php`
+Tabel `ref_iuran_eselon`:
+```
+id, eselon_key (varchar 10, unique), label (varchar 50), besaran (integer), timestamps
+```
+
+#### [NEW] `database/migrations/xxxx_create_ref_eselon_mapping_table.php`
+Tabel `ref_eselon_mapping`:
+```
+id, jabatan_id (string FK → ref_jabatan.id, unique), eselon_key (varchar 10), is_auto (boolean default true), timestamps
+```
+
+#### [NEW] `database/seeders/RefIuranEselonSeeder.php`
+Seed 6 baris tarif eselon (IV/b=25000, IV/a=30000, III/b=35000, III/a=40000, II/b=50000, II/a=75000)
+
+---
+
+### Models
+
+#### [NEW] `app/Models/RefIuranEselon.php`
+Model untuk tarif iuran per eselon
+
+#### [NEW] `app/Models/RefEselonMapping.php`
+Model untuk mapping jabatan → eselon, relasi ke `RefJabatan`
+
+---
+
+### Console Commands
+
+#### [NEW] `app/Console/Commands/GenerateEselonMapping.php`
+- Artisan command: `php artisan eselon:generate-mapping`
+- Opsi `--dry-run` untuk preview tanpa insert
+- Pattern matching dari nama jabatan di `ref_jabatan` → insert ke `ref_eselon_mapping` dengan `is_auto = true`
+- Skip jabatan yang sudah di-override manual (`is_auto = false`)
+
+---
+
+### Controllers
+
+#### [MODIFY] [IuranKorpriController.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/app/Http/Controllers/IuranKorpriController.php)
+- `index()`:
+  - Tambah filter query param `pns` dan `pppk` untuk toggle
+  - Ubah `per_golongan` di opdBreakdown agar value = **nominal** (count × besaran)
+  - Pisahkan struktural vs non-struktural di `$globalTotals`
+  - Pass `RefIuranEselon` ke view untuk tabel tarif eselon
+
+#### [MODIFY] [MariDashboardController.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/app/Http/Controllers/MariDashboardController.php)
+- `index()`:
+  - Hitung Top 10 OPD iuran terbesar (dari golongan-based iuran)
+  - Pass data `$chartTopOpdIuran` ke view
+
+#### [NEW] `app/Http/Controllers/RincianIuranController.php`
+- `index(Request $request)`:
+  - Query param: `opd`, `pns`, `pppk`
+  - Hitung breakdown: Struktural by eselon (via `ref_eselon_mapping`) + Non-Struktural by golongan
+  - Pass ke view: `$eselonBreakdown`, `$golonganBreakdown`, `$grandTotal`, `$listOpd`, `$filterOpd`
+
+---
+
+### Routes
+
+#### [MODIFY] [web.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/routes/web.php)
+Tambah route di group `mari`:
+```php
+Route::get('/rincian-iuran', [RincianIuranController::class, 'index'])->name('rincian-iuran.index');
+```
+
+---
+
+### Views
+
+#### [MODIFY] [layouts/mari.blade.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/resources/views/layouts/mari.blade.php)
+- Tambah menu "Rincian Iuran" di sidebar di bawah "Laporan Iuran (Golongan)"
+
+#### [MODIFY] [admin/iuran-korpri/index.blade.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/resources/views/admin/iuran-korpri/index.blade.php)
+- Tambah PNS/PPPK toggle switch di atas tabel
+- Ubah kolom golongan di tabel OPD: tampilkan **nominal** bukan jumlah pegawai
+
+#### [MODIFY] [mari/dashboard.blade.php](file:///d:/Kukuh/Web/asn-dashboard-laravel-v2/resources/views/mari/dashboard.blade.php)
+- Tambah chart horizontal bar "Top 10 OPD Iuran Terbesar" di antara Summary Cards dan Layanan MARI
+- Gunakan ApexCharts (sudah terinstall) atau Chart.js
+
+#### [NEW] `resources/views/admin/rincian-iuran/index.blade.php`
+- Halaman Rincian Iuran dengan:
+  - Dropdown OPD
+  - PNS/PPPK toggle
+  - 2 tabel: Struktural (by eselon) + Non-Struktural (by golongan)
+  - Grand total
+
+---
+
+### Service Layer (Opsional, untuk reuse)
+
+#### [NEW] `app/Services/EselonResolverService.php` (opsional)
+- Helper service untuk resolve eselon dari `jabatan_id` via `ref_eselon_mapping`
+- Digunakan oleh `IuranKorpriController`, `RincianIuranController`, dan `IuranKorpriGeneratorService`
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+# 1. Run migration
+php artisan migrate
+
+# 2. Seed eselon tarif
+php artisan db:seed --class=RefIuranEselonSeeder
+
+# 3. Generate eselon mapping (dry-run dulu)
+php artisan eselon:generate-mapping --dry-run
+
+# 4. Generate mapping
+php artisan eselon:generate-mapping
+
+# 5. Verify mapping coverage
+php artisan tinker --execute="
+  \$total = \App\Models\Pegawai::aktif()->where('jenis_jabatan_id','1')->count();
+  \$mapped = \App\Models\RefEselonMapping::count();
+  echo \"Struktural: \$total, Mapped: \$mapped\";
+"
+```
+
+### Manual / Browser Verification
+- Buka **Laporan Iuran (Golongan)**: Pastikan kolom menampilkan nominal, bukan jumlah
+- Toggle PNS/PPPK: Pastikan angka berubah sesuai filter
+- Buka **Rincian Iuran**: Pilih OPD dari dropdown, verifikasi 2 tabel (eselon + golongan)
+- Buka **Dashboard MARI**: Pastikan chart Top 10 OPD muncul di posisi yang benar
+- Cross-check: Grand Total di Rincian Iuran (semua OPD) = Total Iuran di Dashboard
+
+---
+
+## Fase 2 — Siap untuk Eselon Eksplisit dari CSV (Future)
+
+> [!TIP]
+> Ketika tim SIDAWAI menambahkan kolom eselon di CSV export, lakukan:
+> 1. Tambah kolom `eselon_id`, `eselon_nama` di tabel `pegawai` dan `stg_pegawai_import`
+> 2. Modifikasi `CsvImportService` untuk menangkap kolom eselon
+> 3. Modifikasi `EselonResolverService` untuk prioritaskan data eksplisit dari `pegawai.eselon_id`, fallback ke `ref_eselon_mapping`
+> 4. Mapping manual di `ref_eselon_mapping` tetap berlaku sebagai override

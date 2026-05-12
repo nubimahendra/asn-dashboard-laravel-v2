@@ -39,6 +39,8 @@ class IuranKorpriController extends Controller
     public function index(Request $request)
     {
         $filterOpd = $request->input('opd');
+        $pns = $request->input('pns', 1);
+        $pppk = $request->input('pppk', 1);
 
         // Get all iuran rates sorted by Roman Numeral logic
         $ratesSorted = IuranKorpri::all()->sortBy(function ($rate) {
@@ -67,6 +69,8 @@ class IuranKorpriController extends Controller
         });
 
         $allIuranRates = $ratesSorted->keyBy('golongan_key');
+        $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
+        $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
         // Get list of unique OPDs for filter dropdown
         $listOpd = RefUnor::whereNotNull('nama')
@@ -78,6 +82,21 @@ class IuranKorpriController extends Controller
 
         // Build pegawai query with relationships
         $query = Pegawai::aktif()->with(['golongan', 'unor']);
+
+        if ($pns && !$pppk) {
+            $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
+                  ->whereIn('status_cpns_pns', ['P','C']);
+        } elseif (!$pns && $pppk) {
+            $query->whereIn('kedudukan_hukum_id', ['71','73']);
+        } elseif (!$pns && !$pppk) {
+            $query->where('id', '<', 0); // none
+        } else {
+            // Both checked: exclude PPPK PW
+            $query->where(function($q) {
+                $q->where('kedudukan_hukum_id', '!=', '101')
+                  ->orWhereNull('kedudukan_hukum_id');
+            });
+        }
 
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
@@ -93,6 +112,7 @@ class IuranKorpriController extends Controller
             'total_pegawai' => 0,
             'total_ber_golongan' => 0,
             'total_non_golongan' => 0,
+            'total_struktural' => 0,
             'total_iuran' => 0,
             'per_golongan' => [],
         ];
@@ -109,8 +129,7 @@ class IuranKorpriController extends Controller
 
         foreach ($pegawaiData as $pegawai) {
             $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
-            $golonganNama = $pegawai->golongan_pppk;
-            $golonganKey = $this->extractGolonganKey($golonganNama);
+            $isStruktural = $pegawai->jenis_jabatan_id == 1;
 
             // Initialize OPD entry if not exists
             if (!isset($opdBreakdown[$opdName])) {
@@ -119,33 +138,48 @@ class IuranKorpriController extends Controller
                     'total_pegawai' => 0,
                     'total_ber_golongan' => 0,
                     'total_non_golongan' => 0,
+                    'total_struktural' => 0,
                     'total_iuran' => 0,
                     'per_golongan' => [],
                 ];
                 foreach ($allIuranRates as $key => $rate) {
-                    $opdBreakdown[$opdName]['per_golongan'][$key] = 0;
+                    $opdBreakdown[$opdName]['per_golongan'][$key] = 0; // subtotal
                 }
             }
 
             $globalTotals['total_pegawai']++;
             $opdBreakdown[$opdName]['total_pegawai']++;
 
-            if ($golonganKey && isset($allIuranRates[$golonganKey])) {
-                // Pegawai with matching golongan - count iuran
-                $besaran = $allIuranRates[$golonganKey]->besaran;
-
-                $globalTotals['total_ber_golongan']++;
-                $globalTotals['per_golongan'][$golonganKey]['count']++;
-                $globalTotals['per_golongan'][$golonganKey]['subtotal'] += $besaran;
+            if ($isStruktural) {
+                // Eselon
+                $eselonKey = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
+                
+                $globalTotals['total_struktural']++;
                 $globalTotals['total_iuran'] += $besaran;
-
-                $opdBreakdown[$opdName]['total_ber_golongan']++;
-                $opdBreakdown[$opdName]['per_golongan'][$golonganKey]++;
+                
+                $opdBreakdown[$opdName]['total_struktural']++;
                 $opdBreakdown[$opdName]['total_iuran'] += $besaran;
             } else {
-                // Non-golongan (PPPK PW etc.) - count but no iuran
-                $globalTotals['total_non_golongan']++;
-                $opdBreakdown[$opdName]['total_non_golongan']++;
+                // Golongan
+                $golonganNama = $pegawai->golongan_pppk;
+                $golonganKey = $this->extractGolonganKey($golonganNama);
+                
+                if ($golonganKey && isset($allIuranRates[$golonganKey])) {
+                    $besaran = $allIuranRates[$golonganKey]->besaran;
+
+                    $globalTotals['total_ber_golongan']++;
+                    $globalTotals['per_golongan'][$golonganKey]['count']++;
+                    $globalTotals['per_golongan'][$golonganKey]['subtotal'] += $besaran;
+                    $globalTotals['total_iuran'] += $besaran;
+
+                    $opdBreakdown[$opdName]['total_ber_golongan']++;
+                    $opdBreakdown[$opdName]['per_golongan'][$golonganKey] += $besaran; // ADD BESARAN INSTEAD OF 1
+                    $opdBreakdown[$opdName]['total_iuran'] += $besaran;
+                } else {
+                    $globalTotals['total_non_golongan']++;
+                    $opdBreakdown[$opdName]['total_non_golongan']++;
+                }
             }
         }
 
@@ -189,6 +223,8 @@ class IuranKorpriController extends Controller
             'filterOpd',
             'globalTotals',
             'opdBreakdown',
+            'pns',
+            'pppk'
         ));
     }
 

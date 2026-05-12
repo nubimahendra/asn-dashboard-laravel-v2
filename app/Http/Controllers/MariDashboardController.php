@@ -41,13 +41,46 @@ class MariDashboardController extends Controller
             ->unique()
             ->count();
 
+        // Hitung Data Chart Top 10 OPD (Berdasarkan tarif saat ini)
+        $allIuranRates = \App\Models\IuranKorpri::all()->keyBy('golongan_key');
+        $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
+        $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
+
+        $pegawais = Pegawai::aktif()->with(['unor', 'golongan', 'kedudukanHukum'])->get();
+        $opdTotals = [];
+        
+        foreach ($pegawais as $pegawai) {
+            // Exclude PPPK PW
+            if ($pegawai->kedudukan_hukum_id == '101') continue;
+
+            $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
+            if (!isset($opdTotals[$opdName])) {
+                $opdTotals[$opdName] = 0;
+            }
+
+            if ($pegawai->jenis_jabatan_id == 1) {
+                $eselonKey = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
+                $opdTotals[$opdName] += $besaran;
+            } else {
+                $golonganNama = trim($pegawai->golongan_pppk ?? '');
+                if ($golonganNama && isset($allIuranRates[$golonganNama])) {
+                    $opdTotals[$opdName] += $allIuranRates[$golonganNama]->besaran;
+                }
+            }
+        }
+
+        arsort($opdTotals);
+        $chartTopOpdIuran = array_slice($opdTotals, 0, 10, true);
+
         return view('mari.dashboard', compact(
             'totalPegawaiAktif',
             'totalPegawaiGolongan',
             'totalIuranBulanIni',
             'jumlahOpdBulanIni',
             'bulanSekarang',
-            'tahunSekarang'
+            'tahunSekarang',
+            'chartTopOpdIuran'
         ));
     }
 }

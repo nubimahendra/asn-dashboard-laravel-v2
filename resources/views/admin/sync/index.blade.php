@@ -425,6 +425,14 @@
                 return;
             }
 
+            const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+            if ((filePns && filePns.size > MAX_SIZE) || 
+                (filePppk && filePppk.size > MAX_SIZE) || 
+                (filePppkpw && filePppkpw.size > MAX_SIZE)) {
+                alert('Ukuran file maksimal adalah 50MB per file.');
+                return;
+            }
+
             if (filePns) formData.append('files[]', filePns);
             if (filePppk) formData.append('files[]', filePppk);
             if (filePppkpw) formData.append('files[]', filePppkpw);
@@ -449,11 +457,15 @@
                 let data;
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
-                    data = await response.json();
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        throw new Error("Respons server tidak valid (bukan JSON). Kemungkinan file terlalu besar atau terjadi error di server.");
+                    }
                 } else {
                     const text = await response.text();
                     console.error('Server response:', text);
-                    throw new Error(`Server error: ${response.status}`);
+                    throw new Error(`Server error: ${response.status} - Pastikan ukuran file tidak melebihi batas upload server.`);
                 }
 
                 if (response.ok && (data.success === true || data.success === undefined)) {
@@ -1152,7 +1164,7 @@
             if (!confirm(`Batalkan import "${filename}"? Data staging yang belum diproses akan dihapus.`)) return;
 
             try {
-                const response = await fetch('{{ route("pegawai.import.cancel") }}', {
+                const response = await fetch('{{ route("masn.pegawai.import.cancel") }}', {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
