@@ -22,8 +22,8 @@ class RincianIuranController extends Controller
     public function index(Request $request)
     {
         $filterOpd = $request->input('opd');
-        $pns = $request->input('pns', 1);
-        $pppk = $request->input('pppk', 1);
+        $pns = $request->has('pns') ? $request->input('pns') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
@@ -52,7 +52,7 @@ class RincianIuranController extends Controller
 
         $eselonMappings = RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor']);
+        $query = Pegawai::aktif()->with(['golongan', 'unor', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
@@ -88,22 +88,37 @@ class RincianIuranController extends Controller
 
         $grandTotal = ['pegawai' => 0, 'iuran' => 0];
 
+        $showEselon = (bool) $pns;
+        $showGolonganPns = (bool) $pns;
+        $showGolonganPppk = (bool) $pppk;
+        
+        $pnsGolKeys = ['I/a','I/b','I/c','I/d','II/a','II/b','II/c','II/d','II/e','III/a','III/b','III/c','III/d','III/e','IV/a','IV/b','IV/c','IV/d','IV/e'];
+        $pppkGolKeys = ['I','V','VII','IX','X','XI'];
+
         foreach ($pegawaiData as $pegawai) {
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
+            $override = $pegawai->iuranOverride;
 
-            if ($isStruktural) {
-                $eselonKey = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+            if ($isStruktural && $pns) {
+                $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                
                 if (isset($eselonBreakdown[$eselonKey])) {
                     $eselonBreakdown[$eselonKey]['count']++;
                     $eselonBreakdown[$eselonKey]['subtotal'] += $eselonBreakdown[$eselonKey]['tarif'];
                     $grandTotal['pegawai']++;
                     $grandTotal['iuran'] += $eselonBreakdown[$eselonKey]['tarif'];
                 }
-            } else {
+            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
                 $golonganNama = $pegawai->golongan_pppk;
-                $golonganKey = $this->extractGolonganKey($golonganNama);
+                $golAsliKey = $this->extractGolonganKey($golonganNama);
+                $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                 
-                if ($golonganKey && isset($golonganBreakdown[$golonganKey])) {
+                $isVisible = false;
+                if ($showGolonganPns && in_array($golonganKey, $pnsGolKeys)) $isVisible = true;
+                if ($showGolonganPppk && in_array($golonganKey, $pppkGolKeys)) $isVisible = true;
+
+                if ($isVisible && $golonganKey && isset($golonganBreakdown[$golonganKey])) {
                     $golonganBreakdown[$golonganKey]['count']++;
                     $golonganBreakdown[$golonganKey]['subtotal'] += $golonganBreakdown[$golonganKey]['tarif'];
                     $grandTotal['pegawai']++;
@@ -114,7 +129,8 @@ class RincianIuranController extends Controller
 
         return view('admin.rincian-iuran.index', compact(
             'listOpd', 'filterOpd', 'pns', 'pppk',
-            'eselonBreakdown', 'golonganBreakdown', 'grandTotal'
+            'eselonBreakdown', 'golonganBreakdown', 'grandTotal',
+            'showEselon', 'showGolonganPns', 'showGolonganPppk'
         ));
     }
 }

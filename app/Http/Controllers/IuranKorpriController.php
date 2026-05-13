@@ -39,8 +39,8 @@ class IuranKorpriController extends Controller
     public function index(Request $request)
     {
         $filterOpd = $request->input('opd');
-        $pns = $request->input('pns', 1);
-        $pppk = $request->input('pppk', 1);
+        $pns = $request->has('pns') ? $request->input('pns') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
 
         // Get all iuran rates sorted by Roman Numeral logic
         $ratesSorted = IuranKorpri::all()->sortBy(function ($rate) {
@@ -69,6 +69,23 @@ class IuranKorpriController extends Controller
         });
 
         $allIuranRates = $ratesSorted->keyBy('golongan_key');
+        
+        // Filter iuran rates berdasarkan toggle
+        $pnsGolKeys = ['I/a','I/b','I/c','I/d','II/a','II/b','II/c','II/d','II/e',
+                       'III/a','III/b','III/c','III/d','III/e','IV/a','IV/b','IV/c','IV/d','IV/e'];
+        $pppkGolKeys = ['I','V','VII','IX','X','XI'];
+        
+        if ($pns && !$pppk) {
+            $filteredRates = $allIuranRates->only($pnsGolKeys);
+        } elseif (!$pns && $pppk) {
+            $filteredRates = $allIuranRates->only($pppkGolKeys);
+        } elseif ($pns && $pppk) {
+            $filteredRates = $allIuranRates;
+        } else {
+            $filteredRates = collect();
+        }
+        $allIuranRates = $filteredRates;
+
         $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
@@ -81,7 +98,7 @@ class IuranKorpriController extends Controller
             ->pluck('nama');
 
         // Build pegawai query with relationships
-        $query = Pegawai::aktif()->with(['golongan', 'unor']);
+        $query = Pegawai::aktif()->with(['golongan', 'unor', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
@@ -130,6 +147,7 @@ class IuranKorpriController extends Controller
         foreach ($pegawaiData as $pegawai) {
             $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
+            $override = $pegawai->iuranOverride;
 
             // Initialize OPD entry if not exists
             if (!isset($opdBreakdown[$opdName])) {
@@ -150,9 +168,10 @@ class IuranKorpriController extends Controller
             $globalTotals['total_pegawai']++;
             $opdBreakdown[$opdName]['total_pegawai']++;
 
-            if ($isStruktural) {
+            if ($isStruktural && $pns) {
                 // Eselon
-                $eselonKey = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 
                 $globalTotals['total_struktural']++;
@@ -160,10 +179,11 @@ class IuranKorpriController extends Controller
                 
                 $opdBreakdown[$opdName]['total_struktural']++;
                 $opdBreakdown[$opdName]['total_iuran'] += $besaran;
-            } else {
+            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
                 // Golongan
                 $golonganNama = $pegawai->golongan_pppk;
-                $golonganKey = $this->extractGolonganKey($golonganNama);
+                $golAsliKey = $this->extractGolonganKey($golonganNama);
+                $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                 
                 if ($golonganKey && isset($allIuranRates[$golonganKey])) {
                     $besaran = $allIuranRates[$golonganKey]->besaran;

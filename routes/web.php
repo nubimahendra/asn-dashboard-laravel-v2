@@ -67,6 +67,11 @@ Route::middleware(['auth'])->group(function () {
             
             Route::get('/rincian-iuran', [App\Http\Controllers\RincianIuranController::class, 'index'])->name('rincian-iuran.index');
             
+            Route::get('/rekon-iuran', [App\Http\Controllers\RekonIuranController::class, 'index'])->name('rekon-iuran.index');
+            Route::put('/rekon-iuran/bulk-override', [App\Http\Controllers\RekonIuranController::class, 'bulkOverride'])->name('rekon-iuran.bulk-override');
+            Route::put('/rekon-iuran/single-override', [App\Http\Controllers\RekonIuranController::class, 'singleOverride'])->name('rekon-iuran.single-override');
+            Route::delete('/rekon-iuran/override/{id}', [App\Http\Controllers\RekonIuranController::class, 'destroy'])->name('rekon-iuran.destroy');
+            Route::post('/rekon-iuran/sync-reset', [App\Http\Controllers\RekonIuranController::class, 'syncReset'])->name('rekon-iuran.sync-reset');
             Route::get('/iuran-korpri/kelas-jabatan', [App\Http\Controllers\KelasJabatanController::class, 'index'])->name('kelas-jabatan.index');
             Route::post('/iuran-korpri/kelas-jabatan/import', [App\Http\Controllers\KelasJabatanController::class, 'import'])->name('kelas-jabatan.import');
             Route::put('/iuran-korpri/kelas-jabatan/tarif', [App\Http\Controllers\KelasJabatanController::class, 'updateTarif'])->name('kelas-jabatan.update-tarif');

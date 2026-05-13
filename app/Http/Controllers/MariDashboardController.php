@@ -46,7 +46,7 @@ class MariDashboardController extends Controller
         $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
-        $pegawais = Pegawai::aktif()->with(['unor', 'golongan', 'kedudukanHukum'])->get();
+        $pegawais = Pegawai::aktif()->with(['unor', 'golongan', 'kedudukanHukum', 'iuranOverride'])->get();
         $opdTotals = [];
         
         foreach ($pegawais as $pegawai) {
@@ -58,14 +58,19 @@ class MariDashboardController extends Controller
                 $opdTotals[$opdName] = 0;
             }
 
+            $override = $pegawai->iuranOverride;
+
             if ($pegawai->jenis_jabatan_id == 1) {
-                $eselonKey = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 $opdTotals[$opdName] += $besaran;
             } else {
                 $golonganNama = trim($pegawai->golongan_pppk ?? '');
-                if ($golonganNama && isset($allIuranRates[$golonganNama])) {
-                    $opdTotals[$opdName] += $allIuranRates[$golonganNama]->besaran;
+                $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golonganNama;
+                
+                if ($golonganKey && isset($allIuranRates[$golonganKey])) {
+                    $opdTotals[$opdName] += $allIuranRates[$golonganKey]->besaran;
                 }
             }
         }

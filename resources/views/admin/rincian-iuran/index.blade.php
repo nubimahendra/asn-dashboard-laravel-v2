@@ -19,6 +19,8 @@
     <!-- Filter Bar -->
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-8 border border-gray-100 dark:border-gray-700">
         <form method="GET" action="{{ route('mari.rincian-iuran.index') }}" class="flex flex-wrap items-end gap-6">
+            <input type="hidden" name="pns" value="0">
+            <input type="hidden" name="pppk" value="0">
             <div class="flex-1 min-w-[300px]">
                 <label for="opd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih OPD</label>
                 <select name="opd" id="opd" class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
@@ -55,7 +57,8 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="space-y-8">
+        @if($showEselon)
         <!-- Tabel Eselon -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
@@ -94,7 +97,9 @@
                 </table>
             </div>
         </div>
+        @endif
 
+        @if($showGolonganPns || $showGolonganPppk)
         <!-- Tabel Golongan -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
@@ -135,6 +140,7 @@
                 </table>
             </div>
         </div>
+        @endif
     </div>
 </div>
 @endsection

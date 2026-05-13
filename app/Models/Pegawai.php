@@ -173,6 +173,11 @@ class Pegawai extends Model
         return $this->hasMany(RiwayatPendidikan::class);
     }
 
+    public function iuranOverride()
+    {
+        return $this->hasOne(IuranOverride::class, 'pegawai_id');
+    }
+
     // Helper method to get full name with titles
     public function getNamaLengkapAttribute()
     {
@@ -191,42 +196,29 @@ class Pegawai extends Model
     {
         $namaGolongan = trim($this->golongan->nama ?? '');
 
+        // Cek apakah pegawai ini PPPK Aktif
         $isPppkAktif = false;
-        if (isset($this->kedudukan_hukum_id) && $this->kedudukan_hukum_id == 71) {
+        if (isset($this->kedudukan_hukum_id) && in_array($this->kedudukan_hukum_id, ['71', '73'])) {
             $isPppkAktif = true;
         } elseif (isset($this->kedudukanHukum->nama) && strtolower(trim($this->kedudukanHukum->nama)) == 'pppk aktif') {
             $isPppkAktif = true;
         }
 
-        if ($isPppkAktif && !empty($namaGolongan)) {
-            switch ($namaGolongan) {
-                case 'I':
-                    $namaGolongan = 'I';
-                    break;
-                case 'V':
-                    $namaGolongan = 'V';
-                    break;
-                case 'II/a': // Tambahan
-                    $namaGolongan = 'V';
-                    break;
-                case 'II/b': // Asumsi II/b ke VI jika ada
-                    $namaGolongan = 'VI';
-                    break;
-                case 'II/c':
-                    $namaGolongan = 'VII';
-                    break;
-                case 'III/a':
-                    $namaGolongan = 'IX';
-                    break;
-                case 'III/b':
-                    $namaGolongan = 'X';
-                    break;
-                case 'III/c':
-                    $namaGolongan = 'XI';
-                    break;
-            }
+        // PNS: langsung return nama golongan asli (I/a, II/b, dst)
+        if (!$isPppkAktif) {
+            return $namaGolongan;
         }
 
-        return empty($namaGolongan) ? null : $namaGolongan;
+        // PPPK Aktif: konversi golongan ke format PPPK
+        return match($namaGolongan) {
+            'I/a', 'I/b', 'I'    => 'I',
+            'II/a', 'V'           => 'V',
+            'II/b', 'VI'          => 'VI',   // tambah VI jika ada
+            'II/c', 'VII'         => 'VII',
+            'III/a', 'IX'         => 'IX',
+            'III/b', 'X'          => 'X',
+            'III/c', 'XI'         => 'XI',
+            default               => $namaGolongan,
+        };
     }
 }
