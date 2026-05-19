@@ -110,7 +110,7 @@ class RincianIuranController extends Controller
                     $grandTotal['iuran'] += $eselonBreakdown[$eselonKey]['tarif'];
                 }
             } elseif (!$isStruktural || ($isStruktural && !$pns)) {
-                $golonganNama = $pegawai->golongan_pppk;
+                $golonganNama = $pegawai->gol_akhir;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                 
@@ -127,10 +127,44 @@ class RincianIuranController extends Controller
             }
         }
 
+        $modePegawai = !empty($filterOpd);
+        $pegawaiDetail = collect();
+
+        if ($modePegawai) {
+            $pegawaiDetail = $pegawaiData->map(function ($pegawai) use ($pns, $eselonMappings, $allEselonRates, $allIuranRates) {
+                $isStruktural = $pegawai->jenis_jabatan_id == 1;
+                $override = $pegawai->iuranOverride;
+                
+                $eselonKey = null;
+                $golonganKey = null;
+
+                if ($isStruktural && $pns) {
+                    $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                    $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                    $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
+                } else {
+                    $golAsliKey = $this->extractGolonganKey($pegawai->gol_akhir);
+                    $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
+                    $besaran = $golonganKey && isset($allIuranRates[$golonganKey]) ? $allIuranRates[$golonganKey]->besaran : 0;
+                }
+                
+                return [
+                    'nama' => $pegawai->nama_lengkap ?? $pegawai->nama,
+                    'nip' => $pegawai->nip_baru,
+                    'jenis' => $isStruktural ? 'Struktural' : 'Non-Struktural',
+                    'golongan' => $pegawai->gol_akhir,
+                    'eselon' => $isStruktural ? ($eselonKey ?? '-') : '-',
+                    'iuran' => $besaran,
+                    'has_override' => $override !== null,
+                ];
+            })->sortBy('nama');
+        }
+
         return view('admin.rincian-iuran.index', compact(
             'listOpd', 'filterOpd', 'pns', 'pppk',
             'eselonBreakdown', 'golonganBreakdown', 'grandTotal',
-            'showEselon', 'showGolonganPns', 'showGolonganPppk'
+            'showEselon', 'showGolonganPns', 'showGolonganPppk',
+            'modePegawai', 'pegawaiDetail'
         ));
     }
 }

@@ -81,6 +81,10 @@
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <div class="mt-2 mb-1 px-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                     Data Master Tarif</div>
+                <a href="{{ route('mari.pengaturan-tarif.iuran-golongan') }}"
+                    class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.pengaturan-tarif.iuran-golongan') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                    Iuran Golongan
+                </a>
                 <a href="{{ route('mari.kelas-jabatan-perbup.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.kelas-jabatan-perbup.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
                     Master Kelas Perbup

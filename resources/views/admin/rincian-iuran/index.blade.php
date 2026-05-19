@@ -58,6 +58,83 @@
     </div>
 
     <div class="space-y-8">
+        @if(isset($modePegawai) && $modePegawai)
+            @if($showEselon)
+            <!-- Tabel Pegawai Struktural -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">Daftar Pegawai Struktural (Eselon)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/50">
+                            <tr>
+                                <th class="px-6 py-4">Nama / NIP</th>
+                                <th class="px-6 py-4 text-center">Golongan</th>
+                                <th class="px-6 py-4 text-center">Eselon</th>
+                                <th class="px-6 py-4 text-right">Iuran (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @foreach($pegawaiDetail->where('jenis', 'Struktural') as $p)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <td class="px-6 py-4">
+                                        <div class="font-medium text-gray-900 dark:text-gray-200">
+                                            {{ $p['nama'] }}
+                                            @if($p['has_override'])
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 ml-2" title="Data Override">⚠️</span>
+                                            @endif
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ $p['nip'] }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">{{ $p['golongan'] }}</td>
+                                    <td class="px-6 py-4 text-center font-semibold">{{ $p['eselon'] }}</td>
+                                    <td class="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap">Rp {{ number_format($p['iuran'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            @if($showGolonganPns || $showGolonganPppk)
+            <!-- Tabel Pegawai Non-Struktural -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">Daftar Pegawai Non-Struktural (Golongan)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/50">
+                            <tr>
+                                <th class="px-6 py-4">Nama / NIP</th>
+                                <th class="px-6 py-4 text-center">Golongan</th>
+                                <th class="px-6 py-4 text-right">Iuran (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @foreach($pegawaiDetail->where('jenis', 'Non-Struktural') as $p)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <td class="px-6 py-4">
+                                        <div class="font-medium text-gray-900 dark:text-gray-200">
+                                            {{ $p['nama'] }}
+                                            @if($p['has_override'])
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 ml-2" title="Data Override">⚠️</span>
+                                            @endif
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ $p['nip'] }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center font-semibold">{{ $p['golongan'] }}</td>
+                                    <td class="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap">Rp {{ number_format($p['iuran'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+        @else
         @if($showEselon)
         <!-- Tabel Eselon -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -140,6 +217,7 @@
                 </table>
             </div>
         </div>
+        @endif
         @endif
     </div>
 </div>

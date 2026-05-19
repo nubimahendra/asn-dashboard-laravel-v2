@@ -113,6 +113,7 @@ class PegawaiImportService
 
                 // Current status (latest)
                 'golongan_id' => $golonganId,
+                'gol_akhir' => $staging->gol_akhir,
                 'jabatan_id' => $jabatanId,
                 'jenis_jabatan_id' => $jenisJabatanId,
                 'pendidikan_id' => $pendidikanId,

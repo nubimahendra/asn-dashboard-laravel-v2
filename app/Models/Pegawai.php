@@ -191,34 +191,15 @@ class Pegawai extends Model
         return implode(' ', $nama);
     }
 
-    // Helper method to get golongan converted for PPPK
+    // Helper method to get golongan (with fallback and future override support)
     public function getGolonganPppkAttribute()
     {
-        $namaGolongan = trim($this->golongan->nama ?? '');
-
-        // Cek apakah pegawai ini PPPK Aktif
-        $isPppkAktif = false;
-        if (isset($this->kedudukan_hukum_id) && in_array($this->kedudukan_hukum_id, ['71', '73'])) {
-            $isPppkAktif = true;
-        } elseif (isset($this->kedudukanHukum->nama) && strtolower(trim($this->kedudukanHukum->nama)) == 'pppk aktif') {
-            $isPppkAktif = true;
+        // Prioritize gol_akhir directly from staging which avoids ID collision issues
+        if (!empty($this->gol_akhir)) {
+            return $this->gol_akhir;
         }
 
-        // PNS: langsung return nama golongan asli (I/a, II/b, dst)
-        if (!$isPppkAktif) {
-            return $namaGolongan;
-        }
-
-        // PPPK Aktif: konversi golongan ke format PPPK
-        return match($namaGolongan) {
-            'I/a', 'I/b', 'I'    => 'I',
-            'II/a', 'V'           => 'V',
-            'II/b', 'VI'          => 'VI',   // tambah VI jika ada
-            'II/c', 'VII'         => 'VII',
-            'III/a', 'IX'         => 'IX',
-            'III/b', 'X'          => 'X',
-            'III/c', 'XI'         => 'XI',
-            default               => $namaGolongan,
-        };
+        // Fallback to relationship if gol_akhir is not set
+        return trim($this->golongan->nama ?? '');
     }
 }

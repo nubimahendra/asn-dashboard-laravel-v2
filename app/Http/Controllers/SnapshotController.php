@@ -54,7 +54,7 @@ class SnapshotController extends Controller
                 'tingkatPendidikan',
                 'pendidikan',
                 'unor'
-            ])->whereNull('deleted_at');
+            ])->aktif();
 
             // Search
             if ($search) {
@@ -78,7 +78,7 @@ class SnapshotController extends Controller
             // Transform live data to match history data structure
             $paginator->getCollection()->transform(function ($item) {
                 // Determine Status ASN based on Golongan formatting rules
-                $golonganPppk = $item->golongan_pppk;
+                $golonganPppk = $item->gol_akhir;
                 $statusAsn = 'PPPK PW'; // Default jika tidak ada golongan
 
                 if (!empty($golonganPppk)) {
@@ -193,7 +193,7 @@ class SnapshotController extends Controller
                 'tingkatPendidikan',
                 'pendidikan',
                 'unor'
-            ])->whereNull('deleted_at')->get();
+            ])->aktif()->get();
 
             if ($sourceData->isEmpty()) {
                 return back()->with('error', 'Data kosong, tidak ada yang bisa disimpan.');
@@ -202,7 +202,7 @@ class SnapshotController extends Controller
             $insertData = [];
             foreach ($sourceData as $item) {
                 // Determine Status ASN based on Golongan formatting rules
-                $golonganPppk = $item->golongan_pppk;
+                $golonganPppk = $item->gol_akhir;
                 $statusAsn = 'PPPK PW'; // Default jika tidak ada golongan
 
                 if (!empty($golonganPppk)) {

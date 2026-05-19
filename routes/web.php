@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
 
             // Iuran Korpri Routes
             Route::get('/laporan/iuran-korpri', [App\Http\Controllers\IuranKorpriController::class, 'index'])->name('iuran-korpri.index');
+            Route::post('/laporan/iuran-korpri/simpan', [App\Http\Controllers\IuranKorpriController::class, 'simpanRekap'])->name('iuran-korpri.simpan');
             Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
             
             Route::get('/rincian-iuran', [App\Http\Controllers\RincianIuranController::class, 'index'])->name('rincian-iuran.index');
@@ -80,6 +81,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/iuran-korpri/kelas-jabatan-perbup', [App\Http\Controllers\KelasJabatanPerbupController::class, 'index'])->name('kelas-jabatan-perbup.index');
             Route::post('/iuran-korpri/kelas-jabatan-perbup/import', [App\Http\Controllers\KelasJabatanPerbupController::class, 'import'])->name('kelas-jabatan-perbup.import');
             Route::delete('/iuran-korpri/kelas-jabatan-perbup/{id}', [App\Http\Controllers\KelasJabatanPerbupController::class, 'destroy'])->name('kelas-jabatan-perbup.destroy');
+
+            Route::get('/pengaturan-tarif/iuran-golongan', [App\Http\Controllers\IuranKorpriController::class, 'pengaturanTarifGolongan'])->name('pengaturan-tarif.iuran-golongan');
 
             Route::get('/iuran-korpri/jabatan-mapping/find-similar', [App\Http\Controllers\JabatanMappingController::class, 'findSimilarPerbup'])->name('jabatan-mapping.find-similar');
             Route::get('/iuran-korpri/jabatan-mapping/generate-bulk', [App\Http\Controllers\JabatanMappingController::class, 'generateBulkSuggestions'])->name('jabatan-mapping.generate-bulk');

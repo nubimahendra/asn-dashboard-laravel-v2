@@ -103,7 +103,7 @@ class PegawaiImportController extends Controller
                 'jenis_kawin' => $employee->jenisKawin?->nama,
                 'jenis_pegawai' => $employee->jenisPegawai?->nama,
                 'kedudukan_hukum' => $employee->kedudukanHukum?->nama,
-                'golongan' => $employee->golongan_pppk,
+                'golongan' => $employee->gol_akhir,
                 'jabatan' => $employee->jabatan?->nama,
                 'jenis_jabatan' => $employee->jenisJabatan?->nama,
                 'pendidikan' => $employee->pendidikan?->nama,

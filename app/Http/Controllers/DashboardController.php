@@ -167,7 +167,7 @@ class DashboardController extends Controller
             ->get()
             ->groupBy(function ($item) {
                 // Konversi golongan untuk PPPK Aktif otomatis dibantu Accessor model Pegawai
-                $namaGolongan = $item->golongan_pppk ?? 'Tidak Diketahui';
+                $namaGolongan = $item->gol_akhir ?? 'Tidak Diketahui';
 
                 // Hardcode specific grouping request for III/a (jika ada pengecualian ID custom)
                 if (in_array($item->golongan_id, ['19.8', '21.9'])) {

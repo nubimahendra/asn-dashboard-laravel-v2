@@ -54,7 +54,7 @@ class SnapshotExport implements FromCollection, WithHeadings, WithMapping, WithT
                     'jenis_kelamin' => $p->jenis_kelamin,
                     'agama' => $p->agama,
                     'status_kawin' => $p->status_kawin,
-                    'golongan_nama' => $p->golongan ? $p->golongan->nama : '-',
+                    'golongan_nama' => $p->gol_akhir ?? '-',
                     'jabatan_nama' => $p->jabatanBaru ? $p->jabatanBaru->nama : '-',
                     'jenis_jabatan_nama' => $p->jenis_jabatan,
                     'unor_nama' => $p->unor ? $p->unor->nama : '-',

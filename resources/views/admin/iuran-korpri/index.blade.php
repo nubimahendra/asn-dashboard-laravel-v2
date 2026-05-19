@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Besaran Iuran KORPRI berdasar Golongan</h1>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Laporan Iuran KORPRI per OPD</h1>
                 <p class="text-gray-500 dark:text-gray-400 mt-1">
                     @if($filterOpd)
                         <span
@@ -17,12 +17,24 @@
                 </p>
             </div>
             <div class="flex items-center gap-3">
-                <form method="GET" action="{{ route('mari.iuran-korpri.index') }}" class="flex items-center gap-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mr-2">
+                <form method="GET" action="{{ route('mari.iuran-korpri.index') }}" class="flex items-center gap-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mr-2" id="filterForm">
                     @if($filterOpd)
                         <input type="hidden" name="opd" value="{{ $filterOpd }}">
                     @endif
                     <input type="hidden" name="pns" value="0">
                     <input type="hidden" name="pppk" value="0">
+                    
+                    <select name="bulan" class="text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                        @foreach(range(1,12) as $m)
+                            <option value="{{ $m }}" {{ $bulan == $m ? 'selected' : '' }}>{{ date('F', mktime(0,0,0,$m,10)) }}</option>
+                        @endforeach
+                    </select>
+                    <select name="tahun" class="text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                        @foreach(range(date('Y')-2, date('Y')+1) as $y)
+                            <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endforeach
+                    </select>
+
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="pns" value="1" class="sr-only peer" {{ $pns ? 'checked' : '' }} onchange="this.form.submit()">
                         <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -34,12 +46,37 @@
                         <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">PPPK</span>
                     </label>
                 </form>
+                <button type="submit" form="filterForm" name="hitung_ulang" value="1" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition" title="Hitung Ulang">
+                    🔄
+                </button>
+                <button type="button" onclick="simpanIuran()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Simpan Iuran Bulan Ini">
+                    💾
+                </button>
                 @if($filterOpd)
                     <a href="{{ route('mari.iuran-korpri.index') }}"
                         class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">Reset</a>
                 @endif
             </div>
         </div>
+
+        @if($isArsip)
+        <div class="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700 dark:text-blue-300">
+                        <strong>Data Arsip:</strong> Menampilkan rekapan yang tersimpan untuk {{ date('F', mktime(0,0,0,$bulan,10)) }} {{ $tahun }}.
+                        <br>
+                        Disimpan oleh: {{ $arsipCreator }} pada {{ \Carbon\Carbon::parse($arsipDate)->format('d M Y H:i') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -84,19 +121,14 @@
                     <thead class="bg-gray-50 dark:bg-gray-900/50">
                         <tr>
                             <th
-                                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10">
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 No</th>
                             <th
-                                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-10 bg-gray-50 dark:bg-gray-900/50 z-10 min-w-[200px]">
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[200px]">
                                 OPD</th>
-                            @foreach($allIuranRates as $key => $rate)
-                                <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
-                                    Gol {{ $key }}</th>
-                            @endforeach
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Total</th>
+                                Total Pegawai</th>
                             <th
                                 class="px-4 py-3 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                                 Total Iuran</th>
@@ -108,22 +140,13 @@
                             <tr class="opd-row hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                 data-name="{{ strtolower($opd['nama_opd']) }}">
                                 <td
-                                    class="px-4 py-3 text-gray-500 dark:text-gray-400 sticky left-0 bg-white dark:bg-gray-800 z-10">
+                                    class="px-4 py-3 text-gray-500 dark:text-gray-400">
                                     {{ $no++ }}
                                 </td>
                                 <td
-                                    class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 sticky left-10 bg-white dark:bg-gray-800 z-10">
+                                    class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
                                     {{ $opd['nama_opd'] }}
                                 </td>
-                                @foreach($allIuranRates as $key => $rate)
-                                    <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                                        @if(($opd['per_golongan'][$key] ?? 0) > 0)
-                                            Rp {{ number_format($opd['per_golongan'][$key], 0, ',', '.') }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                @endforeach
                                 <td class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">
                                     {{ number_format($opd['total_pegawai']) }}
                                 </td>
@@ -133,7 +156,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ count($allIuranRates) + 3 }}"
+                                <td colspan="4"
                                     class="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
                                     Tidak ada data pegawai ditemukan
                                 </td>
@@ -143,15 +166,10 @@
                     @if(count($opdBreakdown) > 0)
                         <tfoot class="bg-emerald-50 dark:bg-emerald-900/20">
                             <tr>
-                                <td class="px-4 py-4 sticky left-0 bg-emerald-50 dark:bg-emerald-900/20 z-10"></td>
+                                <td class="px-4 py-4"></td>
                                 <td
-                                    class="px-4 py-4 font-bold text-emerald-800 dark:text-emerald-300 sticky left-10 bg-emerald-50 dark:bg-emerald-900/20 z-10">
+                                    class="px-4 py-4 font-bold text-emerald-800 dark:text-emerald-300">
                                     GRAND TOTAL</td>
-                                @foreach($allIuranRates as $key => $rate)
-                                    <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300 whitespace-nowrap">
-                                        Rp {{ number_format(($globalTotals['per_golongan'][$key]['subtotal'] ?? 0), 0, ',', '.') }}
-                                    </td>
-                                @endforeach
                                 <td class="px-4 py-4 text-center font-bold text-emerald-800 dark:text-emerald-300">
                                     {{ number_format($globalTotals['total_pegawai']) }}
                                 </td>
@@ -168,74 +186,7 @@
             {{ $opdBreakdown->fragment('tabel-opd')->links() }}
         </div>
 
-        <!-- Tarif Iuran (Editable) - Moved to Bottom -->
-        <div id="tabel-tarif" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Tarif Iuran per Golongan</h3>
-                <button id="btn-save-tarif"
-                    class="hidden inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Simpan Perubahan
-                </button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 dark:bg-gray-900/50">
-                        <tr>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Golongan</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Jumlah Pegawai</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Besaran Iuran (Rp)</th>
-                            <th
-                                class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        @foreach($iuranRatesPaginated as $rate)
-                            @php $key = $rate->golongan_key; @endphp
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td class="px-6 py-4 font-medium text-gray-700 dark:text-gray-200">{{ $rate->label }}</td>
-                                <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
-                                    {{ number_format($globalTotals['per_golongan'][$key]['count'] ?? 0) }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <input type="number" data-rate-id="{{ $rate->id }}" data-original="{{ $rate->besaran }}"
-                                        value="{{ $rate->besaran }}"
-                                        class="tarif-input w-32 px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
-                                        min="0" step="1000">
-                                </td>
-                                <td class="px-6 py-4 text-right font-semibold text-gray-700 dark:text-gray-200">
-                                    Rp {{ number_format(($globalTotals['per_golongan'][$key]['subtotal'] ?? 0), 0, ',', '.') }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot class="bg-emerald-50 dark:bg-emerald-900/20">
-                        <tr>
-                            <td class="px-6 py-4 font-bold text-emerald-800 dark:text-emerald-300">TOTAL</td>
-                            <td class="px-6 py-4 font-bold text-emerald-800 dark:text-emerald-300">
-                                {{ number_format($globalTotals['total_pegawai']) }}
-                            </td>
-                            <td class="px-6 py-4"></td>
-                            <td class="px-6 py-4 text-right font-bold text-emerald-800 dark:text-emerald-300 text-lg">Rp
-                                {{ number_format($globalTotals['total_iuran'], 0, ',', '.') }}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
-                {{ $iuranRatesPaginated->appends(request()->except('tarif_page'))->fragment('tabel-tarif')->links() }}
-            </div>
-        </div>
+
 
 
     </div>
@@ -259,59 +210,33 @@
             });
         }
 
-        // Tarif edit detection
-        const tarifInputs = document.querySelectorAll('.tarif-input');
-        const btnSave = document.getElementById('btn-save-tarif');
 
-        tarifInputs.forEach(input => {
-            input.addEventListener('input', function () {
-                let hasChanges = false;
-                tarifInputs.forEach(inp => {
-                    if (inp.value !== inp.dataset.original) hasChanges = true;
-                });
-                btnSave.classList.toggle('hidden', !hasChanges);
-            });
-        });
+        function simpanIuran() {
+            if(!confirm('Simpan/Update rekapan iuran untuk bulan dan tahun yang dipilih ke database?')) return;
+            
+            const bulan = document.querySelector('select[name="bulan"]').value;
+            const tahun = document.querySelector('select[name="tahun"]').value;
 
-        // Save tarif
-        if (btnSave) {
-            btnSave.addEventListener('click', function () {
-                const rates = [];
-                tarifInputs.forEach(input => {
-                    rates.push({
-                        id: input.dataset.rateId,
-                        besaran: parseInt(input.value) || 0
-                    });
-                });
-
-                btnSave.disabled = true;
-                btnSave.innerHTML = '<svg class="animate-spin w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Menyimpan...';
-
-                fetch('{{ route("mari.iuran-korpri.update") }}', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ rates })
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Reload page to recalculate totals
-                            window.location.reload();
-                        } else {
-                            alert('Gagal menyimpan: ' + data.message);
-                            btnSave.disabled = false;
-                            btnSave.innerHTML = '<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Simpan Perubahan';
-                        }
-                    })
-                    .catch(err => {
-                        alert('Error: ' + err.message);
-                        btnSave.disabled = false;
-                        btnSave.innerHTML = '<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Simpan Perubahan';
-                    });
+            fetch('{{ route("mari.iuran-korpri.simpan") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ bulan, tahun })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert('Gagal menyimpan: ' + data.message);
+                }
+            })
+            .catch(err => {
+                alert('Error: ' + err.message);
             });
         }
     </script>

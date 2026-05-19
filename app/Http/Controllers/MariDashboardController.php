@@ -66,7 +66,7 @@ class MariDashboardController extends Controller
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 $opdTotals[$opdName] += $besaran;
             } else {
-                $golonganNama = trim($pegawai->golongan_pppk ?? '');
+                $golonganNama = trim($pegawai->gol_akhir ?? '');
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golonganNama;
                 
                 if ($golonganKey && isset($allIuranRates[$golonganKey])) {
