@@ -15,6 +15,7 @@ class IuranOverride extends Model
         'pegawai_id',
         'override_golongan_key',
         'override_eselon_key',
+        'override_opd_nama',
         'alasan',
         'updated_by',
     ];

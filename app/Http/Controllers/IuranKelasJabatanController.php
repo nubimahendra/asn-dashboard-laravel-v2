@@ -81,7 +81,8 @@ class IuranKelasJabatanController extends Controller
         ];
 
         foreach ($transaksiData as $transaksi) {
-            $rawOpdName = $transaksi->pegawai->unor->nama ?? 'Tanpa OPD';
+            $override = $transaksi->pegawai->iuranOverride;
+            $rawOpdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($transaksi->pegawai->unor->nama ?? 'Tanpa OPD');
 
             // Check if OPD is one of the "Bagian" to be grouped into "Sekretariat Daerah"
             $opdNameSearch = trim(ucwords(strtolower($rawOpdName)));

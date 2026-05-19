@@ -178,9 +178,9 @@ class IuranKorpriController extends Controller
         }
 
         foreach ($pegawaiData as $pegawai) {
-            $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
-            $isStruktural = $pegawai->jenis_jabatan_id == 1;
             $override = $pegawai->iuranOverride;
+            $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
+            $isStruktural = $pegawai->jenis_jabatan_id == 1;
 
             if (!isset($opdBreakdown[$opdName])) {
                 $opdBreakdown[$opdName] = [
@@ -360,5 +360,115 @@ class IuranKorpriController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Gagal memperbarui: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function invoice(Request $request)
+    {
+        $bulan = $request->input('bulan', date('n'));
+        $tahun = $request->input('tahun', date('Y'));
+        $filterOpd = $request->input('opd');
+        $pns = $request->has('pns') ? $request->input('pns') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+
+        $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
+        $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
+        $allIuranRates = IuranKorpri::all()->keyBy('golongan_key');
+
+        $query = Pegawai::aktif()->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
+
+        if ($pns && !$pppk) {
+            $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])->whereIn('status_cpns_pns', ['P','C']);
+        } elseif (!$pns && $pppk) {
+            $query->whereIn('kedudukan_hukum_id', ['71','73']);
+        } elseif (!$pns && !$pppk) {
+            $query->where('id', '<', 0);
+        } else {
+            $query->where(function($q) {
+                $q->where('kedudukan_hukum_id', '!=', '101')->orWhereNull('kedudukan_hukum_id');
+            });
+        }
+
+        if ($filterOpd) {
+            // Need to handle both unor->nama and override_opd_nama
+            $query->where(function($q) use ($filterOpd) {
+                $q->whereHas('unor', function ($q2) use ($filterOpd) {
+                    $q2->where('nama', $filterOpd);
+                })->orWhereHas('iuranOverride', function ($q2) use ($filterOpd) {
+                    $q2->where('override_opd_nama', $filterOpd);
+                });
+            });
+        }
+
+        $pegawaiData = $query->get();
+
+        $invoiceData = [];
+        $totalIuran = 0;
+        $totalPegawai = 0;
+
+        foreach ($pegawaiData as $pegawai) {
+            $override = $pegawai->iuranOverride;
+            $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
+            
+            // If we filter by OPD, ensure we only include the matching effective OPD
+            if ($filterOpd && $opdName !== $filterOpd) {
+                continue;
+            }
+
+            $isStruktural = $pegawai->jenis_jabatan_id == 1;
+            $besaran = 0;
+            $dasarIuran = '-';
+            $keyIuran = '-';
+
+            if ($isStruktural && $pns) {
+                $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
+                $dasarIuran = 'Eselon';
+                $keyIuran = $eselonKey;
+            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
+                $golonganNama = $pegawai->golongan_pppk;
+                $golAsliKey = $this->extractGolonganKey($golonganNama);
+                $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
+                
+                if ($golonganKey && isset($allIuranRates[$golonganKey])) {
+                    $besaran = $allIuranRates[$golonganKey]->besaran;
+                    $dasarIuran = 'Golongan';
+                    $keyIuran = $golonganKey;
+                }
+            }
+
+            if ($besaran > 0) {
+                if (!isset($invoiceData[$opdName])) {
+                    $invoiceData[$opdName] = [];
+                }
+
+                $invoiceData[$opdName][] = [
+                    'nama' => $pegawai->nama,
+                    'nip' => $pegawai->nip_baru,
+                    'jabatan' => $pegawai->jabatan->nama ?? '-',
+                    'dasar' => $dasarIuran,
+                    'key' => $keyIuran,
+                    'besaran' => $besaran,
+                    'has_override' => $override ? true : false
+                ];
+
+                $totalIuran += $besaran;
+                $totalPegawai++;
+            }
+        }
+
+        // Sort outer and inner arrays
+        ksort($invoiceData);
+        foreach ($invoiceData as $opd => &$pegawais) {
+            usort($pegawais, function($a, $b) {
+                return $a['nama'] <=> $b['nama'];
+            });
+        }
+
+        $invoiceTitle = $filterOpd ?: 'Seluruh OPD';
+
+        return view('admin.iuran-korpri.invoice', compact(
+            'invoiceData', 'invoiceTitle', 'bulan', 'tahun', 'totalIuran', 'totalPegawai'
+        ));
     }
 }

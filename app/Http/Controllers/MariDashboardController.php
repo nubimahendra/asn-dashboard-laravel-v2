@@ -53,7 +53,8 @@ class MariDashboardController extends Controller
             // Exclude PPPK PW
             if ($pegawai->kedudukan_hukum_id == '101') continue;
 
-            $opdName = $pegawai->unor->nama ?? 'Tanpa OPD';
+            $override = $pegawai->iuranOverride;
+            $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
             if (!isset($opdTotals[$opdName])) {
                 $opdTotals[$opdName] = 0;
             }

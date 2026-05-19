@@ -117,11 +117,12 @@ class RekonIuranController extends Controller
             'pegawai_ids.*' => 'exists:pegawai,id',
             'override_golongan_key' => 'nullable|string',
             'override_eselon_key' => 'nullable|string',
+            'override_opd_nama' => 'nullable|string',
             'alasan' => 'required|string|max:255',
         ]);
 
-        if (empty($request->override_golongan_key) && empty($request->override_eselon_key)) {
-            return response()->json(['success' => false, 'message' => 'Pilih minimal salah satu (Golongan/Eselon) untuk diubah.']);
+        if (empty($request->override_golongan_key) && empty($request->override_eselon_key) && empty($request->override_opd_nama)) {
+            return response()->json(['success' => false, 'message' => 'Pilih minimal salah satu (Golongan/Eselon/OPD) untuk diubah.']);
         }
 
         DB::beginTransaction();
@@ -132,17 +133,20 @@ class RekonIuranController extends Controller
                 
                 $oldGolongan = $override ? $override->override_golongan_key : null;
                 $oldEselon = $override ? $override->override_eselon_key : null;
+                $oldOpd = $override ? $override->override_opd_nama : null;
                 
                 $action = $override ? 'update' : 'create';
 
                 $newGolongan = $request->override_golongan_key ?: $oldGolongan;
                 $newEselon = $request->override_eselon_key ?: $oldEselon;
+                $newOpd = $request->override_opd_nama ?: $oldOpd;
 
                 IuranOverride::updateOrCreate(
                     ['pegawai_id' => $pegawai_id],
                     [
                         'override_golongan_key' => $newGolongan,
                         'override_eselon_key' => $newEselon,
+                        'override_opd_nama' => $newOpd,
                         'alasan' => $request->alasan,
                         'updated_by' => 'Admin' // Assuming auth()->user()->name in a real app
                     ]
@@ -155,6 +159,8 @@ class RekonIuranController extends Controller
                     'new_golongan_key' => $newGolongan,
                     'old_eselon_key' => $oldEselon,
                     'new_eselon_key' => $newEselon,
+                    'old_opd_nama' => $oldOpd,
+                    'new_opd_nama' => $newOpd,
                     'alasan' => $request->alasan,
                     'performed_by' => 'Admin'
                 ]);
@@ -173,6 +179,7 @@ class RekonIuranController extends Controller
             'pegawai_id' => 'required|exists:pegawai,id',
             'override_golongan_key' => 'nullable|string',
             'override_eselon_key' => 'nullable|string',
+            'override_opd_nama' => 'nullable|string',
             'alasan' => 'required|string|max:255',
         ]);
 
@@ -194,6 +201,8 @@ class RekonIuranController extends Controller
                 'new_golongan_key' => null,
                 'old_eselon_key' => $override->override_eselon_key,
                 'new_eselon_key' => null,
+                'old_opd_nama' => $override->override_opd_nama,
+                'new_opd_nama' => null,
                 'alasan' => 'Reset ke data BKN',
                 'performed_by' => 'Admin'
             ]);
@@ -227,6 +236,8 @@ class RekonIuranController extends Controller
                     'new_golongan_key' => null,
                     'old_eselon_key' => $override->override_eselon_key,
                     'new_eselon_key' => null,
+                    'old_opd_nama' => $override->override_opd_nama,
+                    'new_opd_nama' => null,
                     'alasan' => 'Bulk Sync Reset dari BKN',
                     'performed_by' => 'Admin'
                 ]);

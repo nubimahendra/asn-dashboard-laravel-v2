@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
 
             // Iuran Korpri Routes
             Route::get('/laporan/iuran-korpri', [App\Http\Controllers\IuranKorpriController::class, 'index'])->name('iuran-korpri.index');
+            Route::get('/laporan/iuran-korpri/invoice', [App\Http\Controllers\IuranKorpriController::class, 'invoice'])->name('iuran-korpri.invoice');
             Route::post('/laporan/iuran-korpri/simpan', [App\Http\Controllers\IuranKorpriController::class, 'simpanRekap'])->name('iuran-korpri.simpan');
             Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
             
