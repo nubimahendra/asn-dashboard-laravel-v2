@@ -30,18 +30,22 @@ class GenerateEselonMapping extends Command
             $eselon = 'IV/b'; // Default
 
             // Pattern Matching
-            if (str_contains($name, 'sekretaris daerah') || str_starts_with($name, 'asisten ')) {
+            if (str_starts_with($name, 'sekretaris daerah')) {
                 $eselon = 'II/a';
             } elseif (str_starts_with($name, 'kepala dinas') || str_starts_with($name, 'kepala badan') || str_starts_with($name, 'inspektur') || str_starts_with($name, 'staf ahli')) {
                 $eselon = 'II/b';
-            } elseif (str_starts_with($name, 'kepala bidang') || str_starts_with($name, 'camat') || ($name === 'sekretaris' || str_starts_with($name, 'sekretaris dinas') || str_starts_with($name, 'sekretaris badan') || str_starts_with($name, 'sekretaris inspektorat') || str_starts_with($name, 'sekretaris dprd') || str_starts_with($name, 'sekretaris kpu') || str_starts_with($name, 'direktur rsud') || str_starts_with($name, 'kepala pelaksana'))) {
+            } elseif (str_starts_with($name, 'kepala bagian') || str_starts_with($name, 'camat') || str_starts_with($name, 'sekretaris dinas') || str_starts_with($name, 'sekretaris badan') || str_starts_with($name, 'wakil direktur') || str_starts_with($name, 'inspektorat pembantu') || str_starts_with($name, 'inspektur pembantu') || $name === 'sekretaris') {
                 $eselon = 'III/a';
-            } elseif (str_starts_with($name, 'kepala sub bagian') || str_starts_with($name, 'kepala seksi') || str_starts_with($name, 'kepala upt') || str_starts_with($name, 'kepala subbidang') || str_starts_with($name, 'kepala sub bidang') || str_starts_with($name, 'lurah')) {
+            } elseif (str_starts_with($name, 'sekretaris camat') || str_starts_with($name, 'sekretaris kecamatan') || str_starts_with($name, 'kepala bidang')) {
                 $eselon = 'III/b';
-            } elseif (str_starts_with($name, 'sekretaris kecamatan') || str_starts_with($name, 'sekretaris kelurahan')) {
+            } elseif (str_starts_with($name, 'kepala sub bagian penyusun program dan keuangan') || (str_starts_with($name, 'kepala seksi') && str_contains($name, 'kelurahan')) || (str_starts_with($name, 'sekretaris') && str_contains($name, 'kelurahan'))) {
+                $eselon = 'IV/b';
+            } elseif (str_starts_with($name, 'kepala upt') || str_starts_with($name, 'kepala seksi') || str_starts_with($name, 'lurah') || str_starts_with($name, 'kepala kelurahan') || str_starts_with($name, 'kepala sub bagian') || str_starts_with($name, 'kepala subbidang') || str_starts_with($name, 'kepala sub bidang')) {
                 $eselon = 'IV/a';
             } elseif (str_starts_with($name, 'bupati') || str_starts_with($name, 'wakil bupati')) {
                 continue; // Skip mapping for bupati
+            } else {
+                $eselon = 'IV/a'; // Default
             }
 
             if (!$dryRun) {

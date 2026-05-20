@@ -7,7 +7,7 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Dashboard MARI</h1>
             <p class="text-gray-500 dark:text-gray-400 mt-1">
-                Manajemen Iuran Korpri & Kelas Jabatan
+                Manajemen Iuran Korpri
             </p>
         </div>
         <div class="flex items-center gap-3">

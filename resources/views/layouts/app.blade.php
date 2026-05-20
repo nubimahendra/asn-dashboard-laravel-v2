@@ -117,8 +117,22 @@
                 </div>
             @endif
 
+            <!-- Theme Toggle Button (Sidebar) -->
+            <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+                <button id="theme-toggle-sidebar"
+                    class="w-full flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-yellow-500 dark:hover:text-yellow-400 rounded-lg transition-colors group">
+                    <svg id="theme-toggle-light-icon-sidebar" class="w-5 h-5 hidden flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <svg id="theme-toggle-dark-icon-sidebar" class="w-5 h-5 hidden flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <span class="sidebar-text font-medium" id="theme-toggle-text">Tema Gelap</span>
+                </button>
+            </div>
+
             <!-- Logout Button (Sidebar Footer) -->
-            <div class="p-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
+            <div class="px-4 pb-4 border-gray-100 dark:border-gray-700 mt-auto">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit"
@@ -140,20 +154,7 @@
             <!-- Mobile spacer for fixed topbar -->
             <div class="h-14 md:hidden"></div>
             <div class="px-3 py-3 md:px-6 md:py-4">
-                @if (session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
-                        role="alert">
-                        <strong class="font-bold">Berhasil!</strong>
-                        <span class="block sm:inline">{{ session('success') }}</span>
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                        <strong class="font-bold">Error!</strong>
-                        <span class="block sm:inline">{{ session('error') }}</span>
-                    </div>
-                @endif
+                <!-- Alerts removed and handled by toast notification -->
             </div>
             @yield('content')
         </main>
@@ -297,16 +298,35 @@
             const link = e.target.closest('#employee-table-container .pagination a, #employee-table-container nav[role="navigation"] a');
             if (link) { e.preventDefault(); const url = new URL(link.getAttribute('href')); const currentSearch = document.getElementById('employee-search')?.value; if (currentSearch) { url.searchParams.set('search', currentSearch); } fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(response => response.text()).then(html => { document.getElementById('employee-table-container').innerHTML = html; }).catch(error => console.error('Error loading page:', error)); }
         });
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        // Sidebar Theme Toggle Logic
+        const themeToggleBtnSidebar = document.getElementById('theme-toggle-sidebar');
+        const themeToggleDarkIconSidebar = document.getElementById('theme-toggle-dark-icon-sidebar');
+        const themeToggleLightIconSidebar = document.getElementById('theme-toggle-light-icon-sidebar');
+        const themeToggleText = document.getElementById('theme-toggle-text');
 
-        if (themeToggleBtn && themeToggleDarkIcon && themeToggleLightIcon) {
-            if (document.documentElement.classList.contains('dark')) { themeToggleLightIcon.classList.remove('hidden'); } else { themeToggleDarkIcon.classList.remove('hidden'); }
-            themeToggleBtn.addEventListener('click', function () {
-                themeToggleDarkIcon.classList.toggle('hidden');
-                themeToggleLightIcon.classList.toggle('hidden');
-                if (localStorage.getItem('color-theme')) { if (localStorage.getItem('color-theme') === 'light') { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); } } else { if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); } else { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); } }
+        function updateSidebarThemeIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIconSidebar?.classList.remove('hidden');
+                themeToggleDarkIconSidebar?.classList.add('hidden');
+                if(themeToggleText) themeToggleText.textContent = 'Tema Terang';
+            } else {
+                themeToggleDarkIconSidebar?.classList.remove('hidden');
+                themeToggleLightIconSidebar?.classList.add('hidden');
+                if(themeToggleText) themeToggleText.textContent = 'Tema Gelap';
+            }
+        }
+
+        if (themeToggleBtnSidebar && themeToggleDarkIconSidebar && themeToggleLightIconSidebar) {
+            updateSidebarThemeIcons();
+            themeToggleBtnSidebar.addEventListener('click', function () {
+                if (document.documentElement.classList.contains('dark')) { 
+                    document.documentElement.classList.remove('dark'); 
+                    localStorage.setItem('color-theme', 'light'); 
+                } else { 
+                    document.documentElement.classList.add('dark'); 
+                    localStorage.setItem('color-theme', 'dark'); 
+                }
+                updateSidebarThemeIcons();
                 if (typeof updateChartTheme === 'function') { updateChartTheme(); }
             });
         }
@@ -361,32 +381,24 @@
                 mobileToggle.addEventListener('click', function () {
                     mobileDarkIcon.classList.toggle('hidden');
                     mobileLightIcon.classList.toggle('hidden');
-                    // Sync with desktop icons too
-                    const desktopDark = document.getElementById('theme-toggle-dark-icon');
-                    const desktopLight = document.getElementById('theme-toggle-light-icon');
+                    // Sync with sidebar icons too
                     if (localStorage.getItem('color-theme')) {
-                        if (localStorage.getItem('color-theme') === 'light') { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); if (desktopDark) desktopDark.classList.add('hidden'); if (desktopLight) desktopLight.classList.remove('hidden'); }
-                        else { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); if (desktopDark) desktopDark.classList.remove('hidden'); if (desktopLight) desktopLight.classList.add('hidden'); }
+                        if (localStorage.getItem('color-theme') === 'light') { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); }
+                        else { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); }
                     } else {
-                        if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); if (desktopDark) desktopDark.classList.remove('hidden'); if (desktopLight) desktopLight.classList.add('hidden'); }
-                        else { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); if (desktopDark) desktopDark.classList.add('hidden'); if (desktopLight) desktopLight.classList.remove('hidden'); }
+                        if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); }
+                        else { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); }
                     }
+                    if(typeof updateSidebarThemeIcons === 'function') updateSidebarThemeIcons();
                     if (typeof updateChartTheme === 'function') updateChartTheme();
                 });
             }
         })();
     </script>
-    <script>
-        // Auto-hide alerts after 3 seconds
-        setTimeout(function () {
-            let alerts = document.querySelectorAll('[role="alert"]');
-            alerts.forEach(function (alert) {
-                alert.style.transition = "opacity 0.5s ease";
-                alert.style.opacity = "0";
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 3000);
     </script>
+    
+    <!-- Toast Notification -->
+    @include('components.toast-notification')
 
     <!-- Helpdesk Widget (Vanilla JS) -->
     @auth

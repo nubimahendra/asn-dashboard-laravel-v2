@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'modules',
         'nip',
     ];
 
@@ -45,7 +46,20 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'modules' => 'array',
         ];
+    }
+
+    /**
+     * Check if user has access to a specific module.
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        return in_array($module, $this->modules ?? ['mari']);
     }
     /**
      * Get the chat messages for the user.

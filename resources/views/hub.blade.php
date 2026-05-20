@@ -117,12 +117,7 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                ✅ {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+
 
         <div class="text-center mb-5">
             <h2 class="fw-light">Selamat Datang! Pilih Layanan</h2>
@@ -132,38 +127,71 @@
         <div class="row g-4 justify-content-center">
             <!-- MASN Module -->
             <div class="col-md-4">
+                @if(auth()->user()->hasModuleAccess('masn'))
                 <a href="{{ route('masn.dashboard') }}" class="module-card">
+                @else
+                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                @endif
                     <div class="card-header-custom">MASN</div>
                     <div class="card-body-custom">
                         <div class="module-icon">📊</div>
                         <h3 class="module-title">Manajemen ASN</h3>
                         <p class="module-desc">Dashboard statistik ASN, master data pegawai, sinkronisasi data, dan snapshot laporan terkini.</p>
+                        @if(!auth()->user()->hasModuleAccess('masn'))
+                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                        @endif
                     </div>
+                @if(auth()->user()->hasModuleAccess('masn'))
                 </a>
+                @else
+                </div>
+                @endif
             </div>
 
             <!-- MARI Module -->
             <div class="col-md-4">
+                @if(auth()->user()->hasModuleAccess('mari'))
                 <a href="{{ route('mari.dashboard') }}" class="module-card">
+                @else
+                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                @endif
                     <div class="card-header-custom">MARI</div>
                     <div class="card-body-custom">
                         <div class="module-icon mari">💰</div>
                         <h3 class="module-title">Manajemen Iuran</h3>
                         <p class="module-desc">Laporan iuran Korpri, manajemen kelas jabatan, mapping perbup, dan pengaturan tarif.</p>
+                        @if(!auth()->user()->hasModuleAccess('mari'))
+                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                        @endif
                     </div>
+                @if(auth()->user()->hasModuleAccess('mari'))
                 </a>
+                @else
+                </div>
+                @endif
             </div>
 
             <!-- MESRA Module -->
             <div class="col-md-4">
+                @if(auth()->user()->hasModuleAccess('mesra'))
                 <a href="{{ route('mesra.dashboard') }}" class="module-card">
+                @else
+                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                @endif
                     <div class="card-header-custom">MESRA</div>
                     <div class="card-body-custom">
                         <div class="module-icon mesra">✉️</div>
                         <h3 class="module-title">Manajemen Surat</h3>
                         <p class="module-desc">Pengelolaan surat masuk (inbox), layanan pengajuan cerai, dan helpdesk chat interaktif.</p>
+                        @if(!auth()->user()->hasModuleAccess('mesra'))
+                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                        @endif
                     </div>
+                @if(auth()->user()->hasModuleAccess('mesra'))
                 </a>
+                @else
+                </div>
+                @endif
             </div>
         </div>
 
@@ -174,15 +202,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        setTimeout(function () {
-            let alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function (alert) {
-                let bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 3000);
-    </script>
+    
+    <!-- Toast Notification -->
+    @include('components.toast-notification')
 </body>
 
 </html>

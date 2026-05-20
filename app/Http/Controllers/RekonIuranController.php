@@ -40,6 +40,8 @@ class RekonIuranController extends Controller
             ->orderBy('nama')
             ->pluck('nama');
 
+        $listOpd->prepend('Tanpa OPD');
+
         $listUnor = RefUnor::whereNotNull('nama_opd')
             ->where('nama_opd', '!=', '')
             ->orderBy('nama_lengkap')
@@ -68,9 +70,16 @@ class RekonIuranController extends Controller
         }
 
         if ($filterOpd) {
-            $query->whereHas('unor', function ($q) use ($filterOpd) {
-                $q->where('nama', $filterOpd);
-            });
+            if ($filterOpd === 'Tanpa OPD') {
+                $query->where(function($q) {
+                    $q->whereNull('unor_id')
+                      ->orWhereDoesntHave('unor');
+                });
+            } else {
+                $query->whereHas('unor', function ($q) use ($filterOpd) {
+                    $q->where('nama', $filterOpd);
+                });
+            }
         }
 
         if ($filterUnor) {

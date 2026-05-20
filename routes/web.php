@@ -15,15 +15,19 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [HubController::class, 'index'])->name('hub');
 
-    // Admin Only Routes
-    Route::middleware([\App\Http\Middleware\IsAdmin::class])->group(function () {
-        
+    // Module MASN & Admin
+    Route::middleware(['module:masn'])->group(function () {
         // ==========================================
         // MASN - Manajemen ASN
         // ==========================================
         Route::prefix('masn')->name('masn.')->group(function () {
             Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-            Route::resource('users', \App\Http\Controllers\UserController::class);
+            
+            // Only admin can access user management inside MASN
+            Route::middleware(['admin'])->group(function () {
+                Route::resource('users', \App\Http\Controllers\UserController::class);
+            });
+            
             Route::get('/sync-data', [\App\Http\Controllers\PegawaiImportController::class, 'syncPage'])->name('sync.index');
             
             // Snapshot / Laporan Routes
@@ -54,10 +58,10 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/batch/{batchId}/retry', [\App\Http\Controllers\PegawaiImportController::class, 'retry'])->name('batch.retry');
             });
         });
+    });
 
-        // ==========================================
-        // MARI - Manajemen Iuran Korpri
-        // ==========================================
+    // Module MARI
+    Route::middleware(['module:mari'])->group(function () {
         Route::prefix('mari')->name('mari.')->group(function () {
             Route::get('/', [MariDashboardController::class, 'index'])->name('dashboard');
 
@@ -74,6 +78,13 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/rekon-iuran/single-override', [App\Http\Controllers\RekonIuranController::class, 'singleOverride'])->name('rekon-iuran.single-override');
             Route::delete('/rekon-iuran/override/{id}', [App\Http\Controllers\RekonIuranController::class, 'destroy'])->name('rekon-iuran.destroy');
             Route::post('/rekon-iuran/sync-reset', [App\Http\Controllers\RekonIuranController::class, 'syncReset'])->name('rekon-iuran.sync-reset');
+            
+            Route::get('/eselon-mapping', [App\Http\Controllers\EselonMappingController::class, 'index'])->name('eselon-mapping.index');
+            Route::post('/eselon-mapping/generate', [App\Http\Controllers\EselonMappingController::class, 'generate'])->name('eselon-mapping.generate');
+            Route::post('/eselon-mapping', [App\Http\Controllers\EselonMappingController::class, 'store'])->name('eselon-mapping.store');
+            Route::put('/eselon-mapping/{id}', [App\Http\Controllers\EselonMappingController::class, 'update'])->name('eselon-mapping.update');
+            Route::delete('/eselon-mapping/{id}', [App\Http\Controllers\EselonMappingController::class, 'destroy'])->name('eselon-mapping.destroy');
+
             Route::get('/iuran-korpri/kelas-jabatan', [App\Http\Controllers\KelasJabatanController::class, 'index'])->name('kelas-jabatan.index');
             Route::post('/iuran-korpri/kelas-jabatan/import', [App\Http\Controllers\KelasJabatanController::class, 'import'])->name('kelas-jabatan.import');
             Route::put('/iuran-korpri/kelas-jabatan/tarif', [App\Http\Controllers\KelasJabatanController::class, 'updateTarif'])->name('kelas-jabatan.update-tarif');
@@ -100,10 +111,10 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/iuran-korpri/iuran-kelas-jabatan/opd-detail', [App\Http\Controllers\IuranKelasJabatanController::class, 'opdDetail'])->name('iuran-kelas-jabatan.opd-detail');
             Route::post('/iuran-korpri/iuran-kelas-jabatan/generate', [App\Http\Controllers\IuranKelasJabatanController::class, 'generate'])->name('iuran-kelas-jabatan.generate');
         });
+    });
 
-        // ==========================================
-        // MESRA - Manajemen Surat Menyurat
-        // ==========================================
+    // Module MESRA
+    Route::middleware(['module:mesra'])->group(function () {
         Route::prefix('mesra')->name('mesra.')->group(function () {
             Route::get('/', function() { return view('mesra.dashboard'); })->name('dashboard');
 

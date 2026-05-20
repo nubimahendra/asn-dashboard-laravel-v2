@@ -60,7 +60,7 @@
         <!-- Invoice Header -->
         <div class="text-center mb-8 border-b-2 border-gray-800 pb-4 print:border-b-[3px] print:border-black">
             <h1 class="text-2xl font-bold uppercase tracking-wider print-text-black">INVOICE IURAN KORPRI</h1>
-            <h2 class="text-xl font-semibold mt-1 print-text-black">Pemerintah Kabupaten Blitar</h2>
+            <h2 class="text-xl font-semibold mt-1 print-text-black">Dewan Pengurus KORPRI Kab. Blitar</h2>
         </div>
 
         <!-- Invoice Details -->
@@ -158,7 +158,7 @@
             @endforeach
 
             <!-- Grand Total -->
-            @if($invoiceTitle === 'Seluruh OPD')
+            @if($invoiceTitle === 'Seluruh PD')
             <div class="flex justify-end mt-4 print:mt-8">
                 <table class="w-72 print-border print-text-black">
                     <tr class="bg-blue-600 text-white print:bg-gray-300 print:text-black">

@@ -47,6 +47,27 @@
                     @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- Modules (Hanya Berlaku untuk User) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Akses Modul</label>
+                    <div class="flex flex-col gap-2">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="modules[]" value="mari" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" {{ in_array('mari', old('modules', $user->modules ?? [])) ? 'checked' : '' }}>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MARI (Manajemen Iuran)</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="modules[]" value="masn" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" {{ in_array('masn', old('modules', $user->modules ?? [])) ? 'checked' : '' }}>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MASN (Manajemen ASN)</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="modules[]" value="mesra" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" {{ in_array('mesra', old('modules', $user->modules ?? [])) ? 'checked' : '' }}>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MESRA (Manajemen Surat)</span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">* Role Admin otomatis memiliki akses ke semua modul terlepas dari pilihan di atas.</p>
+                    @error('modules') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
                 <!-- Password -->
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password
