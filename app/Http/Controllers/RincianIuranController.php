@@ -115,8 +115,13 @@ class RincianIuranController extends Controller
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                 
                 $isVisible = false;
-                if ($showGolonganPns && in_array($golonganKey, $pnsGolKeys)) $isVisible = true;
-                if ($showGolonganPppk && in_array($golonganKey, $pppkGolKeys)) $isVisible = true;
+                
+                // Determine if this is PNS or PPPK based on kedudukan_hukum_id
+                $isPnsEmployee = in_array($pegawai->kedudukan_hukum_id, ['01','02','03','04','15']);
+                $isPppkEmployee = in_array($pegawai->kedudukan_hukum_id, ['71','73']);
+                
+                if ($showGolonganPns && $isPnsEmployee) $isVisible = true;
+                if ($showGolonganPppk && $isPppkEmployee) $isVisible = true;
 
                 if ($isVisible && $golonganKey && isset($golonganBreakdown[$golonganKey])) {
                     $golonganBreakdown[$golonganKey]['count']++;

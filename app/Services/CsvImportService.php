@@ -101,9 +101,10 @@ class CsvImportService
      * 
      * @param string $path Absolute path to the CSV file
      * @param string $filename Original filename to record the source
+     * @param string|null $target Target type (pns, pppk, pppkpw)
      * @return array Array containing counts of 'inserted', 'skipped', and 'errors'
      */
-    public function import(string $path, string $filename): array
+    public function import(string $path, string $filename, ?string $target = null): array
     {
         $handle = fopen($path, 'r');
 
@@ -120,11 +121,12 @@ class CsvImportService
 
         $batch = ImportBatch::create([
             'source_file' => $filename,
+            'import_target' => $target,
             'status' => 'uploaded'
         ]);
         $batchId = $batch->id;
 
-        $result = $this->processCsvLines($handle, $filename, $batchId, $this->expectedColumns);
+        $result = $this->processCsvLines($handle, $filename, $batchId, $this->expectedColumns, $target);
 
         // Append the created batch_id for the controller
         $result['batch_id'] = $batchId;
@@ -138,10 +140,11 @@ class CsvImportService
      * @param string $path Absolute path to the CSV file
      * @param string $sharedFilename Shared source filename (e.g., timestamp_merged)
      * @param int $batchId The existing ImportBatch ID
+     * @param string|null $target Target type (pns, pppk, pppkpw)
      * @param int $expectedCols Optional, override expected column count
      * @return array Array containing counts of 'inserted' and 'skipped'
      */
-    public function importIntoSharedBatch(string $path, string $sharedFilename, int $batchId, int $expectedCols = 67): array
+    public function importIntoSharedBatch(string $path, string $sharedFilename, int $batchId, ?string $target = null, int $expectedCols = 67): array
     {
         $handle = fopen($path, 'r');
 
@@ -149,14 +152,14 @@ class CsvImportService
             throw new \Exception("Cannot open CSV file: {$path}");
         }
 
-        return $this->processCsvLines($handle, $sharedFilename, $batchId, $expectedCols);
+        return $this->processCsvLines($handle, $sharedFilename, $batchId, $expectedCols, $target);
     }
 
     /**
      * Core logic to read lines and insert into DB.
      * extracted to allow reuse across single and multi-file imports.
      */
-    protected function processCsvLines($handle, string $filename, int $batchId, int $expectedCols): array
+    protected function processCsvLines($handle, string $filename, int $batchId, int $expectedCols, ?string $target = null): array
     {
         $rowNumber = 0;
         $inserted = 0;
@@ -189,6 +192,8 @@ class CsvImportService
                     $skipped++;
                     continue; // Skip corrupt/incomplete rows
                 }
+
+                // (Filter target kedudukan_hukum dihapus sesuai Opsi X agar file menjadi source of truth)
 
                 // 3. Data Cleaning and Mapping
                 // Strip leading single quotes commonly used in Excel/CSV exports for text fields

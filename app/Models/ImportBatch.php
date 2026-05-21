@@ -11,11 +11,26 @@ class ImportBatch extends Model
 
     protected $fillable = [
         'source_file',
+        'import_target',
         'total_rows',
         'valid_rows',
         'invalid_rows',
+        'skipped_rows',
+        'processed_count',
+        'error_count',
+        'summary_new',
+        'summary_changed',
+        'summary_unchanged',
         'deactivated_count',
         'status',
+        'total_pegawai_before',
+        'total_pegawai_after',
+        'summary_imported',
+        'synced_at',
+    ];
+
+    protected $casts = [
+        'synced_at' => 'datetime',
     ];
 
     public function imports()

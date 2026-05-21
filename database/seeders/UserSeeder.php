@@ -13,19 +13,36 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Admin
-        \App\Models\User::create([
-            'name' => 'Admin Dashboard',
-            'email' => 'admin@blitar.go.id',
-            'password' => bcrypt('password'),
-            'role' => 'admin',
-        ]);
+        \App\Models\User::updateOrCreate(
+            ['email' => 'admin@blitar.go.id'],
+            [
+                'name' => 'Admin Dashboard',
+                'password' => bcrypt('password'),
+                'role' => 'admin',
+                'modules' => ['mari', 'masn', 'mesra'],
+            ]
+        );
 
-        // User Biasa
-        \App\Models\User::create([
-            'name' => 'User Biasa',
-            'email' => 'user@blitar.go.id',
-            'password' => bcrypt('password'),
-            'role' => 'user',
-        ]);
+        // User Biasa (Full access)
+        \App\Models\User::updateOrCreate(
+            ['email' => 'user@blitar.go.id'],
+            [
+                'name' => 'User Biasa',
+                'password' => bcrypt('password'),
+                'role' => 'user',
+                'modules' => ['mari', 'masn', 'mesra'],
+            ]
+        );
+
+        // User MARI (Only MARI access)
+        \App\Models\User::updateOrCreate(
+            ['email' => 'user.mari@blitar.go.id'],
+            [
+                'name' => 'User MARI',
+                'password' => bcrypt('password'),
+                'role' => 'user',
+                'modules' => ['mari'],
+            ]
+        );
     }
 }

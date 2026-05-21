@@ -32,24 +32,26 @@ class RefGolonganSeeder extends Seeder
             ['id' => '44', 'nama' => 'IV/d'],
             ['id' => '45', 'nama' => 'IV/e'],
 
-            // PPPK
-            ['id' => '51', 'nama' => 'I'],
-            ['id' => '52', 'nama' => 'II'],
-            ['id' => '53', 'nama' => 'III'],
-            ['id' => '54', 'nama' => 'IV'],
-            ['id' => '55', 'nama' => 'V'],
-            ['id' => '56', 'nama' => 'VI'],
-            ['id' => '57', 'nama' => 'VII'],
-            ['id' => '58', 'nama' => 'VIII'],
-            ['id' => '59', 'nama' => 'IX'],
-            ['id' => '60', 'nama' => 'X'],
-            ['id' => '61', 'nama' => 'XI'],
-            ['id' => '62', 'nama' => 'XII'],
-            ['id' => '63', 'nama' => 'XIII'],
-            ['id' => '64', 'nama' => 'XIV'],
-            ['id' => '65', 'nama' => 'XV'],
-            ['id' => '66', 'nama' => 'XVI'],
-            ['id' => '67', 'nama' => 'XVII'],
+            // PPPK — prefixed with "P" to prevent ID collision with PNS
+            // CSV gol_akhir_id for PPPK uses the same numeric range as PNS
+            // but refers to different golongan names. Prefix prevents overwrite.
+            ['id' => 'P51', 'nama' => 'I'],
+            ['id' => 'P52', 'nama' => 'II'],
+            ['id' => 'P53', 'nama' => 'III'],
+            ['id' => 'P54', 'nama' => 'IV'],
+            ['id' => 'P55', 'nama' => 'V'],
+            ['id' => 'P56', 'nama' => 'VI'],
+            ['id' => 'P57', 'nama' => 'VII'],
+            ['id' => 'P58', 'nama' => 'VIII'],
+            ['id' => 'P59', 'nama' => 'IX'],
+            ['id' => 'P60', 'nama' => 'X'],
+            ['id' => 'P61', 'nama' => 'XI'],
+            ['id' => 'P62', 'nama' => 'XII'],
+            ['id' => 'P63', 'nama' => 'XIII'],
+            ['id' => 'P64', 'nama' => 'XIV'],
+            ['id' => 'P65', 'nama' => 'XV'],
+            ['id' => 'P66', 'nama' => 'XVI'],
+            ['id' => 'P67', 'nama' => 'XVII'],
         ];
 
         foreach ($golongans as $gol) {

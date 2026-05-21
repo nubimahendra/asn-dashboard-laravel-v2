@@ -35,7 +35,7 @@ class PegawaiImportService
         $jenisKawinId = $this->referenceSync->syncJenisKawin($staging->jenis_kawin_id, $staging->jenis_kawin);
         $jenisPegawaiId = $this->referenceSync->syncJenisPegawai($staging->jenis_pegawai_id, $staging->jenis_pegawai);
         $kedudukanHukumId = $this->referenceSync->syncKedudukanHukum($staging->kedudukan_hukum_id, $staging->kedudukan_hukum);
-        $golonganId = $this->referenceSync->syncGolongan($staging->gol_akhir_id, $staging->gol_akhir);
+        $golonganId = $this->referenceSync->syncGolongan($staging->gol_akhir_id, $staging->gol_akhir, $staging->kedudukan_hukum_id);
         $jabatanId = $this->referenceSync->syncJabatan($staging->jabatan_id, $staging->jabatan);
         $jenisJabatanId = $this->referenceSync->syncJenisJabatan($staging->jenis_jabatan_id, $staging->jenis_jabatan);
         $pendidikanId = $this->referenceSync->syncPendidikan($staging->pendidikan_id, $staging->pendidikan);

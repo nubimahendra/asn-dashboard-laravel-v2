@@ -18,11 +18,10 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
         $this->call([
             RefGolonganSeeder::class,
+            RefIuranEselonSeeder::class,
             IuranKorpriSeeder::class,
             UserSeeder::class,
-            RefGolonganSeeder::class,
-            RefUserSeeder::class,
-            RefFaqsTableSeeder::class,
+            FaqsTableSeeder::class,
         ]);
     }
 }

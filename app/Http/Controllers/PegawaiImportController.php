@@ -229,6 +229,7 @@ class PegawaiImportController extends Controller
 
         // Validate that each uploaded file is valid
         $files = $request->file('files');
+        $targets = $request->input('targets', []);
         foreach ($files as $file) {
             if (!$file->isValid()) {
                 return response()->json([
@@ -254,9 +255,10 @@ class PegawaiImportController extends Controller
             $fileSummaries = [];
 
             // 1. Process each file
-            foreach ($files as $file) {
+            foreach ($files as $index => $file) {
                 $originalName = $file->getClientOriginalName();
                 $filename = time() . '_' . $originalName; // unique stored name
+                $target = $targets[$index] ?? null;
 
                 // Store file
                 $path = $file->storeAs('imports/pegawai', $filename);
@@ -267,12 +269,12 @@ class PegawaiImportController extends Controller
 
                 // If this is the very first file being inserted, create the batch using the generic import()
                 if (!$batchCreated) {
-                    $result = $csvService->import($fullPath, $sharedFilename);
+                    $result = $csvService->import($fullPath, $sharedFilename, $target);
                     $batchId = $result['batch_id'];
                     $batchCreated = true;
                 } else {
                     // Subsequent files append to the same batch and use the same $sharedFilename
-                    $result = $csvService->importIntoSharedBatch($fullPath, $sharedFilename, $batchId);
+                    $result = $csvService->importIntoSharedBatch($fullPath, $sharedFilename, $batchId, $target);
                 }
 
                 $totalInserted += $result['inserted'];
@@ -338,9 +340,13 @@ class PegawaiImportController extends Controller
                 if ($batch) {
                     $status = ($invalid > 0 && $valid == 0) ? 'failed' : (($invalid > 0) ? 'partial' : 'ready');
                     $batch->update([
-                        'total_rows' => $total,
+                        'total_rows' => $total + $totalSkipped,
                         'valid_rows' => $valid,
                         'invalid_rows' => $invalid,
+                        'skipped_rows' => $totalSkipped,
+                        'summary_new' => $counts['new'] ?? 0,
+                        'summary_changed' => $counts['changed'] ?? 0,
+                        'summary_unchanged' => $counts['unchanged'] ?? 0,
                         'status' => $status
                     ]);
 
@@ -387,51 +393,74 @@ class PegawaiImportController extends Controller
      */
     public function history()
     {
-        $imports = StgPegawaiImport::select('source_file', 'imported_at')
-            ->selectRaw('COUNT(*) as total_rows')
-            ->selectRaw('SUM(CASE WHEN is_processed = 1 THEN 1 ELSE 0 END) as processed_rows')
-            ->selectRaw('SUM(CASE WHEN processing_error IS NOT NULL THEN 1 ELSE 0 END) as processing_error_rows')
-            ->selectRaw('SUM(CASE WHEN import_error IS NOT NULL THEN 1 ELSE 0 END) as import_error_rows')
-            ->selectRaw('SUM(CASE WHEN is_anomali = 1 THEN 1 ELSE 0 END) as anomaly_rows')
-            ->groupBy('source_file', 'imported_at')
-            ->orderBy('imported_at', 'desc')
-            ->paginate(5);
+        $batches = \App\Models\ImportBatch::orderBy('created_at', 'desc')->paginate(5);
 
-        $imports->getCollection()->transform(function ($import) {
-            $totalErrors = $import->processing_error_rows;
+        $batches->getCollection()->transform(function ($batch) {
+            $hasStagingData = StgPegawaiImport::where('source_file', $batch->source_file)->exists();
+            $anomalyRows = StgPegawaiImport::where('source_file', $batch->source_file)->where('is_anomali', true)->count();
             
-            $batch = \App\Models\ImportBatch::where('source_file', $import->source_file)->first();
-            $deactivatedCount = $batch?->deactivated_count ?? 0;
-
+            // Format status
             $status = 'Menunggu';
-            if ($totalErrors > 0 && $import->processed_rows == 0) {
-                $status = 'Gagal';
-            } elseif ($totalErrors > 0 && $import->processed_rows > 0) {
-                $status = 'Sebagian';
-            } elseif ($import->processed_rows == $import->total_rows) {
+            if ($batch->status === 'synced') {
                 $status = 'Selesai';
-            } elseif ($import->processed_rows > 0) {
+            } elseif ($batch->status === 'failed') {
+                $status = 'Gagal';
+            } elseif ($batch->status === 'partial') {
+                $status = 'Sebagian';
+            } elseif ($batch->processed_count > 0 && $batch->status !== 'ready') {
                 $status = 'Diproses';
+            } elseif ($batch->status === 'ready' || $batch->status === 'uploaded') {
+                $status = 'Menunggu';
+            }
+
+            // Calculate progress using ImportBatch as Source of Truth
+            $progress = 0;
+            if ($batch->status === 'synced') {
+                $progress = 100;
+            } elseif ($batch->total_rows > 0) {
+                // Ignore skipped rows for progress calculation of processing staging
+                $stagingTotal = max(1, $batch->total_rows - $batch->skipped_rows);
+                $progress = round(($batch->processed_count / $stagingTotal) * 100, 2);
+                if ($progress > 100) $progress = 100;
+            }
+
+            // Get sample errors if there are skipped rows or processing errors
+            $errorSample = null;
+            if ($batch->skipped_rows > 0) {
+                $errorSample = "{$batch->skipped_rows} baris di-skip karena format tidak sesuai (kurang/lebih kolom).";
+            } elseif ($batch->error_count > 0 && $hasStagingData) {
+                $sample = StgPegawaiImport::where('source_file', $batch->source_file)
+                    ->whereNotNull('processing_error')
+                    ->first();
+                if ($sample) {
+                    $errorSample = $sample->processing_error;
+                }
             }
 
             return [
-                'filename' => $import->source_file,
-                'uploaded_at' => $import->imported_at->format('d/m/Y H:i:s'),
-                'total_rows' => $import->total_rows,
-                'processed_rows' => $import->processed_rows,
-                'import_error_rows' => $import->import_error_rows,
-                'processing_error_rows' => $import->processing_error_rows,
-                'anomaly_rows' => $import->anomaly_rows,
-                'total_error_rows' => $totalErrors,
-                'deactivated_count' => $deactivatedCount,
+                'filename' => $batch->source_file,
+                'uploaded_at' => $batch->created_at->format('d/m/Y H:i:s'),
+                'total_rows' => $batch->total_rows,
+                'processed_rows' => $batch->processed_count,
+                'error_rows' => $batch->error_count,
+                'skipped_rows' => $batch->skipped_rows,
+                'anomaly_rows' => $anomalyRows,
+                'deactivated_count' => $batch->deactivated_count,
+                'summary_new' => $batch->summary_new,
+                'summary_changed' => $batch->summary_changed,
+                'summary_unchanged' => $batch->summary_unchanged,
+                'total_pegawai_before' => $batch->total_pegawai_before,
+                'total_pegawai_after' => $batch->total_pegawai_after,
+                'summary_imported' => $batch->summary_imported,
+                'synced_at' => $batch->synced_at ? $batch->synced_at->format('d/m/Y H:i:s') : null,
+                'has_staging_data' => $hasStagingData,
                 'status' => $status,
-                'progress' => $import->total_rows > 0
-                    ? round(($import->processed_rows / $import->total_rows) * 100, 2)
-                    : 0,
+                'progress' => $progress,
+                'error_sample' => $errorSample,
             ];
         });
 
-        return response()->json($imports);
+        return response()->json($batches);
     }
 
     /**
@@ -638,6 +667,31 @@ class PegawaiImportController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Import \"{$filename}\" berhasil dibatalkan."
+        ]);
+    }
+
+    /**
+     * Delete staging data for a completed import batch
+     */
+    public function deleteStaging(Request $request, $filename)
+    {
+        $batch = \App\Models\ImportBatch::where('source_file', $filename)
+            ->where('status', 'synced')
+            ->first();
+
+        if (!$batch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batch tidak ditemukan atau proses sinkronisasi belum selesai.'
+            ], 404);
+        }
+
+        // Hapus data staging tapi BUKAN batch
+        $deleted = StgPegawaiImport::where('source_file', $filename)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$deleted} baris data staging untuk \"{$filename}\" berhasil dihapus."
         ]);
     }
 

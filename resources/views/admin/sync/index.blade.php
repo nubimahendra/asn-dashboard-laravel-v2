@@ -30,7 +30,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <p class="font-semibold text-gray-700 dark:text-gray-300">PNS.csv</p>
+                        <p class="font-semibold text-gray-700 dark:text-gray-300">File Data PNS (Pegawai Negeri Sipil)</p>
                         <p class="text-xs text-gray-400 mt-1">Wajib &bull; Seret ke sini atau klik</p>
                         <p id="pns-label"
                             class="hidden text-xs mt-2 text-green-600 dark:text-green-400 font-medium truncate w-full"></p>
@@ -44,7 +44,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <p class="font-semibold text-gray-700 dark:text-gray-300">PPPK.csv</p>
+                        <p class="font-semibold text-gray-700 dark:text-gray-300">File Data PPPK (Pegawai Pemerintah dengan Perjanjian Kerja)</p>
                         <p class="text-xs text-gray-400 mt-1">Opsional &bull; Seret ke sini atau klik</p>
                         <p id="pppk-label"
                             class="hidden text-xs mt-2 text-green-600 dark:text-green-400 font-medium truncate w-full"></p>
@@ -58,7 +58,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <p class="font-semibold text-gray-700 dark:text-gray-300">PPPK PW.csv</p>
+                        <p class="font-semibold text-gray-700 dark:text-gray-300">File Data PPPK Paruh Waktu</p>
                         <p class="text-xs text-gray-400 mt-1">Opsional &bull; Seret ke sini atau klik</p>
                         <p id="pppkpw-label"
                             class="hidden text-xs mt-2 text-green-600 dark:text-green-400 font-medium truncate w-full"></p>
@@ -151,7 +151,7 @@
 
                 <div class="mt-4 mb-4 p-4 border border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800 rounded-lg">
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" id="delete-removed-checkbox" class="mt-1 w-4 h-4 text-orange-600 border-orange-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                        <input type="checkbox" id="delete-removed-checkbox" checked class="mt-1 w-4 h-4 text-orange-600 border-orange-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                         <div>
                             <span class="font-semibold text-orange-800 dark:text-orange-300">Nonaktifkan pegawai yang tidak ditemukan dalam file import ini</span>
                             <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">Cocok untuk pegawai yang sudah pensiun, meninggal, atau tidak aktif lagi. Kedudukan hukum akan diubah ke 'ASN Non Aktif' (kode 17).</p>
@@ -308,6 +308,9 @@
                                 Anomali</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Summary</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Status</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -433,9 +436,9 @@
                 return;
             }
 
-            if (filePns) formData.append('files[]', filePns);
-            if (filePppk) formData.append('files[]', filePppk);
-            if (filePppkpw) formData.append('files[]', filePppkpw);
+            if (filePns) { formData.append('files[]', filePns); formData.append('targets[]', 'pns'); }
+            if (filePppk) { formData.append('files[]', filePppk); formData.append('targets[]', 'pppk'); }
+            if (filePppkpw) { formData.append('files[]', filePppkpw); formData.append('targets[]', 'pppkpw'); }
 
             // Show loading state
             uploadBtn.disabled = true;
@@ -917,7 +920,10 @@
                 historyTableBody.innerHTML = imports.map(item => `
                                                 <tr>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                                                        ${item.filename}
+                                                        <div class="font-medium">${item.filename}</div>
+                                                        ${item.has_staging_data 
+                                                            ? '<span class="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">Staging: Ada</span>'
+                                                            : '<span class="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Staging: Dihapus</span>'}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                         ${item.uploaded_at}
@@ -928,19 +934,32 @@
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                         ${getAnomaliBadge(item.filename, item.anomaly_rows || 0)}
                                                     </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                        <div class="text-gray-800 dark:text-gray-200 font-semibold mb-1 border-b border-gray-200 dark:border-gray-700 pb-1">
+                                                            Total Pegawai: ${item.total_pegawai_before} &rarr; ${item.total_pegawai_after}
+                                                        </div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                            Di-import: ${item.summary_imported} | Sync: ${item.synced_at || '-'}
+                                                        </div>
+                                                        <div class="text-blue-600 dark:text-blue-400">Baru: ${item.summary_new || 0}</div>
+                                                        <div class="text-yellow-600 dark:text-yellow-400">Berubah: ${item.summary_changed || 0}</div>
+                                                        <div class="text-gray-500 dark:text-gray-400">Tetap: ${item.summary_unchanged || 0}</div>
+                                                        ${item.error_sample ? `<div class="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 p-2 rounded"><strong>Peringatan:</strong> ${item.error_sample}</div>` : ''}
+                                                    </td>
                                                     <td class="px-6 py-4 whitespace-nowrap">
                                                         ${getStatusBadge(item.status)}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap">
-                                                        ${getProgressBar(item.progress, item.status)}
+                                                        ${getProgressBar(item.progress, item.status, item.processed_rows, item.total_rows - (item.skipped_rows || 0), item.error_rows)}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                         ${item.deactivated_count > 0 
                                                             ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">${item.deactivated_count} Dinonaktifkan</span>` 
                                                             : '<span class="text-gray-400">-</span>'}
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                        ${item.status === 'Menunggu' ? `<button onclick="cancelImport('${item.filename}')" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">Batalkan</button>` : '-'}
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm flex flex-col gap-1">
+                                                        ${item.status === 'Menunggu' ? `<button onclick="cancelImport('${item.filename}')" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">Batalkan</button>` : ''}
+                                                        ${item.status === 'Selesai' && item.has_staging_data ? `<button onclick="deleteStaging('${item.filename}')" class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white border border-red-500 hover:bg-red-600 rounded-lg transition-colors flex items-center justify-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Staging</button>` : ''}
                                                     </td>
                                                 </tr>
                                             `).join('');
@@ -1092,18 +1111,28 @@
             anomalyPagination.innerHTML = html;
         }
 
-        function getProgressBar(progress, status) {
+        function getProgressBar(progress, status, processedRows, totalRows, errorRows) {
             if (status === 'Selesai') {
-                return '<span class="text-sm text-green-600 dark:text-green-400 font-semibold">100%</span>';
+                return '<span class="text-sm text-green-600 dark:text-green-400 font-semibold">100% ✅</span>';
             }
             if (status === 'Gagal') {
-                return '<span class="text-sm text-red-600 dark:text-red-400">-</span>';
+                return '<span class="text-sm text-red-600 dark:text-red-400 font-semibold">Gagal ❌</span>';
             }
+            if (status === 'Sebagian') {
+                return `
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                        <div class="bg-yellow-500 h-2.5 rounded-full" style="width: ${progress}%"></div>
+                    </div>
+                    <span class="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">${progress}% (${errorRows} error)</span>
+                `;
+            }
+            
+            // Diproses / Menunggu
             return `
-                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ${status === 'Diproses' ? 'animate-pulse' : ''}" style="width: ${progress}%"></div>
                                             </div>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${progress}%</span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">${progress}% (${processedRows}/${totalRows})</span>
                                         `;
         }
 
@@ -1185,6 +1214,33 @@
             } catch (error) {
                 showStatus('error', 'Terjadi kesalahan saat membatalkan import: ' + error.message);
                 console.error('Cancel Error:', error);
+            }
+        }
+
+        async function deleteStaging(filename) {
+            if (!confirm(`Anda yakin ingin menghapus data staging untuk "${filename}"? Histori batch dan statistik tidak akan dihapus.`)) return;
+
+            try {
+                const response = await fetch(`{{ url('masn/sync-data/staging') }}/${filename}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showStatus('success', data.message || 'Data staging berhasil dihapus.');
+                    loadHistory();
+                } else {
+                    showStatus('error', data.message || 'Gagal menghapus data staging.');
+                }
+            } catch (error) {
+                showStatus('error', 'Terjadi kesalahan saat menghapus data staging: ' + error.message);
+                console.error('Delete Staging Error:', error);
             }
         }
     </script>

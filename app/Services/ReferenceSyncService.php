@@ -70,9 +70,29 @@ class ReferenceSyncService
         return $this->syncRef('ref_kedudukan_hukum', $id, $nama);
     }
 
-    public function syncGolongan($id, $nama)
+    /**
+     * Sync golongan reference with PNS/PPPK collision prevention.
+     * 
+     * CSV data uses the same gol_akhir_id for different golongan names
+     * depending on whether the employee is PNS or PPPK:
+     *   PNS  gol_akhir_id=21 → "II/a"
+     *   PPPK gol_akhir_id=21 → "V"
+     * 
+     * To prevent overwrite, PPPK IDs are prefixed with "P".
+     */
+    public function syncGolongan($id, $nama, ?string $kedudukanHukumId = null)
     {
-        return $this->syncRef('ref_golongan', $id, $nama);
+        if (empty($id) || empty($nama)) {
+            return null;
+        }
+
+        // Determine if PPPK based on kedudukan_hukum_id
+        $isPppk = in_array($kedudukanHukumId, ['71', '73', '101']);
+
+        // Create unique ID to prevent PNS/PPPK collision
+        $uniqueId = $isPppk ? "P{$id}" : $id;
+
+        return $this->syncRef('ref_golongan', $uniqueId, $nama);
     }
 
     public function syncJenisJabatan($id, $nama)
@@ -196,10 +216,10 @@ class ReferenceSyncService
         if ($this->syncKedudukanHukum($staging->kedudukan_hukum_id, $staging->kedudukan_hukum))
             $syncCount++;
 
-        // Sync golongan (both awal and akhir)
-        if ($this->syncGolongan($staging->gol_awal_id, $staging->gol_awal))
+        // Sync golongan (both awal and akhir) — pass kedudukan_hukum_id for PNS/PPPK collision prevention
+        if ($this->syncGolongan($staging->gol_awal_id, $staging->gol_awal, $staging->kedudukan_hukum_id))
             $syncCount++;
-        if ($this->syncGolongan($staging->gol_akhir_id, $staging->gol_akhir))
+        if ($this->syncGolongan($staging->gol_akhir_id, $staging->gol_akhir, $staging->kedudukan_hukum_id))
             $syncCount++;
 
         // Sync jabatan related
