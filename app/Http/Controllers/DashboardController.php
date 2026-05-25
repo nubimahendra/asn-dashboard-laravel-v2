@@ -160,14 +160,13 @@ class DashboardController extends Controller
 
         // Chart 6: Golongan (Bar)
         // Group by pure golongan name to merge duplicate groups like 'III/a' 
-        // Then sort them properly by parsing their values, or just let string sort handle it (or use custom sort if string sort isn't enough, but usually string sort keys is fine, or we can just sortDesc to show the highest populated).
+        // Then sort them properly by parsing their values
         $dataGolongan = (clone $query)
-            ->whereHas('golongan')
             ->with(['golongan', 'kedudukanHukum'])
             ->get()
             ->groupBy(function ($item) {
                 // Konversi golongan untuk PPPK Aktif otomatis dibantu Accessor model Pegawai
-                $namaGolongan = $item->gol_akhir ?? 'Tidak Diketahui';
+                $namaGolongan = $item->golongan_pppk;
 
                 // Hardcode specific grouping request for III/a (jika ada pengecualian ID custom)
                 if (in_array($item->golongan_id, ['19.8', '21.9'])) {
@@ -186,6 +185,7 @@ class DashboardController extends Controller
 
         // Custom sort for Golongan (I, II, III, IV, V, VII, IX, X, XI)
         $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
+            if ($key === 'Tidak Diketahui') return 999;
             return \App\Helpers\GolonganHelper::parseRoman($key);
         });
 
