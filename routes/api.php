@@ -10,7 +10,6 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 
     Route::get('/chat/history', [App\Http\Controllers\ChatController::class, 'history']);
-    Route::get('/chat/history', [App\Http\Controllers\ChatController::class, 'history']);
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'send']);
     Route::post('/chat/expire', [App\Http\Controllers\ChatController::class, 'expire']); // New Route
     Route::post('/chat/mode', [App\Http\Controllers\ChatController::class, 'switchMode']); // New Route

@@ -28,6 +28,7 @@ class SnapshotPegawai extends Model
     ];
 
     protected $casts = [
+        'tgl_lahir' => 'date',
         'last_sync_at' => 'datetime',
     ];
 }

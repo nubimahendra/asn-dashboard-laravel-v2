@@ -15,11 +15,13 @@ class KelasJabatanController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->whereHas('jabatan', function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%");
-            })->orWhereHas('unor', function ($q) use ($search) {
-                $q->where('nama_opd', 'like', "%{$search}%")
-                    ->orWhere('nama', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('jabatan', function ($q2) use ($search) {
+                    $q2->where('nama', 'like', "%{$search}%");
+                })->orWhereHas('unor', function ($q2) use ($search) {
+                    $q2->where('nama_opd', 'like', "%{$search}%")
+                        ->orWhere('nama', 'like', "%{$search}%");
+                });
             });
         }
 

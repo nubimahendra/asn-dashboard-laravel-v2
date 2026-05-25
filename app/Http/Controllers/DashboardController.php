@@ -186,33 +186,7 @@ class DashboardController extends Controller
 
         // Custom sort for Golongan (I, II, III, IV, V, VII, IX, X, XI)
         $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
-            $romanOrder = [
-                'I' => 1,
-                'II' => 2,
-                'III' => 3,
-                'IV' => 4,
-                'V' => 5,
-                'VI' => 6,
-                'VII' => 7,
-                'VIII' => 8,
-                'IX' => 9,
-                'X' => 10,
-                'XI' => 11,
-                'XII' => 12
-            ];
-
-            // Extract the base Roman numeral before the slash (e.g., "III/a" -> "III")
-            $parts = explode('/', $key);
-            $base = trim($parts[0]);
-
-            $baseValue = $romanOrder[$base] ?? 99;
-            // For sub-levels like "/a", we add a small decimal to preserve order (a=1, b=2, etc.)
-            $subValue = 0;
-            if (isset($parts[1])) {
-                $subValue = ord(strtolower($parts[1])) / 1000;
-            }
-
-            return $baseValue + $subValue;
+            return \App\Helpers\GolonganHelper::parseRoman($key);
         });
 
         $chartGolongan = [

@@ -15,11 +15,13 @@ class JabatanMappingController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->whereHas('jabatanSiasn', function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%");
-            })->orWhereHas('kelasPerbup', function ($q) use ($search) {
-                $q->where('nama_jabatan_perbup', 'like', "%{$search}%")
-                    ->orWhere('nama_opd_perbup', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('jabatanSiasn', function ($q2) use ($search) {
+                    $q2->where('nama', 'like', "%{$search}%");
+                })->orWhereHas('kelasPerbup', function ($q2) use ($search) {
+                    $q2->where('nama_jabatan_perbup', 'like', "%{$search}%")
+                        ->orWhere('nama_opd_perbup', 'like', "%{$search}%");
+                });
             });
         }
 
