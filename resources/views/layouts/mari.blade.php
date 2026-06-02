@@ -72,7 +72,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span class="sidebar-text truncate">Pengaturan Tarif</span>
+                <span class="sidebar-text truncate">Pengaturan</span>
             </div>
             <svg id="menu-pengaturan-icon"
                 class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
@@ -88,6 +88,10 @@
                 <a href="{{ route('mari.pengaturan-tarif.iuran-golongan') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.pengaturan-tarif.iuran-golongan') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
                     Iuran Golongan
+                </a>
+                <a href="{{ route('mari.pengaturan.invoice') }}"
+                    class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.pengaturan.invoice') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                    Pengaturan Invoice
                 </a>
                 <a href="{{ route('mari.kelas-jabatan-perbup.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.kelas-jabatan-perbup.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">

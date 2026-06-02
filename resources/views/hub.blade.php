@@ -120,7 +120,7 @@
 
 
         <div class="text-center mb-5">
-            <h2 class="fw-light">Selamat Datang! Pilih Layanan</h2>
+            <h2 class="fw-light">Selamat Datang, Silahkan Pilih Layanan!!</h2>
         </div>
 
         <!-- Modules Grid -->

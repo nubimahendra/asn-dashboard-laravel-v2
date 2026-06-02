@@ -5,14 +5,14 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Laporan Iuran KORPRI per OPD</h1>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Laporan Iuran KORPRI per PD</h1>
                 <p class="text-gray-500 dark:text-gray-400 mt-1">
                     @if($filterOpd)
                         <span
                             class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">FILTERED</span>
                         {{ $filterOpd }}
                     @else
-                        Pemerintah Kabupaten Blitar — Semua OPD
+                        Dewan Pengurus KORPRI Kab. Blitar — Semua PD
                     @endif
                 </p>
             </div>
@@ -49,7 +49,10 @@
                 <button type="submit" form="filterForm" name="hitung_ulang" value="1" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition" title="Hitung Ulang">
                     🔄
                 </button>
-                <a href="{{ route('mari.iuran-korpri.invoice', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice">
+                <a href="{{ route('mari.iuran-korpri.invoice-golongan', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice Golongan">
+                    📋
+                </a>
+                <a href="{{ route('mari.iuran-korpri.invoice', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice Pegawai">
                     🧾
                 </a>
                 <button type="button" onclick="simpanIuran()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Simpan Iuran Bulan Ini">
@@ -107,7 +110,7 @@
         <div id="tabel-opd" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
             <div
                 class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Rincian Iuran per OPD</h3>
+                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Rincian Iuran per PD</h3>
                 <div class="relative w-full md:w-64">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg
                             class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -128,7 +131,7 @@
                                 No</th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[200px]">
-                                OPD</th>
+                                PD</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Total Pegawai</th>
@@ -160,9 +163,14 @@
                                     {{ number_format($opd['total_iuran'], 0, ',', '.') }}
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <a href="{{ route('mari.iuran-korpri.invoice', ['opd' => $opd['nama_opd'], 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors" title="Cetak Invoice OPD">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                    </a>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ route('mari.iuran-korpri.invoice-golongan', ['opd' => $opd['nama_opd'], 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors" title="Cetak Invoice Golongan">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                        </a>
+                                        <a href="{{ route('mari.iuran-korpri.invoice', ['opd' => $opd['nama_opd'], 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors" title="Cetak Invoice Pegawai">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
 
             // Iuran Korpri Routes
             Route::get('/laporan/iuran-korpri', [App\Http\Controllers\IuranKorpriController::class, 'index'])->name('iuran-korpri.index');
+            Route::get('/laporan/iuran-korpri/invoice-golongan', [App\Http\Controllers\IuranKorpriController::class, 'invoiceGolongan'])->name('iuran-korpri.invoice-golongan');
             Route::get('/laporan/iuran-korpri/invoice', [App\Http\Controllers\IuranKorpriController::class, 'invoice'])->name('iuran-korpri.invoice');
             Route::post('/laporan/iuran-korpri/simpan', [App\Http\Controllers\IuranKorpriController::class, 'simpanRekap'])->name('iuran-korpri.simpan');
             Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
@@ -95,7 +96,9 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/iuran-korpri/kelas-jabatan-perbup/import', [App\Http\Controllers\KelasJabatanPerbupController::class, 'import'])->name('kelas-jabatan-perbup.import');
             Route::delete('/iuran-korpri/kelas-jabatan-perbup/{id}', [App\Http\Controllers\KelasJabatanPerbupController::class, 'destroy'])->name('kelas-jabatan-perbup.destroy');
 
-            Route::get('/pengaturan-tarif/iuran-golongan', [App\Http\Controllers\IuranKorpriController::class, 'pengaturanTarifGolongan'])->name('pengaturan-tarif.iuran-golongan');
+            Route::get('/pengaturan/iuran-golongan', [App\Http\Controllers\IuranKorpriController::class, 'pengaturanTarifGolongan'])->name('pengaturan-tarif.iuran-golongan');
+            Route::get('/pengaturan/invoice', [App\Http\Controllers\IuranKorpriController::class, 'pengaturanInvoice'])->name('pengaturan.invoice');
+            Route::post('/pengaturan/invoice', [App\Http\Controllers\IuranKorpriController::class, 'updatePengaturanInvoice'])->name('pengaturan.invoice.update');
 
             Route::get('/iuran-korpri/jabatan-mapping/find-similar', [App\Http\Controllers\JabatanMappingController::class, 'findSimilarPerbup'])->name('jabatan-mapping.find-similar');
             Route::get('/iuran-korpri/jabatan-mapping/generate-bulk', [App\Http\Controllers\JabatanMappingController::class, 'generateBulkSuggestions'])->name('jabatan-mapping.generate-bulk');

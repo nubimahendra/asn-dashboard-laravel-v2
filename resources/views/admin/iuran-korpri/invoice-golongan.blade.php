@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice KORPRI - {{ $invoiceTitle }}</title>
+    <title>Invoice KORPRI (Golongan) - {{ $invoiceTitle }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @media print {
@@ -59,6 +59,9 @@
 
         <!-- Invoice Header -->
         <div class="text-center mb-8 border-b-2 border-gray-800 pb-4 print:border-b-[3px] print:border-black">
+            @if(!empty($invoiceSettings['logo']))
+                <img src="{{ Storage::url($invoiceSettings['logo']) }}" alt="Logo KORPRI" class="mx-auto h-24 mb-4 object-contain">
+            @endif
             <h1 class="text-2xl font-bold uppercase tracking-wider print-text-black">INVOICE IURAN KORPRI</h1>
             <h2 class="text-xl font-semibold mt-1 print-text-black">Dewan Pengurus KORPRI Kab. Blitar</h2>
         </div>
@@ -101,7 +104,7 @@
             </div>
         @else
             <!-- Data Tables -->
-            @foreach($invoiceData as $opdName => $pegawais)
+            @foreach($invoiceData as $opdName => $rows)
                 @if($invoiceTitle === 'Seluruh PD')
                     <div class="mt-8 mb-3 bg-gray-100 p-2 font-bold text-gray-800 border-l-4 border-blue-600 print:bg-gray-200 print:border-black print-text-black">
                         {{ $opdName }}
@@ -112,11 +115,11 @@
                     <thead class="bg-gray-100 print:bg-gray-200 text-gray-700 print-text-black print-border">
                         <tr>
                             <th class="py-2 px-3 border print-border w-12 text-center">No</th>
-                            <th class="py-2 px-3 border print-border">Nama / NIP</th>
-                            <th class="py-2 px-3 border print-border w-1/3">Jabatan</th>
+                            <th class="py-2 px-3 border print-border">Golongan / Eselon</th>
                             <th class="py-2 px-3 border print-border text-center w-24">Dasar</th>
-                            <th class="py-2 px-3 border print-border text-center w-20">Key</th>
-                            <th class="py-2 px-3 border print-border text-right w-28">Iuran (Rp)</th>
+                            <th class="py-2 px-3 border print-border text-center w-28">Jumlah</th>
+                            <th class="py-2 px-3 border print-border text-right w-36">Besaran/Orang (Rp)</th>
+                            <th class="py-2 px-3 border print-border text-right w-36">Jumlah Iuran (Rp)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -124,23 +127,15 @@
                             $opdTotal = 0; 
                             $no = 1;
                         @endphp
-                        @foreach($pegawais as $p)
-                            @php $opdTotal += $p['besaran']; @endphp
+                        @foreach($rows as $r)
+                            @php $opdTotal += $r['subtotal']; @endphp
                             <tr class="border-b print-border-b print-text-black">
                                 <td class="py-2 px-3 border-x print-border-r text-center align-top">{{ $no++ }}</td>
-                                <td class="py-2 px-3 border-x print-border-r align-top">
-                                    <div class="font-semibold">{{ $p['nama'] }}</div>
-                                    <div class="text-gray-500 print:text-gray-700 text-xs mt-0.5">{{ $p['nip'] }}</div>
-                                </td>
-                                <td class="py-2 px-3 border-x print-border-r align-top text-xs">{{ $p['jabatan'] }}</td>
-                                <td class="py-2 px-3 border-x print-border-r text-center align-top">{{ $p['dasar'] }}</td>
-                                <td class="py-2 px-3 border-x print-border-r text-center align-top">
-                                    {{ $p['key'] }}
-                                    @if($p['has_override'])
-                                        <span class="text-[10px] ml-0.5" title="Data Override">⚠️</span>
-                                    @endif
-                                </td>
-                                <td class="py-2 px-3 border-x print-border-r text-right align-top font-medium">{{ number_format($p['besaran'], 0, ',', '.') }}</td>
+                                <td class="py-2 px-3 border-x print-border-r align-top font-semibold">{{ $r['key'] }}</td>
+                                <td class="py-2 px-3 border-x print-border-r text-center align-top">{{ $r['dasar'] }}</td>
+                                <td class="py-2 px-3 border-x print-border-r text-center align-top">{{ $r['jumlah_orang'] }} Orang</td>
+                                <td class="py-2 px-3 border-x print-border-r text-right align-top">{{ number_format($r['besaran'], 0, ',', '.') }}</td>
+                                <td class="py-2 px-3 border-x print-border-r text-right align-top font-medium">{{ number_format($r['subtotal'], 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -159,10 +154,19 @@
 
             <!-- Grand Total -->
             @if($invoiceTitle === 'Seluruh PD')
-            <div class="flex justify-end mt-4 print:mt-8">
+            <div class="flex justify-end mt-4 print:mt-8 mb-8">
                 <table class="w-72 print-border print-text-black">
                     <tr class="bg-blue-600 text-white print:bg-gray-300 print:text-black">
-                        <td class="py-3 px-4 font-bold text-lg border print-border">GRAND TOTAL</td>
+                        <td class="py-3 px-4 font-bold text-lg border print-border">JUMLAH TOTAL</td>
+                        <td class="py-3 px-4 text-right font-bold text-lg border print-border">Rp {{ number_format($totalIuran, 0, ',', '.') }}</td>
+                    </tr>
+                </table>
+            </div>
+            @else
+            <div class="flex justify-end mt-4 print:mt-8 mb-8">
+                <table class="w-72 print-border print-text-black">
+                    <tr class="bg-blue-600 text-white print:bg-gray-300 print:text-black">
+                        <td class="py-3 px-4 font-bold text-lg border print-border">JUMLAH TOTAL</td>
                         <td class="py-3 px-4 text-right font-bold text-lg border print-border">Rp {{ number_format($totalIuran, 0, ',', '.') }}</td>
                     </tr>
                 </table>
@@ -170,10 +174,24 @@
             @endif
         @endif
 
-        <!-- Footer Notes -->
-        <div class="mt-16 text-sm text-gray-500 text-center print:text-black print:mt-24">
-            <p>Invoice ini di-generate otomatis oleh Sistem MARI (Manajemen Iuran Korpri).</p>
-            <p>Tanda "⚠️" menunjukkan bahwa dasar perhitungan menggunakan nilai manual (override).</p>
+        <!-- Footer Notes & Signatures -->
+        <div class="mt-12 pt-8 border-t border-gray-300 print:border-black print-text-black">
+            @if(!empty($invoiceSettings['bank_nama']) && !empty($invoiceSettings['bank_rekening']))
+                @php
+                    $nextMonth = $bulan == 12 ? 1 : $bulan + 1;
+                    $nextYear = $bulan == 12 ? $tahun + 1 : $tahun;
+                    $namaBulan = date('F', mktime(0, 0, 0, $nextMonth, 10));
+                @endphp
+                <p class="text-sm font-medium mb-4 italic">
+                    Harap setor ke Rek KORPRI Bank {{ $invoiceSettings['bank_nama'] }} No. Rek {{ $invoiceSettings['bank_rekening'] }} 
+                    an. {{ $invoiceSettings['bank_atas_nama'] }} 
+                    sebelum tanggal {{ $invoiceSettings['batas_setor'] }} {{ $namaBulan }} {{ $nextYear }}.
+                </p>
+            @endif
+            
+            <p class="text-sm md:text-base font-bold text-center mt-12 mb-4">
+                "Bersama KORPRI mari wujudkan Blitar Berdaya dan Berjaya"
+            </p>
         </div>
     </div>
 </body>
