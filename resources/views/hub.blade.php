@@ -193,6 +193,29 @@
                 </div>
                 @endif
             </div>
+
+            <!-- SIPUT Module -->
+            <div class="col-md-4">
+                @if(auth()->user()->hasModuleAccess('siput'))
+                <a href="{{ route('siput.dashboard') }}" class="module-card">
+                @else
+                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                @endif
+                    <div class="card-header-custom" style="background-color: #2e7d32;">SIPUT</div>
+                    <div class="card-body-custom">
+                        <div class="module-icon" style="color: #66bb6a;">🏅</div>
+                        <h3 class="module-title">Pengusulan SLKS</h3>
+                        <p class="module-desc">Input data usul Satyalancana Karya Satya, rekomendasi otomatis, dan tracking usulan.</p>
+                        @if(!auth()->user()->hasModuleAccess('siput'))
+                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                        @endif
+                    </div>
+                @if(auth()->user()->hasModuleAccess('siput'))
+                </a>
+                @else
+                </div>
+                @endif
+            </div>
         </div>
 
         <!-- Footer -->

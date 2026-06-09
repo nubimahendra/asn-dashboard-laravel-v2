@@ -143,4 +143,25 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/chat', [App\Http\Controllers\ChatAdminController::class, 'index'])->name('chat.index');
         });
     });
+
+    // Module SIPUT
+    Route::middleware(['module:siput'])->group(function () {
+        Route::prefix('siput')->name('siput.')->group(function () {
+            Route::get('/', [App\Http\Controllers\SlksDashboardController::class, 'index'])->name('dashboard');
+            
+            Route::controller(App\Http\Controllers\UsulSlksController::class)
+                ->prefix('usul-slks')
+                ->name('usul-slks.')
+                ->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::post('/', 'store')->name('store');
+                    Route::get('/search-pegawai', 'searchPegawai')->name('search');
+                    Route::get('/manage', 'manage')->name('manage');
+                    Route::get('/{id}/edit', 'edit')->name('edit');
+                    Route::put('/{id}', 'update')->name('update');
+                    Route::delete('/{id}', 'destroy')->name('destroy');
+                    Route::get('/print', 'print')->name('print');
+                });
+        });
+    });
 });
