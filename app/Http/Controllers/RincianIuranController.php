@@ -110,7 +110,7 @@ class RincianIuranController extends Controller
                     $grandTotal['iuran'] += $eselonBreakdown[$eselonKey]['tarif'];
                 }
             } elseif (!$isStruktural || ($isStruktural && !$pns)) {
-                $golonganNama = $pegawai->gol_akhir;
+                $golonganNama = $pegawai->golongan_pppk;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                 
@@ -148,7 +148,7 @@ class RincianIuranController extends Controller
                     $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
                     $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 } else {
-                    $golAsliKey = $this->extractGolonganKey($pegawai->gol_akhir);
+                    $golAsliKey = $this->extractGolonganKey($pegawai->golongan_pppk);
                     $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                     $besaran = $golonganKey && isset($allIuranRates[$golonganKey]) ? $allIuranRates[$golonganKey]->besaran : 0;
                 }
@@ -157,7 +157,7 @@ class RincianIuranController extends Controller
                     'nama' => $pegawai->nama_lengkap ?? $pegawai->nama,
                     'nip' => $pegawai->nip_baru,
                     'jenis' => $isStruktural ? 'Struktural' : 'Non-Struktural',
-                    'golongan' => $pegawai->gol_akhir,
+                    'golongan' => $golonganKey ?? $pegawai->golongan_pppk ?? '-',
                     'eselon' => $isStruktural ? ($eselonKey ?? '-') : '-',
                     'iuran' => $besaran,
                     'has_override' => $override !== null,

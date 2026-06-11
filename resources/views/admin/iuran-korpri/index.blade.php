@@ -16,35 +16,37 @@
                     @endif
                 </p>
             </div>
-            <div class="flex items-center gap-3">
-                <form method="GET" action="{{ route('mari.iuran-korpri.index') }}" class="flex items-center gap-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mr-2" id="filterForm">
+            <div class="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                <form method="GET" action="{{ route('mari.iuran-korpri.index') }}" class="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mr-2 w-full md:w-auto" id="filterForm">
                     @if($filterOpd)
                         <input type="hidden" name="opd" value="{{ $filterOpd }}">
                     @endif
                     <input type="hidden" name="pns" value="0">
                     <input type="hidden" name="pppk" value="0">
                     
-                    <select name="bulan" class="text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                    <select name="bulan" class="w-full md:w-auto text-[14px] py-2 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
                         @foreach(range(1,12) as $m)
                             <option value="{{ $m }}" {{ $bulan == $m ? 'selected' : '' }}>{{ date('F', mktime(0,0,0,$m,10)) }}</option>
                         @endforeach
                     </select>
-                    <select name="tahun" class="text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                    <select name="tahun" class="w-full md:w-auto text-[14px] py-2 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
                         @foreach(range(date('Y')-2, date('Y')+1) as $y)
                             <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endforeach
                     </select>
 
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="pns" value="1" class="sr-only peer" {{ $pns ? 'checked' : '' }} onchange="this.form.submit()">
-                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">PNS</span>
-                    </label>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="pppk" value="1" class="sr-only peer" {{ $pppk ? 'checked' : '' }} onchange="this.form.submit()">
-                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
-                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">PPPK</span>
-                    </label>
+                    <div class="flex gap-3 flex-wrap mt-2 md:mt-0">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="pns" value="1" class="sr-only peer" {{ $pns ? 'checked' : '' }} onchange="this.form.submit()">
+                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">PNS</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="pppk" value="1" class="sr-only peer" {{ $pppk ? 'checked' : '' }} onchange="this.form.submit()">
+                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+                            <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">PPPK</span>
+                        </label>
+                    </div>
                 </form>
                 <button type="submit" form="filterForm" name="hitung_ulang" value="1" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition" title="Hitung Ulang">
                     🔄

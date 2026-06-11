@@ -15,7 +15,9 @@ class IuranKorpriController extends Controller
         if (empty($namaGolongan)) {
             return null;
         }
-        return trim($namaGolongan);
+        
+        $parts = explode('-', $namaGolongan);
+        return trim($parts[0]);
     }
 
     public function index(Request $request)
@@ -38,9 +40,9 @@ class IuranKorpriController extends Controller
         $pppkGolKeys = ['I','V','VII','IX','X','XI'];
         
         if ($pns && !$pppk) {
-            $filteredRates = $allIuranRates->only($pnsGolKeys);
+            $filteredRates = $allIuranRates->whereIn('golongan_key', $pnsGolKeys);
         } elseif (!$pns && $pppk) {
-            $filteredRates = $allIuranRates->only($pppkGolKeys);
+            $filteredRates = $allIuranRates->whereIn('golongan_key', $pppkGolKeys);
         } elseif ($pns && $pppk) {
             $filteredRates = $allIuranRates;
         } else {

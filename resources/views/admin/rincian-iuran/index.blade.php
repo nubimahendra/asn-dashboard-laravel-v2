@@ -18,19 +18,19 @@
 
     <!-- Filter Bar -->
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-8 border border-gray-100 dark:border-gray-700">
-        <form method="GET" action="{{ route('mari.rincian-iuran.index') }}" class="flex flex-wrap items-end gap-6">
+        <form method="GET" action="{{ route('mari.rincian-iuran.index') }}" class="flex flex-col md:flex-row flex-wrap items-stretch md:items-end gap-4">
             <input type="hidden" name="pns" value="0">
             <input type="hidden" name="pppk" value="0">
-            <div class="flex-1 min-w-[300px]">
+            <div class="flex-1 min-w-0 w-full md:w-auto md:min-w-[300px]">
                 <label for="opd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih OPD</label>
-                <select name="opd" id="opd" class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+                <select name="opd" id="opd" class="w-full text-[14px] py-2.5 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
                     <option value="">Semua OPD</option>
                     @foreach($listOpd as $opdName)
                         <option value="{{ $opdName }}" {{ $filterOpd == $opdName ? 'selected' : '' }}>{{ $opdName }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="flex gap-4">
+            <div class="flex flex-wrap gap-3 mt-2 md:mt-0">
                 <label class="inline-flex items-center cursor-pointer">
                     <input type="checkbox" name="pns" value="1" class="sr-only peer" {{ $pns ? 'checked' : '' }} onchange="this.form.submit()">
                     <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>

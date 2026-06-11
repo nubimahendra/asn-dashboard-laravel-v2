@@ -20,7 +20,9 @@ class RekonIuranController extends Controller
         if (empty($namaGolongan)) {
             return null;
         }
-        return trim($namaGolongan);
+        
+        $parts = explode('-', $namaGolongan);
+        return trim($parts[0]);
     }
 
     public function index(Request $request)

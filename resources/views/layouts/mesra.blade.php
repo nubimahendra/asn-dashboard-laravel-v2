@@ -26,13 +26,13 @@
                 <span class="sidebar-text truncate">Surat</span>
             </div>
             <svg id="menu-surat-icon"
-                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200 {{ request()->routeIs('mesra.surat-masuk.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-surat-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-surat-content" class="{{ request()->routeIs('mesra.surat-masuk.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <a href="{{ route('mesra.surat-masuk.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mesra.surat-masuk.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
@@ -56,13 +56,13 @@
                 <span class="sidebar-text truncate">Laporan</span>
             </div>
             <svg id="menu-laporan-icon"
-                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200 {{ request()->routeIs('mesra.pengajuan-cerai.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-laporan-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-laporan-content" class="{{ request()->routeIs('mesra.pengajuan-cerai.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <a href="{{ route('mesra.pengajuan-cerai.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mesra.pengajuan-cerai.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
@@ -89,13 +89,13 @@
             <span id="chat-badge"
                 class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
             <svg id="menu-chatbot-icon"
-                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200 ml-2"
+                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200 ml-2 {{ request()->routeIs('mesra.chat.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-chatbot-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-chatbot-content" class="{{ request()->routeIs('mesra.chat.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <a href="{{ route('mesra.chat.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mesra.chat.index') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">

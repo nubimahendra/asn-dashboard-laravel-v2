@@ -26,17 +26,17 @@
                 <span class="sidebar-text truncate">Iuran Korpri</span>
             </div>
             <svg id="menu-iurankorpri-icon"
-                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200 {{ request()->routeIs('mari.iuran-korpri.*', 'mari.rincian-iuran.*', 'mari.rekon-iuran.*', 'mari.eselon-mapping.*', 'mari.iuran-kelas-jabatan.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-iurankorpri-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-iurankorpri-content" class="{{ request()->routeIs('mari.iuran-korpri.*', 'mari.rincian-iuran.*', 'mari.rekon-iuran.*', 'mari.eselon-mapping.*', 'mari.iuran-kelas-jabatan.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <a href="{{ route('mari.iuran-korpri.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.iuran-korpri.index') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
-                    Laporan Iuran (Golongan)
+                    Laporan Iuran
                 </a>
                 <a href="{{ route('mari.rincian-iuran.index') }}"
                     class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('mari.rincian-iuran.index') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
@@ -75,13 +75,13 @@
                 <span class="sidebar-text truncate">Pengaturan</span>
             </div>
             <svg id="menu-pengaturan-icon"
-                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200"
+                class="sidebar-text h-4 w-4 text-gray-400 transform transition-transform duration-200 {{ request()->routeIs('mari.pengaturan-tarif.*', 'mari.pengaturan.*', 'mari.kelas-jabatan-perbup.*', 'mari.jabatan-mapping.*', 'mari.jabatan-default.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-pengaturan-content" class="hidden mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-pengaturan-content" class="{{ request()->routeIs('mari.pengaturan-tarif.*', 'mari.pengaturan.*', 'mari.kelas-jabatan-perbup.*', 'mari.jabatan-mapping.*', 'mari.jabatan-default.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <div class="mt-2 mb-1 px-4 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                     Data Master Tarif</div>

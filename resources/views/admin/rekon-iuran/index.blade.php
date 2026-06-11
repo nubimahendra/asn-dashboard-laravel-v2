@@ -114,7 +114,7 @@
                                 $isStruktural = $pegawai->jenis_jabatan_id == 1;
                                 
                                 // Asli
-                                $golAsli = $pegawai->gol_akhir;
+                                $golAsli = $pegawai->golongan_pppk;
                                 $eselAsli = $isStruktural ? ($eselonMappings[$pegawai->jabatan_id] ?? 'IV/b') : '-';
                                 
                                 // Efektif
