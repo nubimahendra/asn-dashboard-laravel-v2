@@ -122,7 +122,7 @@
             @forelse($data as $index => $item)
                 <tr>
                     <td style="text-align: center;">{{ $index + 1 }}</td>
-                    <td>{{ $item->nama }}</td>
+                    <td>{{ strtoupper($item->nama) }}</td>
                     <td>{{ $item->nip }}</td>
                     <td>{{ $item->pangkat }}</td>
                     <td>{{ $item->jabatan }}</td>

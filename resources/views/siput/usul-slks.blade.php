@@ -86,6 +86,39 @@
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Jabatan</label>
                         <input type="text" name="jabatan" id="form_jabatan" value="{{ old('jabatan', $usulSlks->jabatan ?? '') }}" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     </div>
+
+                    {{-- MK: display readonly + hidden inputs untuk submit --}}
+                    <div class="grid grid-cols-3 items-center gap-4">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Masa Kerja</label>
+                        <div class="col-span-2">
+                            <input type="text" id="form_mk_display"
+                                value="{{ isset($usulSlks) && $usulSlks->masa_kerja_tahun !== null ? $usulSlks->masa_kerja_tahun . ' Thn ' . ($usulSlks->masa_kerja_bulan ?? 0) . ' Bln' : '' }}"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="(otomatis dari NIP)" readonly>
+                            {{-- Hidden: nilai numerik yang dikirim ke server --}}
+                            <input type="hidden" name="masa_kerja_tahun" id="form_mk_tahun"
+                                value="{{ old('masa_kerja_tahun', $usulSlks->masa_kerja_tahun ?? '') }}">
+                            <input type="hidden" name="masa_kerja_bulan" id="form_mk_bulan"
+                                value="{{ old('masa_kerja_bulan', $usulSlks->masa_kerja_bulan ?? '') }}">
+                        </div>
+                    </div>
+
+                    {{-- Kedudukan Hukum: display + hidden id --}}
+                    <div class="grid grid-cols-3 items-center gap-4">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Kedudukan Hukum</label>
+                        <div class="col-span-2">
+                            <input type="text" id="form_kedudukan_hukum_display"
+                                value="{{ isset($usulSlks) && $usulSlks->kedudukan_hukum_id ? $usulSlks->kedudukan_hukum_id : '' }}"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="(otomatis dari NIP)" readonly>
+                            {{-- Hidden: id kode kedudukan hukum --}}
+                            <input type="hidden" name="kedudukan_hukum_id" id="form_kedudukan_hukum_id"
+                                value="{{ old('kedudukan_hukum_id', $usulSlks->kedudukan_hukum_id ?? '') }}">
+                            {{-- Hidden: jenis pegawai PNS/PPPK --}}
+                            <input type="hidden" name="jenis_pegawai" id="form_jenis_pegawai"
+                                value="{{ old('jenis_pegawai', $usulSlks->jenis_pegawai ?? '') }}">
+                        </div>
+                    </div>
                     
                     <div class="grid grid-cols-3 items-center gap-4">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">No SK Hukdis / TMT</label>
@@ -105,25 +138,74 @@
                     
                     <div class="grid grid-cols-3 items-center gap-4">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Kabkota</label>
-                        <input type="text" name="kabkota" value="{{ old('kabkota', $usulSlks->kabkota ?? '') }}" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <input type="text" name="kabkota" value="Kab. Blitar" class="col-span-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" readonly>
                     </div>
                     
                     <div class="grid grid-cols-3 items-center gap-4">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Provinsi</label>
-                        <input type="text" name="provinsi" value="{{ old('provinsi', $usulSlks->provinsi ?? '') }}" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <input type="text" name="provinsi" value="Jawa Timur" class="col-span-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" readonly>
                     </div>
                     
                     <div class="grid grid-cols-3 items-center gap-4">
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Kd Wil</label>
-                        <input type="text" name="kd_wil" value="{{ old('kd_wil', $usulSlks->kd_wil ?? '') }}" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <input type="text" name="kd_wil" value="12636" class="col-span-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" readonly>
                     </div>
                 </div>
                 
                 <!-- Kolom Kanan: Riwayat & Usulan -->
                 <div class="space-y-6">
-                    <!-- A. Riwayat SLKS (Dinamis) -->
+                    
+                    <!-- C. SLKS yang diusulkan -->
+                    <div class="space-y-4">
+                        <h3 class="text-md font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">SLKS yang diusulkan</h3>
+                        
+                        <div class="grid grid-cols-3 items-center gap-4">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Slks Usul</label>
+                            @php $usul_slks_val = old('usul_slks', $usulSlks->usul_slks ?? ''); @endphp
+                            <select name="usul_slks" id="form_usul_slks" class="col-span-2 bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-blue-900/30 dark:border-blue-700 dark:text-white font-medium">
+                                <option value="">-- Pilih --</option>
+                                <option value="10 Tahun" {{ $usul_slks_val == '10 Tahun' ? 'selected' : '' }}>10 Tahun</option>
+                                <option value="20 Tahun" {{ $usul_slks_val == '20 Tahun' ? 'selected' : '' }}>20 Tahun</option>
+                                <option value="30 Tahun" {{ $usul_slks_val == '30 Tahun' ? 'selected' : '' }}>30 Tahun</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 items-center gap-4">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Bulan/Tahunp</label>
+                            <div class="col-span-2 grid grid-cols-2 gap-2">
+                                @php $bulanp = old('bulanp', $usulSlks->bulanp ?? date('m')); @endphp
+                                <select name="bulanp" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    @for($i=1; $i<=12; $i++)
+                                        <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ $bulanp == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}</option>
+                                    @endfor
+                                </select>
+                                @php $tahunp = old('tahunp', $usulSlks->tahunp ?? date('Y')); @endphp
+                                <select name="tahunp" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    @for($y=date('Y')-1; $y<=date('Y')+1; $y++)
+                                        <option value="{{ $y }}" {{ $tahunp == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 items-center gap-4">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Ms Tms</label>
+                            @php $ms_tms = old('ms_tms', $usulSlks->ms_tms ?? 'MS'); @endphp
+                            <select name="ms_tms" id="form_ms_tms" onchange="toggleKetTms()" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="MS" {{ $ms_tms == 'MS' ? 'selected' : '' }}>Memenuhi Syarat (MS)</option>
+                                <option value="TMS" {{ $ms_tms == 'TMS' ? 'selected' : '' }}>Tidak Memenuhi Syarat (TMS)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="ket_tms_container" class="grid grid-cols-3 items-start gap-4 {{ $ms_tms == 'TMS' ? '' : 'hidden' }}">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1 mt-2">Ket Tms</label>
+                            <textarea name="ket_tms" id="form_ket_tms" rows="2" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">{{ old('ket_tms', $usulSlks->ket_tms ?? '') }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Riwayat SLKS (Dinamis) -->
                     <div id="riwayat-container" class="hidden">
-                        <h3 class="text-md font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">Riwayat SLKS yang sudah diperoleh:</h3>
+                        <h3 class="text-md font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">Riwayat SLKS yang sudah diperoleh</h3>
                         <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg">
                             <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
@@ -140,100 +222,15 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <!-- B. SLKS yang sudah diperoleh -->
-                        <div class="space-y-3">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SLKS yang sudah diperoleh:</h3>
-                            
-                            <div>
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Slks Lama</label>
-                                @php $slks_ada = old('slks_ada', $usulSlks->slks_ada ?? ''); @endphp
-                                <select name="slks_ada" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                                    <option value="">-- Pilih --</option>
-                                    <option value="10 Tahun" {{ $slks_ada == '10 Tahun' ? 'selected' : '' }}>10 Tahun</option>
-                                    <option value="20 Tahun" {{ $slks_ada == '20 Tahun' ? 'selected' : '' }}>20 Tahun</option>
-                                    <option value="30 Tahun" {{ $slks_ada == '30 Tahun' ? 'selected' : '' }}>30 Tahun</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">No Keppres</label>
-                                <input type="text" name="no_slks" value="{{ old('no_slks', $usulSlks->no_slks ?? '') }}" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Tgl Keppres</label>
-                                <input type="date" name="tgl_slks" value="{{ old('tgl_slks', isset($usulSlks) && $usulSlks->tgl_slks ? $usulSlks->tgl_slks->format('Y-m-d') : '') }}" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                            </div>
-                            
-                            <div class="mt-4 pt-2">
-                                <p class="text-xs text-blue-600 dark:text-blue-400 font-medium">mkpns</p>
-                                <p class="text-xs text-blue-600 dark:text-blue-400 font-medium">mkhukdis</p>
-                            </div>
-                        </div>
-                        
-                        <!-- C. SLKS yang diusulkan -->
-                        <div class="space-y-3">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">SLKS yang diusulkan:</h3>
-                            
-                            <div>
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Slks Usul</label>
-                                @php $usul_slks_val = old('usul_slks', $usulSlks->usul_slks ?? ''); @endphp
-                                <select name="usul_slks" id="form_usul_slks" class="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-blue-900/30 dark:border-blue-700 dark:text-white font-medium">
-                                    <option value="">-- Pilih --</option>
-                                    <option value="10 Tahun" {{ $usul_slks_val == '10 Tahun' ? 'selected' : '' }}>10 Tahun</option>
-                                    <option value="20 Tahun" {{ $usul_slks_val == '20 Tahun' ? 'selected' : '' }}>20 Tahun</option>
-                                    <option value="30 Tahun" {{ $usul_slks_val == '30 Tahun' ? 'selected' : '' }}>30 Tahun</option>
-                                </select>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Bulanp</label>
-                                    @php $bulanp = old('bulanp', $usulSlks->bulanp ?? date('m')); @endphp
-                                    <select name="bulanp" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                        @for($i=1; $i<=12; $i++)
-                                            <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ $bulanp == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}</option>
-                                        @endfor
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Tahunp</label>
-                                    @php $tahunp = old('tahunp', $usulSlks->tahunp ?? date('Y')); @endphp
-                                    <select name="tahunp" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                        @for($y=date('Y')-1; $y<=date('Y')+1; $y++)
-                                            <option value="{{ $y }}" {{ $tahunp == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                        @endfor
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Ms Tms</label>
-                                @php $ms_tms = old('ms_tms', $usulSlks->ms_tms ?? 'MS'); @endphp
-                                <select name="ms_tms" id="form_ms_tms" onchange="toggleKetTms()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    <option value="MS" {{ $ms_tms == 'MS' ? 'selected' : '' }}>Memenuhi Syarat (MS)</option>
-                                    <option value="TMS" {{ $ms_tms == 'TMS' ? 'selected' : '' }}>Tidak Memenuhi Syarat (TMS)</option>
-                                </select>
-                            </div>
-                            
-                            <div id="ket_tms_container" class="{{ $ms_tms == 'TMS' ? '' : 'hidden' }}">
-                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Ket Tms</label>
-                                <textarea name="ket_tms" id="form_ket_tms" rows="2" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">{{ old('ket_tms', $usulSlks->ket_tms ?? '') }}</textarea>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             
             <!-- Footer Form -->
-            <div class="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
+            <div class="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-center items-center gap-4">
                 @if(!isset($usulSlks))
                     <button type="button" onclick="clearForm()" class="text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 font-bold rounded-lg text-sm px-8 py-3 text-center dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:focus:ring-gray-800 transition-colors shadow-sm">
                         CLEAR
                     </button>
-                @else
-                    <div></div> <!-- Spacer for flex-between -->
                 @endif
                 <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold rounded-lg text-sm px-8 py-3 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors shadow-md">
                     {{ isset($usulSlks) ? 'UPDATE USULAN' : 'SIMPAN USULAN' }}
@@ -287,22 +284,46 @@
                     document.getElementById('form_pangkat').value = data.pangkat;
                     document.getElementById('form_jabatan').value = data.jabatan;
                     
+                    // Isi MK display dan hidden inputs
+                    const mkTahun = data.mk_tahun ?? 0;
+                    const mkBulan = data.mk_bulan ?? 0;
+                    document.getElementById('form_mk_display').value =
+                        mkTahun > 0 || mkBulan > 0 ? `${mkTahun} Thn ${mkBulan} Bln` : '';
+                    document.getElementById('form_mk_tahun').value = mkTahun;
+                    document.getElementById('form_mk_bulan').value = mkBulan;
+
+                    // Isi Kedudukan Hukum
+                    const kdhId   = data.kedudukan_hukum_id ?? '';
+                    const kdhNama = data.kedudukan_hukum ?? '';
+                    // Tampilkan: "01 - Aktif" jika ada nama, atau hanya kode
+                    document.getElementById('form_kedudukan_hukum_display').value =
+                        kdhId ? (kdhNama ? `${kdhId} - ${kdhNama}` : kdhId) : '';
+                    document.getElementById('form_kedudukan_hukum_id').value = kdhId;
+
+                    // Isi jenis pegawai
+                    document.getElementById('form_jenis_pegawai').value = data.jenis_pegawai ?? '';
+
                     // Auto select SLKS Usul based on masa kerja
                     let usulSlks = '';
-                    if (data.mk_tahun >= 30) usulSlks = '30 Tahun';
-                    else if (data.mk_tahun >= 20) usulSlks = '20 Tahun';
-                    else if (data.mk_tahun >= 10) usulSlks = '10 Tahun';
-                    
+                    if (mkTahun >= 30) usulSlks = '30 Tahun';
+                    else if (mkTahun >= 20) usulSlks = '20 Tahun';
+                    else if (mkTahun >= 10) usulSlks = '10 Tahun';
                     document.getElementById('form_usul_slks').value = usulSlks;
                     
                     // Render Riwayat
                     renderRiwayat(data.riwayat);
                 } else {
                     document.getElementById('nip-message').classList.remove('hidden');
-                    // Kosongkan nama & pangkat
+                    // Kosongkan semua field yang diisi otomatis
                     document.getElementById('form_nama').value = '';
                     document.getElementById('form_pangkat').value = '';
                     document.getElementById('form_jabatan').value = '';
+                    document.getElementById('form_mk_display').value = '';
+                    document.getElementById('form_mk_tahun').value = '';
+                    document.getElementById('form_mk_bulan').value = '';
+                    document.getElementById('form_kedudukan_hukum_display').value = '';
+                    document.getElementById('form_kedudukan_hukum_id').value = '';
+                    document.getElementById('form_jenis_pegawai').value = '';
                     document.getElementById('riwayat-container').classList.add('hidden');
                 }
             })
@@ -338,9 +359,9 @@
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-4 py-2">${item.usul_slks || '-'}</td>
-                    <td class="px-4 py-2">${item.no_slks || '-'}</td>
-                    <td class="px-4 py-2">${tglSlksStr}</td>
+                    <td class="px-2 py-1">${item.usul_slks || '-'}</td>
+                    <td class="px-2 py-1">${item.no_slks || '-'}</td>
+                    <td class="px-2 py-1">${tglSlksStr}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -359,6 +380,12 @@
         document.getElementById('form_nama').value = '';
         document.getElementById('form_pangkat').value = '';
         document.getElementById('form_jabatan').value = '';
+        document.getElementById('form_mk_display').value = '';
+        document.getElementById('form_mk_tahun').value = '';
+        document.getElementById('form_mk_bulan').value = '';
+        document.getElementById('form_kedudukan_hukum_display').value = '';
+        document.getElementById('form_kedudukan_hukum_id').value = '';
+        document.getElementById('form_jenis_pegawai').value = '';
         document.getElementById('nip-message').classList.add('hidden');
         document.getElementById('riwayat-container').classList.add('hidden');
         

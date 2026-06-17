@@ -280,6 +280,26 @@
                 if (isHidden) { menuIuranKorpriContent.classList.remove('hidden'); menuIuranKorpriIcon.classList.add('rotate-180'); } else { menuIuranKorpriContent.classList.add('hidden'); menuIuranKorpriIcon.classList.remove('rotate-180'); }
             });
         }
+        // SIPUT: Usul SLKS dropdown toggle
+        const menuSiputUsulToggle = document.getElementById('menu-siput-usul-toggle');
+        const menuSiputUsulContent = document.getElementById('menu-siput-usul-content');
+        const menuSiputUsulIcon = document.getElementById('menu-siput-usul-icon');
+        if (menuSiputUsulToggle && menuSiputUsulContent) {
+            menuSiputUsulToggle.addEventListener('click', () => {
+                const isHidden = menuSiputUsulContent.classList.contains('hidden');
+                if (isHidden) { menuSiputUsulContent.classList.remove('hidden'); menuSiputUsulIcon.classList.add('rotate-180'); } else { menuSiputUsulContent.classList.add('hidden'); menuSiputUsulIcon.classList.remove('rotate-180'); }
+            });
+        }
+        // SIPUT: Laporan dropdown toggle
+        const menuSiputLaporanToggle = document.getElementById('menu-siput-laporan-toggle');
+        const menuSiputLaporanContent = document.getElementById('menu-siput-laporan-content');
+        const menuSiputLaporanIcon = document.getElementById('menu-siput-laporan-icon');
+        if (menuSiputLaporanToggle && menuSiputLaporanContent) {
+            menuSiputLaporanToggle.addEventListener('click', () => {
+                const isHidden = menuSiputLaporanContent.classList.contains('hidden');
+                if (isHidden) { menuSiputLaporanContent.classList.remove('hidden'); menuSiputLaporanIcon.classList.add('rotate-180'); } else { menuSiputLaporanContent.classList.add('hidden'); menuSiputLaporanIcon.classList.remove('rotate-180'); }
+            });
+        }
         function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
         // Wrap in IIFE to avoid variable name conflicts
         (function () {

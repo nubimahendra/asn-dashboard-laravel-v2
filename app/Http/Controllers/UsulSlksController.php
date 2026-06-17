@@ -18,26 +18,34 @@ class UsulSlksController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nip' => 'required|string|max:20',
-            'nama' => 'required|string|max:255',
-            'pangkat' => 'nullable|string|max:255',
-            'jabatan' => 'nullable|string|max:255',
-            'no_sk_hukdis' => 'nullable|string|max:255',
-            'tmt_hukdis' => 'nullable|date',
-            'no_sk_cltn' => 'nullable|string|max:255',
-            'tmt_cltn' => 'nullable|date',
-            'kabkota' => 'nullable|string|max:255',
-            'provinsi' => 'nullable|string|max:255',
-            'kd_wil' => 'nullable|string|max:255',
-            'slks_ada' => 'nullable|string|max:255',
-            'no_slks' => 'nullable|string|max:255',
-            'tgl_slks' => 'nullable|date',
-            'usul_slks' => 'nullable|string|max:255',
-            'bulanp' => 'nullable|string|max:255',
-            'tahunp' => 'nullable|string|max:255',
-            'ms_tms' => 'nullable|string|max:255',
-            'ket_tms' => 'nullable|string',
+            'nip'               => 'required|string|max:20',
+            'nama'              => 'required|string|max:255',
+            'pangkat'           => 'nullable|string|max:255',
+            'jabatan'           => 'nullable|string|max:255',
+            'no_sk_hukdis'      => 'nullable|string|max:255',
+            'tmt_hukdis'        => 'nullable|date',
+            'no_sk_cltn'        => 'nullable|string|max:255',
+            'tmt_cltn'          => 'nullable|date',
+            'kabkota'           => 'nullable|string|max:255',
+            'provinsi'          => 'nullable|string|max:255',
+            'kd_wil'            => 'nullable|string|max:255',
+            'slks_ada'          => 'nullable|string|max:255',
+            'no_slks'           => 'nullable|string|max:255',
+            'tgl_slks'          => 'nullable|date',
+            'usul_slks'         => 'nullable|string|max:255',
+            'bulanp'            => 'nullable|string|max:255',
+            'tahunp'            => 'nullable|string|max:255',
+            'ms_tms'            => 'nullable|string|max:255',
+            'ket_tms'           => 'nullable|string',
+            // Field dari data pegawai (auto-fill via NIP search)
+            'masa_kerja_tahun'  => 'nullable|integer|min:0',
+            'masa_kerja_bulan'  => 'nullable|integer|min:0|max:11',
+            'kedudukan_hukum_id'=> 'nullable|string|max:10',
+            'jenis_pegawai'     => 'nullable|string|max:50',
         ]);
+        
+        // Nama selalu disimpan UPPERCASE
+        $validated['nama'] = strtoupper($validated['nama']);
         
         DB::beginTransaction();
         try {
@@ -72,14 +80,26 @@ class UsulSlksController extends Controller
             ->orderBy('created_at', 'desc')
             ->get(['usul_slks', 'no_slks', 'tgl_slks', 'status']);
 
+        // Susun nama lengkap beserta gelar
+        $fullName = $pegawai->nama;
+        if (!empty($pegawai->gelar_depan)) {
+            $fullName = trim($pegawai->gelar_depan) . ' ' . $fullName;
+        }
+        if (!empty($pegawai->gelar_belakang)) {
+            $fullName = $fullName . ', ' . trim($pegawai->gelar_belakang);
+        }
+
         return response()->json([
-            'found' => true,
-            'nama'  => $pegawai->nama,
-            'pangkat' => $pegawai->gol_akhir,
-            'jabatan' => $pegawai->jabatan,
-            'mk_tahun' => $pegawai->mk_tahun,
-            'mk_bulan' => $pegawai->mk_bulan,
-            'riwayat' => $riwayat,
+            'found'               => true,
+            'nama'                => $fullName,
+            'pangkat'             => $pegawai->gol_akhir,
+            'jabatan'             => $pegawai->jabatan,
+            'mk_tahun'            => $pegawai->mk_tahun,
+            'mk_bulan'            => $pegawai->mk_bulan,
+            'kedudukan_hukum_id'  => $pegawai->kedudukan_hukum_id,
+            'kedudukan_hukum'     => $pegawai->kedudukan_hukum,  // nama teks untuk display
+            'jenis_pegawai'       => $pegawai->jenis_pegawai,
+            'riwayat'             => $riwayat,
         ]);
     }
 
@@ -101,28 +121,36 @@ class UsulSlksController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'nip' => 'required|string|max:20',
-            'nama' => 'required|string|max:255',
-            'pangkat' => 'nullable|string|max:255',
-            'jabatan' => 'nullable|string|max:255',
-            'no_sk_hukdis' => 'nullable|string|max:255',
-            'tmt_hukdis' => 'nullable|date',
-            'no_sk_cltn' => 'nullable|string|max:255',
-            'tmt_cltn' => 'nullable|date',
-            'kabkota' => 'nullable|string|max:255',
-            'provinsi' => 'nullable|string|max:255',
-            'kd_wil' => 'nullable|string|max:255',
-            'slks_ada' => 'nullable|string|max:255',
-            'no_slks' => 'nullable|string|max:255',
-            'tgl_slks' => 'nullable|date',
-            'usul_slks' => 'nullable|string|max:255',
-            'bulanp' => 'nullable|string|max:255',
-            'tahunp' => 'nullable|string|max:255',
-            'ms_tms' => 'nullable|string|max:255',
-            'ket_tms' => 'nullable|string',
+            'nip'               => 'required|string|max:20',
+            'nama'              => 'required|string|max:255',
+            'pangkat'           => 'nullable|string|max:255',
+            'jabatan'           => 'nullable|string|max:255',
+            'no_sk_hukdis'      => 'nullable|string|max:255',
+            'tmt_hukdis'        => 'nullable|date',
+            'no_sk_cltn'        => 'nullable|string|max:255',
+            'tmt_cltn'          => 'nullable|date',
+            'kabkota'           => 'nullable|string|max:255',
+            'provinsi'          => 'nullable|string|max:255',
+            'kd_wil'            => 'nullable|string|max:255',
+            'slks_ada'          => 'nullable|string|max:255',
+            'no_slks'           => 'nullable|string|max:255',
+            'tgl_slks'          => 'nullable|date',
+            'usul_slks'         => 'nullable|string|max:255',
+            'bulanp'            => 'nullable|string|max:255',
+            'tahunp'            => 'nullable|string|max:255',
+            'ms_tms'            => 'nullable|string|max:255',
+            'ket_tms'           => 'nullable|string',
+            // Field dari data pegawai (auto-fill via NIP search)
+            'masa_kerja_tahun'  => 'nullable|integer|min:0',
+            'masa_kerja_bulan'  => 'nullable|integer|min:0|max:11',
+            'kedudukan_hukum_id'=> 'nullable|string|max:10',
+            'jenis_pegawai'     => 'nullable|string|max:50',
         ]);
         
         $usulSlks = UsulSlks::findOrFail($id);
+        
+        // Nama selalu disimpan UPPERCASE
+        $validated['nama'] = strtoupper($validated['nama']);
         
         try {
             $usulSlks->update(array_merge($validated, ['updated_by' => auth()->id()]));
