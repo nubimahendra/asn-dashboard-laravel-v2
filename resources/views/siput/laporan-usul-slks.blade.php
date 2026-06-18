@@ -126,9 +126,9 @@
                     <td>{{ $item->nip }}</td>
                     <td>{{ $item->pangkat }}</td>
                     <td>{{ $item->jabatan }}</td>
-                    <td style="text-align: center;">{{ $item->slks_ada ?? '-' }}</td>
-                    <td>{{ $item->no_slks ?? '-' }}</td>
-                    <td style="text-align: center;">{{ $item->tgl_slks ? $item->tgl_slks->format('d/m/Y') : '-' }}</td>
+                    <td style="text-align: center;">{{ $item->riwayat_lama ? $item->riwayat_lama->usul_slks : '-' }}</td>
+                    <td>{{ $item->riwayat_lama ? $item->riwayat_lama->no_slks : '-' }}</td>
+                    <td style="text-align: center;">{{ ($item->riwayat_lama && $item->riwayat_lama->tgl_slks) ? $item->riwayat_lama->tgl_slks->format('d/m/Y') : '-' }}</td>
                     <td style="text-align: center;">{{ $item->usul_slks ?? '-' }}</td>
                     <td style="text-align: center;">{{ $item->masa_kerja_tahun ? $item->masa_kerja_tahun . ' Thn ' . $item->masa_kerja_bulan . ' Bln' : '-' }}</td>
                 </tr>

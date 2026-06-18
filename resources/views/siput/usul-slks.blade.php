@@ -32,6 +32,15 @@
         </div>
     @endif
 
+    <!-- Alert Frontend Validation -->
+    <div id="frontend-validation-alert" class="hidden mb-6 p-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-gray-800 dark:text-yellow-400 dark:border-yellow-800 shadow-sm" role="alert">
+        <div class="flex items-center gap-2 mb-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span class="font-bold">Peringatan Validasi:</span>
+        </div>
+        <ul id="frontend-validation-messages" class="list-disc list-inside space-y-1 ml-7"></ul>
+    </div>
+
     <!-- Bagian 1: Form Input -->
     <div id="form-input-slks" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden">
         <form action="{{ isset($usulSlks) ? route('siput.usul-slks.update', $usulSlks->id) : route('siput.usul-slks.store') }}" method="POST" id="mainForm">
@@ -78,7 +87,7 @@
                     </div>
                     
                     <div class="grid grid-cols-3 items-center gap-4">
-                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Kd Pangkat</label>
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Pangkat</label>
                         <input type="text" name="pangkat" id="form_pangkat" value="{{ old('pangkat', $usulSlks->pangkat ?? '') }}" class="col-span-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" readonly>
                     </div>
                     
@@ -162,7 +171,7 @@
                         <div class="grid grid-cols-3 items-center gap-4">
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Slks Usul</label>
                             @php $usul_slks_val = old('usul_slks', $usulSlks->usul_slks ?? ''); @endphp
-                            <select name="usul_slks" id="form_usul_slks" class="col-span-2 bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-blue-900/30 dark:border-blue-700 dark:text-white font-medium">
+                            <select name="usul_slks" id="form_usul_slks" onchange="validateForm()" class="col-span-2 bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-blue-900/30 dark:border-blue-700 dark:text-white font-medium">
                                 <option value="">-- Pilih --</option>
                                 <option value="10 Tahun" {{ $usul_slks_val == '10 Tahun' ? 'selected' : '' }}>10 Tahun</option>
                                 <option value="20 Tahun" {{ $usul_slks_val == '20 Tahun' ? 'selected' : '' }}>20 Tahun</option>
@@ -180,7 +189,7 @@
                                     @endfor
                                 </select>
                                 @php $tahunp = old('tahunp', $usulSlks->tahunp ?? date('Y')); @endphp
-                                <select name="tahunp" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <select name="tahunp" id="form_tahunp" onchange="validateForm()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     @for($y=date('Y')-1; $y<=date('Y')+1; $y++)
                                         <option value="{{ $y }}" {{ $tahunp == $y ? 'selected' : '' }}>{{ $y }}</option>
                                     @endfor
@@ -232,7 +241,7 @@
                         CLEAR
                     </button>
                 @endif
-                <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold rounded-lg text-sm px-8 py-3 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors shadow-md">
+                <button type="submit" id="submit-btn" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold rounded-lg text-sm px-8 py-3 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ isset($usulSlks) ? 'UPDATE USULAN' : 'SIMPAN USULAN' }}
                 </button>
             </div>
@@ -242,6 +251,13 @@
 </div>
 
 <script>
+    window.pegawaiRiwayat = [];
+    window.masaKerjaTahun = 0;
+    @if(isset($usulSlks) && $usulSlks->masa_kerja_tahun !== null)
+        window.masaKerjaTahun = {{ $usulSlks->masa_kerja_tahun }};
+    @endif
+    window.currentUsulId = {{ isset($usulSlks) ? $usulSlks->id : 'null' }};
+
     document.addEventListener('DOMContentLoaded', function() {
         const nipInput = document.getElementById('form_nip');
         let typingTimer;
@@ -311,7 +327,12 @@
                     document.getElementById('form_usul_slks').value = usulSlks;
                     
                     // Render Riwayat
+                    window.pegawaiRiwayat = data.riwayat || [];
+                    window.masaKerjaTahun = mkTahun;
                     renderRiwayat(data.riwayat);
+                    
+                    // Validate after loading
+                    validateForm();
                 } else {
                     document.getElementById('nip-message').classList.remove('hidden');
                     // Kosongkan semua field yang diisi otomatis
@@ -338,7 +359,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.found) {
+                    window.pegawaiRiwayat = data.riwayat || [];
+                    window.masaKerjaTahun = data.mk_tahun ?? window.masaKerjaTahun;
                     renderRiwayat(data.riwayat);
+                    validateForm();
                 }
             });
     }
@@ -406,6 +430,71 @@
             ketTmsContainer.classList.remove('hidden');
         } else {
             ketTmsContainer.classList.add('hidden');
+        }
+    }
+
+    function validateForm() {
+        const alertBox = document.getElementById('frontend-validation-alert');
+        const messagesUl = document.getElementById('frontend-validation-messages');
+        const submitBtn = document.getElementById('submit-btn');
+        const usulSlks = document.getElementById('form_usul_slks').value;
+        const tahunp = document.getElementById('form_tahunp').value;
+        
+        let errors = [];
+        
+        if (!usulSlks || !document.getElementById('form_nip').value) {
+            alertBox.classList.add('hidden');
+            submitBtn.disabled = false;
+            return;
+        }
+
+        // 1. Cek Duplikat: usul_slks dan tahunp yang sama
+        const hasDuplicate = window.pegawaiRiwayat.some(item => {
+            // Jika sedang edit dan ini adalah data yang sedang diedit (berdasarkan id jika ada, atau lewati)
+            // Di sini kita tidak punya ID di json, tapi biasanya data update akan replace. 
+            // Untuk amannya, kita cek jika NIP punya riwayat yang sama di tahun yang sama
+            return item.usul_slks === usulSlks && item.tahunp == tahunp;
+        });
+
+        // Karena response searchPegawai juga memuat data yang sedang di-edit (jika dalam mode edit),
+        // kita perlu handle ini: jika form sedang mode edit dan tahun/usul tidak berubah dari value awal,
+        // maka abaikan duplikat diri sendiri.
+        let isDuplicateError = false;
+        if (hasDuplicate) {
+            @if(isset($usulSlks))
+                const originalUsul = "{{ $usulSlks->usul_slks }}";
+                const originalTahun = "{{ $usulSlks->tahunp }}";
+                if (usulSlks !== originalUsul || tahunp !== originalTahun) {
+                    isDuplicateError = true;
+                }
+            @else
+                isDuplicateError = true;
+            @endif
+        }
+
+        if (isDuplicateError) {
+            errors.push(`NIP ini sudah memiliki pengajuan <b>${usulSlks}</b> untuk tahun <b>${tahunp}</b>.`);
+        }
+
+        // 2. Cek Masa Kerja < Usulan SLKS
+        const slksYearsStr = usulSlks.replace(/[^0-9]/g, '');
+        if (slksYearsStr) {
+            const slksYears = parseInt(slksYearsStr);
+            if (window.masaKerjaTahun < slksYears) {
+                errors.push(`Masa kerja (<b>${window.masaKerjaTahun} Tahun</b>) kurang dari usulan SLKS (<b>${slksYears} Tahun</b>).`);
+            }
+        }
+
+        if (errors.length > 0) {
+            messagesUl.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+            alertBox.classList.remove('hidden');
+            
+            // Disable submit jika ada error duplikat, tapi jika hanya error masa kerja (TMS), kita blokir juga?
+            // "tampilkan peringatan" -> kita disable saja biar aman, user harus ganti usul_slks
+            submitBtn.disabled = true;
+        } else {
+            alertBox.classList.add('hidden');
+            submitBtn.disabled = false;
         }
     }
 </script>

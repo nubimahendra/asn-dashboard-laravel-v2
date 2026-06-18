@@ -14,6 +14,33 @@ class UsulSlksController extends Controller
     {
         return view('siput.usul-slks');
     }
+
+    private function getPangkatFromGolongan($golongan)
+    {
+        if (!$golongan) return null;
+        
+        $map = [
+            'I/a'  => 'Juru Muda',
+            'I/b'  => 'Juru Muda Tk. I',
+            'I/c'  => 'Juru',
+            'I/d'  => 'Juru Tk. I',
+            'II/a' => 'Pengatur Muda',
+            'II/b' => 'Pengatur Muda Tk. I',
+            'II/c' => 'Pengatur',
+            'II/d' => 'Pengatur Tk. I',
+            'III/a'=> 'Penata Muda',
+            'III/b'=> 'Penata Muda Tk. I',
+            'III/c'=> 'Penata',
+            'III/d'=> 'Penata Tk. I',
+            'IV/a' => 'Pembina',
+            'IV/b' => 'Pembina Tk. I',
+            'IV/c' => 'Pembina Utama Muda',
+            'IV/d' => 'Pembina Utama Madya',
+            'IV/e' => 'Pembina Utama',
+        ];
+
+        return $map[$golongan] ?? $golongan;
+    }
     
     public function store(Request $request)
     {
@@ -43,6 +70,16 @@ class UsulSlksController extends Controller
             'kedudukan_hukum_id'=> 'nullable|string|max:10',
             'jenis_pegawai'     => 'nullable|string|max:50',
         ]);
+        
+        // Cek duplikat usul_slks pada tahun yang sama untuk nip tersebut
+        $exists = UsulSlks::where('nip', $validated['nip'])
+            ->where('usul_slks', $validated['usul_slks'])
+            ->where('tahunp', $validated['tahunp'])
+            ->exists();
+            
+        if ($exists) {
+            return redirect()->back()->withInput()->withErrors(['Duplikat usulan: NIP ' . $validated['nip'] . ' sudah mengajukan ' . $validated['usul_slks'] . ' untuk tahun ' . $validated['tahunp'] . '.']);
+        }
         
         // Nama selalu disimpan UPPERCASE
         $validated['nama'] = strtoupper($validated['nama']);
@@ -78,7 +115,7 @@ class UsulSlksController extends Controller
         // Cari riwayat SLKS yang sudah pernah diusulkan untuk NIP ini
         $riwayat = UsulSlks::where('nip', $nip)
             ->orderBy('created_at', 'desc')
-            ->get(['usul_slks', 'no_slks', 'tgl_slks', 'status']);
+            ->get(['usul_slks', 'no_slks', 'tgl_slks', 'status', 'tahunp']);
 
         // Susun nama lengkap beserta gelar
         $fullName = $pegawai->nama;
@@ -92,7 +129,7 @@ class UsulSlksController extends Controller
         return response()->json([
             'found'               => true,
             'nama'                => $fullName,
-            'pangkat'             => $pegawai->gol_akhir,
+            'pangkat'             => $this->getPangkatFromGolongan($pegawai->gol_akhir),
             'jabatan'             => $pegawai->jabatan,
             'mk_tahun'            => $pegawai->mk_tahun,
             'mk_bulan'            => $pegawai->mk_bulan,
@@ -147,6 +184,17 @@ class UsulSlksController extends Controller
             'jenis_pegawai'     => 'nullable|string|max:50',
         ]);
         
+        // Cek duplikat usul_slks pada tahun yang sama untuk nip tersebut
+        $exists = UsulSlks::where('nip', $validated['nip'])
+            ->where('usul_slks', $validated['usul_slks'])
+            ->where('tahunp', $validated['tahunp'])
+            ->where('id', '!=', $id)
+            ->exists();
+            
+        if ($exists) {
+            return redirect()->back()->withInput()->withErrors(['Duplikat usulan: NIP ' . $validated['nip'] . ' sudah mengajukan ' . $validated['usul_slks'] . ' untuk tahun ' . $validated['tahunp'] . '.']);
+        }
+        
         $usulSlks = UsulSlks::findOrFail($id);
         
         // Nama selalu disimpan UPPERCASE
@@ -176,7 +224,90 @@ class UsulSlksController extends Controller
         $data = UsulSlks::where('status', '!=', 'riwayat')
             ->orderBy('created_at', 'desc')
             ->get();
+            
+        // Ambil riwayat usulan sebelumnya untuk tiap NIP
+        $nips = $data->pluck('nip')->unique();
+        $riwayatList = UsulSlks::whereIn('nip', $nips)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('nip');
+            
+        foreach ($data as $item) {
+            // Cari usulan yang BUKAN diri sendiri, dan yang memiliki usul_slks / no_slks
+            $riwayatLama = null;
+            if (isset($riwayatList[$item->nip])) {
+                $riwayatLama = $riwayatList[$item->nip]->first(function($r) use ($item) {
+                    return $r->id !== $item->id;
+                });
+            }
+            
+            $item->riwayat_lama = $riwayatLama;
+        }
         
         return view('siput.laporan-usul-slks', compact('data'));
+    }
+
+    public function approve()
+    {
+        $data = UsulSlks::where('status', '!=', 'riwayat')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('siput.approve-usul-slks', compact('data'));
+    }
+
+    public function searchApprove(Request $request)
+    {
+        $nip = $request->query('nip');
+        
+        // Find proposal by NIP or Name, prioritizing NIP
+        $query = UsulSlks::where('status', '!=', 'riwayat');
+        if (is_numeric($nip)) {
+            $query->where('nip', 'like', "%{$nip}%");
+        } else {
+            $query->where('nama', 'like', "%{$nip}%");
+        }
+        
+        $usulan = $query->orderBy('created_at', 'desc')->first();
+
+        if (!$usulan) {
+            return response()->json(['found' => false]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'id' => $usulan->id,
+            'nip' => $usulan->nip,
+            'nama' => $usulan->nama,
+            'pangkat' => $usulan->pangkat,
+            'jabatan' => $usulan->jabatan,
+            'usul_slks' => $usulan->usul_slks,
+            'no_kepres' => $usulan->no_kepres,
+            'tanggal_kepres' => $usulan->tanggal_kepres ? $usulan->tanggal_kepres->format('Y-m-d') : null,
+            'masa_kerja_tahun' => $usulan->masa_kerja_tahun,
+            'masa_kerja_bulan' => $usulan->masa_kerja_bulan,
+            'kedudukan_hukum_id' => $usulan->kedudukan_hukum_id,
+        ]);
+    }
+
+    public function updateApprove(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'no_kepres' => 'nullable|string|max:255',
+            'tanggal_kepres' => 'nullable|date',
+        ]);
+        
+        try {
+            $usulSlks = UsulSlks::findOrFail($id);
+            $usulSlks->update([
+                'no_kepres' => $validated['no_kepres'],
+                'tanggal_kepres' => $validated['tanggal_kepres'],
+                'updated_by' => auth()->id()
+            ]);
+            
+            return redirect()->route('siput.usul-slks.approve')->with('success', 'Data No Kepres dan Tanggal Kepres berhasil disimpan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menyimpan: ' . $e->getMessage());
+        }
     }
 }

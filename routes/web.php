@@ -157,6 +157,9 @@ Route::middleware(['auth'])->group(function () {
                     Route::post('/', 'store')->name('store');
                     Route::get('/search-pegawai', 'searchPegawai')->name('search');
                     Route::get('/manage', 'manage')->name('manage');
+                    Route::get('/approve', 'approve')->name('approve');
+                    Route::get('/search-approve', 'searchApprove')->name('search-approve');
+                    Route::put('/{id}/approve', 'updateApprove')->name('update-approve');
                     Route::get('/{id}/edit', 'edit')->name('edit');
                     Route::put('/{id}', 'update')->name('update');
                     Route::delete('/{id}', 'destroy')->name('destroy');

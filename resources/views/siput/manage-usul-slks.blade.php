@@ -67,7 +67,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center flex items-center justify-center gap-2">
-                                <a href="{{ route('siput.usul-slks.edit', $item->id) }}" class="text-white bg-amber-500 hover:bg-amber-600 focus:ring-4 focus:ring-amber-300 font-medium rounded-lg text-xs px-3 py-1.5 focus:outline-none transition-colors" title="Edit">
+                                <a href="{{ route('siput.usul-slks.edit', $item->id) }}" class="inline-flex items-center justify-center text-white bg-amber-500 hover:bg-amber-600 focus:ring-4 focus:ring-amber-300 font-medium rounded-lg text-xs px-3 py-1.5 focus:outline-none transition-colors !text-white !bg-amber-500" title="Edit">
                                     Edit
                                 </a>
                                 <form action="{{ route('siput.usul-slks.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data usulan ini?');">

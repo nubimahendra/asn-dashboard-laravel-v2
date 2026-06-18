@@ -20,12 +20,14 @@ class UsulSlks extends Model
         'bulanp', 'tahunp', 'ms_tms', 'ket_tms',
         'status', 'jenis_pegawai', 'kedudukan_hukum_id',
         'created_by', 'updated_by', 'catatan',
+        'no_kepres', 'tanggal_kepres',
     ];
     
     protected $casts = [
         'tmt_hukdis' => 'date',
         'tmt_cltn' => 'date',
         'tgl_slks' => 'date',
+        'tanggal_kepres' => 'date',
     ];
     
     // Scopes

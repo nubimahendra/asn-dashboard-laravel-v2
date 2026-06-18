@@ -35,8 +35,12 @@
         <div id="menu-siput-usul-content" class="{{ request()->routeIs('siput.usul-slks.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <a href="{{ route('siput.usul-slks.index') }}"
-                    class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('siput.usul-slks.*') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                    class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('siput.usul-slks.index') || request()->routeIs('siput.usul-slks.edit') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
                     Input Data Usul
+                </a>
+                <a href="{{ route('siput.usul-slks.approve') }}"
+                    class="block px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-colors {{ request()->routeIs('siput.usul-slks.approve') ? 'text-blue-600 dark:text-blue-400 font-semibold bg-slate-50 dark:bg-gray-700' : '' }}">
+                    Approve
                 </a>
             </div>
         </div>
