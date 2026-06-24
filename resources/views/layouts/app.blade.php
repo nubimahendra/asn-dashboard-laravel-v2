@@ -41,11 +41,11 @@
     </style>
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-zinc-950 min-h-screen transition-colors duration-300">
 
     <!-- Mobile Topbar -->
     <header id="mobile-topbar"
-        class="md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between px-4 h-14">
+        class="md:hidden fixed top-0 left-0 right-0 z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-zinc-800/60 shadow-sm flex items-center justify-between px-4 h-14">
         <button id="mobile-menu-btn" aria-label="Buka menu"
             class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400 focus:outline-none">
             <svg id="mobile-hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,11 +79,11 @@
 
     <div id="wrapper" class="flex w-full items-stretch gap-0 md:gap-0 lg:gap-0">
         <aside id="main-sidebar"
-            class="fixed md:sticky inset-y-0 left-0 z-50 md:z-20 w-64 bg-white dark:bg-gray-800 shadow-md flex-col h-screen flex-shrink-0 border-r border-gray-100 dark:border-gray-700 flex transition-transform duration-300 -translate-x-full md:translate-x-0">
+            class="fixed md:sticky inset-y-0 left-0 z-50 md:z-20 w-64 bg-white dark:bg-zinc-900 shadow-xl shadow-slate-200/50 dark:shadow-zinc-950/50 flex-col h-screen flex-shrink-0 border-r border-slate-200/40 dark:border-zinc-800/40 flex transition-transform duration-300 -translate-x-full md:translate-x-0">
             <div
-                class="p-4 md:p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 flex items-center justify-between">
+                class="p-5 md:p-7 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0 flex items-center justify-between">
                 <a href="{{ route('hub') }}"
-                    class="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2 whitespace-nowrap overflow-hidden transition-all duration-300 hover:text-blue-600 dark:hover:text-blue-400">
+                    class="text-lg font-semibold text-slate-800 dark:text-zinc-100 tracking-tight flex items-center gap-2 whitespace-nowrap overflow-hidden transition-all duration-300 hover:text-blue-600 dark:hover:text-blue-400">
                     <svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -108,19 +108,19 @@
                     </svg>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto py-4 px-3 space-y-4">
+            <div class="flex-1 overflow-y-auto py-5 px-4 space-y-5">
                 @yield('sidebar-menu')
             </div>
             @if(auth()->user()->role === 'admin')
-                <div class="p-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="p-4 border-t border-slate-100 dark:border-zinc-800/60">
 
                 </div>
             @endif
 
             <!-- Theme Toggle Button (Sidebar) -->
-            <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+            <div class="px-4 py-2 border-t border-slate-100 dark:border-zinc-800/60">
                 <button id="theme-toggle-sidebar"
-                    class="w-full flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-yellow-500 dark:hover:text-yellow-400 rounded-lg transition-colors group">
+                    class="w-full flex items-center gap-2 px-4 py-2 text-slate-500 dark:text-zinc-400 hover:bg-slate-50/80 dark:hover:bg-zinc-800/60 hover:text-yellow-500 dark:hover:text-yellow-400 rounded-lg transition-colors group">
                     <svg id="theme-toggle-light-icon-sidebar" class="w-5 h-5 hidden flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
@@ -132,11 +132,11 @@
             </div>
 
             <!-- Logout Button (Sidebar Footer) -->
-            <div class="px-4 pb-4 border-gray-100 dark:border-gray-700 mt-auto">
+            <div class="px-4 pb-4 border-slate-100 dark:border-zinc-800/60 mt-auto">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors group">
+                        class="w-full flex items-center gap-2 px-4 py-2 text-slate-500 dark:text-zinc-400 hover:bg-red-50/60 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors group">
                         <svg class="w-5 h-5 flex-shrink-0 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -150,10 +150,10 @@
         </aside>
 
         <main id="main-content"
-            class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300 w-full min-w-0">
+            class="flex-1 bg-slate-50 dark:bg-zinc-950 min-h-screen transition-all duration-300 w-full min-w-0">
             <!-- Mobile spacer for fixed topbar -->
             <div class="h-14 md:hidden"></div>
-            <div class="px-3 py-3 md:px-6 md:py-4">
+            <div class="px-4 py-4 md:px-8 md:py-6">
                 <!-- Alerts removed and handled by toast notification -->
             </div>
             @yield('content')

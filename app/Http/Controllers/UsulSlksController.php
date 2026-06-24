@@ -302,10 +302,13 @@ class UsulSlksController extends Controller
             $usulSlks->update([
                 'no_kepres' => $validated['no_kepres'],
                 'tanggal_kepres' => $validated['tanggal_kepres'],
+                'no_slks' => $validated['no_kepres'],      // Mirror value
+                'tgl_slks' => $validated['tanggal_kepres'], // Mirror value
+                'status' => 'riwayat', // Mengubah status menjadi riwayat setelah di-approve
                 'updated_by' => auth()->id()
             ]);
             
-            return redirect()->route('siput.usul-slks.approve')->with('success', 'Data No Kepres dan Tanggal Kepres berhasil disimpan.');
+            return redirect()->route('siput.usul-slks.approve')->with('success', 'Data No Kepres dan Tanggal Kepres berhasil disimpan, status usulan telah menjadi Riwayat.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menyimpan: ' . $e->getMessage());
         }

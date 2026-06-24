@@ -5,140 +5,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub Layanan ASN</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            min-height: 100vh;
-            color: white;
-        }
-
-        .hub-header {
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 40px;
-        }
-
-        .module-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-
-        .module-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-            color: inherit;
-        }
-
-        .card-header-custom {
-            background-color: #800000;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-        }
-
-        .card-body-custom {
-            padding: 30px 20px;
-            text-align: center;
-        }
-
-        .module-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: #4CAF50;
-        }
-        
-        .module-icon.mari {
-            color: #FFC107;
-        }
-
-        .module-icon.mesra {
-            color: #2196F3;
-        }
-
-        .module-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .module-desc {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.95rem;
-        }
-
-        .btn-logout {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.2s;
-        }
-        .btn-logout:hover {
-            background: rgba(255, 0, 0, 0.2);
-            color: white;
-            border-color: rgba(255, 0, 0, 0.5);
-        }
-    </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body>
-    <div class="container">
+<body class="bg-gradient-to-br from-slate-900 via-zinc-900 to-slate-950 min-h-screen text-slate-100 selection:bg-indigo-500/30">
+    <div class="container mx-auto px-4 md:px-8">
         <!-- Header -->
-        <div class="hub-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
+        <div class="hub-header flex justify-between items-center py-6 md:py-8 border-b border-white/10 mb-10 md:mb-16">
+            <div class="flex items-center gap-3">
                 <div>
-                    <h4 class="mb-0">PRISMA Hub</h4>
-                    <small class="text-white-50">Portal Real-time Informasi & Sistem Manajemen Aparatur</small>
+                    <h4 class="mb-0 text-xl font-bold tracking-tight text-white">PRISMA Hub</h4>
+                    <small class="text-slate-400 font-medium">Portal Real-time Informasi & Sistem Manajemen Aparatur</small>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-3">
-                <div class="text-end d-none d-md-block">
-                    <div class="fw-bold">{{ auth()->user()->name ?? 'User' }}</div>
-                    <small class="text-white-50">{{ auth()->user()->role ?? 'Admin' }}</small>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <div class="font-semibold text-slate-100">{{ auth()->user()->name ?? 'User' }}</div>
+                    <small class="text-slate-400 capitalize">{{ auth()->user()->role ?? 'Admin' }}</small>
                 </div>
-                <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                <form action="{{ route('logout') }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" class="btn btn-logout px-3">
+                    <button type="submit" class="btn btn-logout px-4 py-2 rounded-xl bg-white/5 hover:bg-red-500/10 text-white border border-white/10 hover:border-red-500/30 hover:text-red-400 transition-all duration-300 font-medium flex items-center gap-2">
                         Logout 🚪
                     </button>
                 </form>
             </div>
         </div>
 
-
-
-        <div class="text-center mb-5">
-            <h2 class="fw-light">Selamat Datang, Silahkan Pilih Layanan!!</h2>
+        <div class="text-center mb-12">
+            <h2 class="font-light text-3xl text-slate-200">Selamat Datang, Silahkan Pilih Layanan!!</h2>
         </div>
 
         <!-- Modules Grid -->
-        <div class="row g-4 justify-content-center">
+        <div class="row flex flex-wrap -mx-4 justify-center gap-y-8">
             <!-- MASN Module -->
-            <div class="col-md-4">
+            <div class="col-md-4 w-full md:w-1/2 lg:w-1/4 px-4">
                 @if(auth()->user()->hasModuleAccess('masn'))
-                <a href="{{ route('masn.dashboard') }}" class="module-card">
+                <a href="{{ route('masn.dashboard') }}" class="module-card group block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-white/20 hover:bg-white/10">
                 @else
-                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                <div class="module-card opacity-50 cursor-not-allowed block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden" title="Hubungi admin untuk akses modul ini">
                 @endif
-                    <div class="card-header-custom">MASN</div>
-                    <div class="card-body-custom">
-                        <div class="module-icon">📊</div>
-                        <h3 class="module-title">Manajemen ASN</h3>
-                        <p class="module-desc">Dashboard statistik ASN, master data pegawai, sinkronisasi data, dan snapshot laporan terkini.</p>
+                    <div class="card-header-custom bg-rose-900/80 backdrop-blur-sm text-white p-4 text-center font-bold text-lg tracking-wide border-b border-white/10">MASN</div>
+                    <div class="card-body-custom p-8 text-center flex flex-col items-center">
+                        <div class="module-icon text-5xl mb-5 text-emerald-400 group-hover:scale-110 transition-transform duration-500">📊</div>
+                        <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Manajemen ASN</h3>
+                        <p class="module-desc text-slate-400 text-sm leading-relaxed">Dashboard statistik ASN, master data pegawai, sinkronisasi data, dan snapshot laporan terkini.</p>
                         @if(!auth()->user()->hasModuleAccess('masn'))
-                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                            <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>
                         @endif
                     </div>
                 @if(auth()->user()->hasModuleAccess('masn'))
@@ -149,19 +62,19 @@
             </div>
 
             <!-- MARI Module -->
-            <div class="col-md-4">
+            <div class="col-md-4 w-full md:w-1/2 lg:w-1/4 px-4">
                 @if(auth()->user()->hasModuleAccess('mari'))
-                <a href="{{ route('mari.dashboard') }}" class="module-card">
+                <a href="{{ route('mari.dashboard') }}" class="module-card group block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-white/20 hover:bg-white/10">
                 @else
-                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                <div class="module-card opacity-50 cursor-not-allowed block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden" title="Hubungi admin untuk akses modul ini">
                 @endif
-                    <div class="card-header-custom">MARI</div>
-                    <div class="card-body-custom">
-                        <div class="module-icon mari">💰</div>
-                        <h3 class="module-title">Manajemen Iuran</h3>
-                        <p class="module-desc">Laporan iuran Korpri, manajemen kelas jabatan, mapping perbup, dan pengaturan tarif.</p>
+                    <div class="card-header-custom bg-indigo-900/80 backdrop-blur-sm text-white p-4 text-center font-bold text-lg tracking-wide border-b border-white/10">MARI</div>
+                    <div class="card-body-custom p-8 text-center flex flex-col items-center">
+                        <div class="module-icon mari text-5xl mb-5 text-amber-400 group-hover:scale-110 transition-transform duration-500">💰</div>
+                        <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Manajemen Iuran</h3>
+                        <p class="module-desc text-slate-400 text-sm leading-relaxed">Laporan iuran Korpri, manajemen kelas jabatan, mapping perbup, dan pengaturan tarif.</p>
                         @if(!auth()->user()->hasModuleAccess('mari'))
-                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                            <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>
                         @endif
                     </div>
                 @if(auth()->user()->hasModuleAccess('mari'))
@@ -172,19 +85,19 @@
             </div>
 
             <!-- MESRA Module -->
-            <div class="col-md-4">
+            <div class="col-md-4 w-full md:w-1/2 lg:w-1/4 px-4">
                 @if(auth()->user()->hasModuleAccess('mesra'))
-                <a href="{{ route('mesra.dashboard') }}" class="module-card">
+                <a href="{{ route('mesra.dashboard') }}" class="module-card group block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-white/20 hover:bg-white/10">
                 @else
-                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                <div class="module-card opacity-50 cursor-not-allowed block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden" title="Hubungi admin untuk akses modul ini">
                 @endif
-                    <div class="card-header-custom">MESRA</div>
-                    <div class="card-body-custom">
-                        <div class="module-icon mesra">✉️</div>
-                        <h3 class="module-title">Manajemen Surat</h3>
-                        <p class="module-desc">Pengelolaan surat masuk (inbox), layanan pengajuan cerai, dan helpdesk chat interaktif.</p>
+                    <div class="card-header-custom bg-blue-900/80 backdrop-blur-sm text-white p-4 text-center font-bold text-lg tracking-wide border-b border-white/10">MESRA</div>
+                    <div class="card-body-custom p-8 text-center flex flex-col items-center">
+                        <div class="module-icon mesra text-5xl mb-5 text-blue-400 group-hover:scale-110 transition-transform duration-500">✉️</div>
+                        <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Manajemen Surat</h3>
+                        <p class="module-desc text-slate-400 text-sm leading-relaxed">Pengelolaan surat masuk (inbox), layanan pengajuan cerai, dan helpdesk chat interaktif.</p>
                         @if(!auth()->user()->hasModuleAccess('mesra'))
-                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                            <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>
                         @endif
                     </div>
                 @if(auth()->user()->hasModuleAccess('mesra'))
@@ -195,19 +108,19 @@
             </div>
 
             <!-- SIPUT Module -->
-            <div class="col-md-4">
+            <div class="col-md-4 w-full md:w-1/2 lg:w-1/4 px-4">
                 @if(auth()->user()->hasModuleAccess('siput'))
-                <a href="{{ route('siput.dashboard') }}" class="module-card">
+                <a href="{{ route('siput.dashboard') }}" class="module-card group block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-white/20 hover:bg-white/10">
                 @else
-                <div class="module-card opacity-50 cursor-not-allowed" title="Hubungi admin untuk akses modul ini">
+                <div class="module-card opacity-50 cursor-not-allowed block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden" title="Hubungi admin untuk akses modul ini">
                 @endif
-                    <div class="card-header-custom" style="background-color: #2e7d32;">SIPUT</div>
-                    <div class="card-body-custom">
-                        <div class="module-icon" style="color: #66bb6a;">🏅</div>
-                        <h3 class="module-title">Pengusulan SLKS</h3>
-                        <p class="module-desc">Input data usul Satyalancana Karya Satya, rekomendasi otomatis, dan tracking usulan.</p>
+                    <div class="card-header-custom bg-emerald-900/80 backdrop-blur-sm text-white p-4 text-center font-bold text-lg tracking-wide border-b border-white/10">SIPUT</div>
+                    <div class="card-body-custom p-8 text-center flex flex-col items-center">
+                        <div class="module-icon text-5xl mb-5 text-emerald-400 group-hover:scale-110 transition-transform duration-500">🏅</div>
+                        <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Pengusulan SLKS</h3>
+                        <p class="module-desc text-slate-400 text-sm leading-relaxed">Input data usul Satyalancana Karya Satya, rekomendasi otomatis, dan tracking usulan.</p>
                         @if(!auth()->user()->hasModuleAccess('siput'))
-                            <span class="badge bg-secondary mt-2">Akses Terkunci</span>
+                            <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>
                         @endif
                     </div>
                 @if(auth()->user()->hasModuleAccess('siput'))
@@ -219,7 +132,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="text-center mt-5 pt-4 text-white-50">
+        <div class="text-center mt-12 pt-6 text-slate-500 font-medium">
             <small>&copy; {{ date('Y') }} Tim IT BKPSDM Kab. Blitar</small>
         </div>
     </div>
