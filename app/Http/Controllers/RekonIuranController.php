@@ -284,4 +284,89 @@ class RekonIuranController extends Controller
             return response()->json(['success' => false, 'message' => 'Gagal mereset: ' . $e->getMessage()], 500);
         }
     }
+
+    public function generateOpdRecommendation(Request $request)
+    {
+        $request->validate([
+            'pegawai_ids' => 'required|array',
+            'pegawai_ids.*' => 'exists:pegawai,id',
+        ]);
+
+        $pegawaiList = Pegawai::with(['unor', 'jabatan'])
+            ->whereIn('id', $request->pegawai_ids)
+            ->get();
+
+        $recommendations = [];
+        $skipped = [];
+
+        // Definisi pattern OPD yang sudah valid (untuk fallback jika diperlukan)
+        $validOpdPatterns = [
+            'Badan', 'Dinas', 'Bagian', 'Kecamatan', 'Kelurahan',
+            'RSUD Ngudi Waluyo Wlingi', 'RSUD Srengat',
+            'Satuan Polisi Pamong Praja Dan Pemadam Kebakaran',
+            'Pelaksana Badan Penanggulangan Bencana Daerah'
+        ];
+
+        foreach ($pegawaiList as $pegawai) {
+            $currentOpd = $pegawai->unor->nama ?? null;
+
+            // Generate rekomendasi
+            $jabatanNama = $pegawai->jabatan->nama ?? '';
+            $recommendedOpd = null;
+            $source = '';
+
+            // Prioritas 1: Guru → Dinas Pendidikan
+            if (stripos($jabatanNama, 'guru') !== false) {
+                $recommendedOpd = 'Dinas Pendidikan';
+                $source = "Jabatan: {$jabatanNama}";
+            }
+            // Prioritas 2: Perawat/Bidan/Dokter → Dinas Kesehatan
+            elseif (preg_match('/perawat|bidan|dokter/i', $jabatanNama)) {
+                $recommendedOpd = 'Dinas Kesehatan';
+                $source = "Jabatan: {$jabatanNama}";
+            }
+            // Prioritas 3: Fallback ke unor.nama_opd jika valid
+            elseif (!empty($pegawai->unor->nama_opd)) {
+                $namaOpd = $pegawai->unor->nama_opd;
+                $opdValid = false;
+                foreach ($validOpdPatterns as $pattern) {
+                    if (stripos($namaOpd, $pattern) !== false) {
+                        $opdValid = true;
+                        break;
+                    }
+                }
+                if ($opdValid) {
+                    $recommendedOpd = $namaOpd;
+                    $source = "Unit Kerja (nama_opd): " . ($pegawai->unor->nama_lengkap ?? $namaOpd);
+                }
+            }
+
+            if ($recommendedOpd) {
+                $recommendations[] = [
+                    'id' => $pegawai->id,
+                    'nama' => $pegawai->nama,
+                    'nip' => $pegawai->nip_baru,
+                    'current_opd' => $currentOpd ?? 'Tanpa OPD',
+                    'jabatan' => $jabatanNama ?: '-',
+                    'recommended_opd' => $recommendedOpd,
+                    'source' => $source,
+                ];
+            } else {
+                $skipped[] = [
+                    'id' => $pegawai->id,
+                    'nama' => $pegawai->nama,
+                    'reason' => 'Tidak dapat ditentukan dari jabatan maupun unit kerja'
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'recommendations' => $recommendations,
+            'skipped' => $skipped,
+            'total_selected' => count($request->pegawai_ids),
+            'total_recommended' => count($recommendations),
+            'total_skipped' => count($skipped),
+        ]);
+    }
 }

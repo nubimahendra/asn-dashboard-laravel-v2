@@ -76,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/rincian-iuran', [App\Http\Controllers\RincianIuranController::class, 'index'])->name('rincian-iuran.index');
             
             Route::get('/rekon-iuran', [App\Http\Controllers\RekonIuranController::class, 'index'])->name('rekon-iuran.index');
+            Route::post('/rekon-iuran/generate-opd', [App\Http\Controllers\RekonIuranController::class, 'generateOpdRecommendation'])->name('rekon-iuran.generate-opd');
             Route::put('/rekon-iuran/bulk-override', [App\Http\Controllers\RekonIuranController::class, 'bulkOverride'])->name('rekon-iuran.bulk-override');
             Route::put('/rekon-iuran/single-override', [App\Http\Controllers\RekonIuranController::class, 'singleOverride'])->name('rekon-iuran.single-override');
             Route::delete('/rekon-iuran/override/{id}', [App\Http\Controllers\RekonIuranController::class, 'destroy'])->name('rekon-iuran.destroy');
