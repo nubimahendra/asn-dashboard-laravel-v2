@@ -47,6 +47,13 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans text-gray-900 py-8 print:py-0">
+    @php
+        $bulanIndo = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+    @endphp
     <div class="max-w-5xl mx-auto bg-white p-8 md:p-12 shadow-lg rounded-xl print:shadow-none print:rounded-none print:p-0">
         
         <!-- Header Actions -->
@@ -78,7 +85,7 @@
                     <tr>
                         <td class="font-semibold text-gray-600 print-text-black align-top">Bulan</td>
                         <td class="align-top">:</td>
-                        <td class="print-text-black">{{ date('F', mktime(0, 0, 0, $bulan, 10)) }} {{ $tahun }}</td>
+                        <td class="print-text-black">{{ $bulanIndo[(int)$bulan] }} {{ $tahun }}</td>
                     </tr>
                 </table>
             </div>
@@ -92,7 +99,7 @@
                     <tr>
                         <td class="font-semibold text-gray-600 print-text-black align-top">Tanggal Cetak</td>
                         <td class="align-top">:</td>
-                        <td class="print-text-black">{{ date('d M Y H:i') }}</td>
+                        <td class="print-text-black">{{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y H:i') }}</td>
                     </tr>
                 </table>
             </div>
@@ -180,7 +187,7 @@
                 @php
                     $nextMonth = $bulan == 12 ? 1 : $bulan + 1;
                     $nextYear = $bulan == 12 ? $tahun + 1 : $tahun;
-                    $namaBulan = date('F', mktime(0, 0, 0, $nextMonth, 10));
+                    $namaBulan = $bulanIndo[(int)$nextMonth];
                 @endphp
                 <p class="text-sm font-medium mb-4 italic">
                     Harap setor ke Rek KORPRI Bank {{ $invoiceSettings['bank_nama'] }} No. Rek {{ $invoiceSettings['bank_rekening'] }} 

@@ -24,7 +24,7 @@ class IuranKorpriController extends Controller
     {
         $filterOpd = $request->input('opd');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
-        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
         
         $bulan = $request->input('bulan', date('n'));
         $tahun = $request->input('tahun', date('Y'));
@@ -226,12 +226,14 @@ class IuranKorpriController extends Controller
             $globalTotals['total_pegawai']++;
             $opdBreakdown[$opdName]['total_pegawai']++;
 
-            if ($isStruktural && $pns) {
+            $hasEselonOverride = $override && $override->override_eselon_key;
+
+            if ($hasEselonOverride || ($isStruktural && $pns)) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                if (!isset($eselonMappings[$pegawai->jabatan_id])) {
+                if (!isset($eselonMappings[$pegawai->jabatan_id]) && $isStruktural) {
                     \Illuminate\Support\Facades\Log::warning("Jabatan ID {$pegawai->jabatan_id} unmapped to eselon, defaulting to IV/b for Iuran Korpri");
                 }
-                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 
                 $globalTotals['total_struktural']++;
@@ -239,7 +241,7 @@ class IuranKorpriController extends Controller
                 
                 $opdBreakdown[$opdName]['total_struktural']++;
                 $opdBreakdown[$opdName]['total_iuran'] += $besaran;
-            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
+            } else {
                 $golonganNama = $pegawai->golongan_pppk;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
@@ -403,7 +405,7 @@ class IuranKorpriController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $filterOpd = $request->input('opd');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
-        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
 
         $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
@@ -457,16 +459,18 @@ class IuranKorpriController extends Controller
             $dasarIuran = '-';
             $keyIuran = '-';
 
-            if ($isStruktural && $pns) {
+            $hasEselonOverride = $override && $override->override_eselon_key;
+
+            if ($hasEselonOverride || ($isStruktural && $pns)) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                if (!isset($eselonMappings[$pegawai->jabatan_id])) {
+                if (!isset($eselonMappings[$pegawai->jabatan_id]) && $isStruktural) {
                     \Illuminate\Support\Facades\Log::warning("Jabatan ID {$pegawai->jabatan_id} unmapped to eselon, defaulting to IV/b for Iuran Korpri Invoice");
                 }
-                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 $dasarIuran = 'Eselon';
                 $keyIuran = $eselonKey;
-            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
+            } else {
                 $golonganNama = $pegawai->golongan_pppk;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
@@ -502,14 +506,25 @@ class IuranKorpriController extends Controller
         ksort($invoiceData);
         foreach ($invoiceData as $opd => &$pegawais) {
             usort($pegawais, function($a, $b) {
+                if ($a['besaran'] !== $b['besaran']) {
+                    return $b['besaran'] <=> $a['besaran'];
+                }
                 return $a['nama'] <=> $b['nama'];
             });
         }
 
         $invoiceTitle = $filterOpd ?: 'Seluruh PD';
 
+        $invoiceSettings = [
+            'logo' => \App\Models\AppSetting::getValue('invoice_logo'),
+            'bank_nama' => \App\Models\AppSetting::getValue('invoice_bank_nama'),
+            'bank_rekening' => \App\Models\AppSetting::getValue('invoice_bank_rekening'),
+            'bank_atas_nama' => \App\Models\AppSetting::getValue('invoice_bank_atas_nama'),
+            'batas_setor' => \App\Models\AppSetting::getValue('invoice_batas_setor', '10'),
+        ];
+
         return view('admin.iuran-korpri.invoice', compact(
-            'invoiceData', 'invoiceTitle', 'bulan', 'tahun', 'totalIuran', 'totalPegawai'
+            'invoiceData', 'invoiceTitle', 'bulan', 'tahun', 'totalIuran', 'totalPegawai', 'invoiceSettings'
         ));
     }
 
@@ -519,7 +534,7 @@ class IuranKorpriController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $filterOpd = $request->input('opd');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
-        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
 
         $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
@@ -572,9 +587,11 @@ class IuranKorpriController extends Controller
 
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
 
-            if ($isStruktural && $pns) {
+            $hasEselonOverride = $override && $override->override_eselon_key;
+
+            if ($hasEselonOverride || ($isStruktural && $pns)) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 
                 if ($besaran > 0) {
@@ -593,7 +610,7 @@ class IuranKorpriController extends Controller
                     $totalIuran += $besaran;
                     $totalPegawai++;
                 }
-            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
+            } else {
                 $golonganNama = $pegawai->golongan_pppk;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
@@ -623,12 +640,14 @@ class IuranKorpriController extends Controller
         // Sort data
         ksort($invoiceData);
         foreach ($invoiceData as $opd => &$rows) {
-            // Sort by Dasar (Eselon first) then besaran (desc)
             usort($rows, function($a, $b) {
+                if ($a['besaran'] !== $b['besaran']) {
+                    return $b['besaran'] <=> $a['besaran'];
+                }
                 if ($a['dasar'] !== $b['dasar']) {
                     return $a['dasar'] === 'Eselon' ? -1 : 1;
                 }
-                return $b['besaran'] <=> $a['besaran'];
+                return 0;
             });
         }
 

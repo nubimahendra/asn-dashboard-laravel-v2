@@ -23,7 +23,7 @@ class RincianIuranController extends Controller
     {
         $filterOpd = $request->input('opd');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
-        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
@@ -103,9 +103,11 @@ class RincianIuranController extends Controller
                 continue;
             }
 
-            if ($isStruktural && $pns) {
+            $hasEselonOverride = $override && $override->override_eselon_key;
+
+            if ($hasEselonOverride || ($isStruktural && $pns)) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                 
                 if (isset($eselonBreakdown[$eselonKey])) {
                     $eselonBreakdown[$eselonKey]['count']++;
@@ -113,7 +115,7 @@ class RincianIuranController extends Controller
                     $grandTotal['pegawai']++;
                     $grandTotal['iuran'] += $eselonBreakdown[$eselonKey]['tarif'];
                 }
-            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
+            } else {
                 $golonganNama = $pegawai->golongan_pppk;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
@@ -147,13 +149,15 @@ class RincianIuranController extends Controller
                 $eselonKey = null;
                 $golonganKey = null;
 
+                $hasEselonOverride = $override && $override->override_eselon_key;
+
                 if ($override && !$override->is_active) {
                     $besaran = 0;
-                    $eselonKey = $isStruktural ? ($eselonMappings[$pegawai->jabatan_id] ?? 'IV/b') : null;
+                    $eselonKey = $hasEselonOverride ? $override->override_eselon_key : ($isStruktural ? ($eselonMappings[$pegawai->jabatan_id] ?? 'IV/b') : null);
                     $golonganKey = $this->extractGolonganKey($pegawai->golongan_pppk);
-                } elseif ($isStruktural && $pns) {
+                } elseif ($hasEselonOverride || ($isStruktural && $pns)) {
                     $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                    $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                    $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                     $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 } else {
                     $golAsliKey = $this->extractGolonganKey($pegawai->golongan_pppk);
@@ -166,7 +170,7 @@ class RincianIuranController extends Controller
                     'nip' => $pegawai->nip_baru,
                     'jenis' => $isStruktural ? 'Struktural' : 'Non-Struktural',
                     'golongan' => $golonganKey ?? $pegawai->golongan_pppk ?? '-',
-                    'eselon' => $isStruktural ? ($eselonKey ?? '-') : '-',
+                    'eselon' => ($hasEselonOverride || $isStruktural) ? ($eselonKey ?? '-') : '-',
                     'iuran' => $besaran,
                     'has_override' => $override !== null,
                 ];

@@ -33,7 +33,7 @@ class RekonIuranController extends Controller
         $filterJabatan = $request->input('jabatan');
         $search = $request->input('search');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
-        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')

@@ -47,6 +47,13 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans text-gray-900 py-8 print:py-0">
+    @php
+        $bulanIndo = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+    @endphp
     <div class="max-w-5xl mx-auto bg-white p-8 md:p-12 shadow-lg rounded-xl print:shadow-none print:rounded-none print:p-0">
         
         <!-- Header Actions -->
@@ -59,8 +66,11 @@
 
         <!-- Invoice Header -->
         <div class="text-center mb-8 border-b-2 border-gray-800 pb-4 print:border-b-[3px] print:border-black">
+            @if(!empty($invoiceSettings['logo']))
+                <img src="{{ Storage::url($invoiceSettings['logo']) }}" alt="Logo KORPRI" class="mx-auto h-24 mb-4 object-contain">
+            @endif
             <h1 class="text-2xl font-bold uppercase tracking-wider print-text-black">INVOICE IURAN KORPRI</h1>
-            <h2 class="text-xl font-semibold mt-1 print-text-black">Dewan Pengurus KORPRI Kab. Blitar</h2>
+            <h2 class="text-xl font-semibold mt-1 print-text-black">Dewan Pengurus KORPRI Kabupaten Blitar</h2>
         </div>
 
         <!-- Invoice Details -->
@@ -75,7 +85,7 @@
                     <tr>
                         <td class="font-semibold text-gray-600 print-text-black align-top">Bulan</td>
                         <td class="align-top">:</td>
-                        <td class="print-text-black">{{ date('F', mktime(0, 0, 0, $bulan, 10)) }} {{ $tahun }}</td>
+                        <td class="print-text-black">{{ $bulanIndo[(int)$bulan] }} {{ $tahun }}</td>
                     </tr>
                 </table>
             </div>
@@ -89,7 +99,7 @@
                     <tr>
                         <td class="font-semibold text-gray-600 print-text-black align-top">Tanggal Cetak</td>
                         <td class="align-top">:</td>
-                        <td class="print-text-black">{{ date('d M Y H:i') }}</td>
+                        <td class="print-text-black">{{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y H:i') }}</td>
                     </tr>
                 </table>
             </div>
@@ -171,9 +181,27 @@
         @endif
 
         <!-- Footer Notes -->
-        <div class="mt-16 text-sm text-gray-500 text-center print:text-black print:mt-24">
-            <p>Invoice ini di-generate otomatis oleh Sistem MARI (Manajemen Iuran Korpri).</p>
-            <p>Tanda "⚠️" menunjukkan bahwa dasar perhitungan menggunakan nilai manual (override).</p>
+        <div class="mt-12 pt-8 border-t border-gray-300 print:border-black print-text-black">
+            @if(!empty($invoiceSettings['bank_nama']) && !empty($invoiceSettings['bank_rekening']))
+                @php
+                    $nextMonth = $bulan == 12 ? 1 : $bulan + 1;
+                    $nextYear = $bulan == 12 ? $tahun + 1 : $tahun;
+                    $namaBulan = $bulanIndo[(int)$nextMonth];
+                @endphp
+                <p class="text-sm font-medium mb-4 italic">
+                    Harap setor ke Rek KORPRI Bank {{ $invoiceSettings['bank_nama'] }} No. Rek {{ $invoiceSettings['bank_rekening'] }} 
+                    an. {{ $invoiceSettings['bank_atas_nama'] }} 
+                    sebelum tanggal {{ $invoiceSettings['batas_setor'] }} {{ $namaBulan }} {{ $nextYear }}.
+                </p>
+            @endif
+            
+            <p class="text-sm md:text-base font-bold text-center mt-12 mb-4">
+                "Bersama KORPRI mari wujudkan Blitar Berdaya dan Berjaya"
+            </p>
+            <div class="mt-8 text-sm text-gray-500 text-center print:text-black">
+                <p>Invoice ini di-generate otomatis oleh Sistem MARI (Manajemen Iuran Korpri).</p>
+                <p>Tanda "⚠️" menunjukkan bahwa dasar perhitungan menggunakan nilai manual (override).</p>
+            </div>
         </div>
     </div>
 </body>

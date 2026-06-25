@@ -12,7 +12,7 @@
                             class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">FILTERED</span>
                         {{ $filterOpd }}
                     @else
-                        Dewan Pengurus KORPRI Kab. Blitar — Semua PD
+                        Dewan Pengurus KORPRI Kabupaten Blitar — Semua PD
                     @endif
                 </p>
             </div>

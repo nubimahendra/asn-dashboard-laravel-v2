@@ -26,13 +26,13 @@
                 <span class="sidebar-text truncate">Iuran Korpri</span>
             </div>
             <svg id="menu-iurankorpri-icon"
-                class="sidebar-text h-4 w-4 text-slate-400 dark:text-zinc-500 transform transition-transform duration-200 {{ request()->routeIs('mari.iuran-korpri.*', 'mari.rincian-iuran.*', 'mari.rekon-iuran.*', 'mari.eselon-mapping.*', 'mari.iuran-kelas-jabatan.*') ? 'rotate-180' : '' }}"
+                class="sidebar-text h-4 w-4 text-slate-400 dark:text-zinc-500 transform transition-transform duration-200 {{ request()->routeIs('mari.iuran-korpri.*', 'mari.rincian-iuran.*', 'mari.rekon-iuran.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-iurankorpri-content" class="{{ request()->routeIs('mari.iuran-korpri.*', 'mari.rincian-iuran.*', 'mari.rekon-iuran.*', 'mari.eselon-mapping.*', 'mari.iuran-kelas-jabatan.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-iurankorpri-content" class="{{ request()->routeIs('mari.iuran-korpri.*', 'mari.rincian-iuran.*', 'mari.rekon-iuran.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2.5 rounded-xl bg-slate-50/80 dark:bg-zinc-800/30">
                 <a href="{{ route('mari.iuran-korpri.index') }}"
                     class="block px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 hover:text-indigo-600 hover:translate-x-0.5 rounded-md transition-all duration-200 {{ request()->routeIs('mari.iuran-korpri.index') ? 'text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50/60 dark:bg-indigo-500/10' : '' }}">
@@ -46,14 +46,10 @@
                     class="block px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 hover:text-indigo-600 hover:translate-x-0.5 rounded-md transition-all duration-200 {{ request()->routeIs('mari.rekon-iuran.index') ? 'text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50/60 dark:bg-indigo-500/10' : '' }}">
                     Rekon Iuran Manual
                 </a>
-                <a href="{{ route('mari.eselon-mapping.index') }}"
-                    class="block px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 hover:text-indigo-600 hover:translate-x-0.5 rounded-md transition-all duration-200 {{ request()->routeIs('mari.eselon-mapping.*') ? 'text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50/60 dark:bg-indigo-500/10' : '' }}">
-                    Mapping Eselon
-                </a>
-                <a href="{{ route('mari.iuran-kelas-jabatan.index') }}"
+                {{-- <a href="{{ route('mari.iuran-kelas-jabatan.index') }}"
                     class="block px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 hover:text-indigo-600 hover:translate-x-0.5 rounded-md transition-all duration-200 {{ request()->routeIs('mari.iuran-kelas-jabatan.*') ? 'text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50/60 dark:bg-indigo-500/10' : '' }}">
                     Iuran Kelas Jabatan
-                </a>
+                </a> --}}
             </div>
         </div>
     </div>
@@ -75,13 +71,13 @@
                 <span class="sidebar-text truncate">Pengaturan</span>
             </div>
             <svg id="menu-pengaturan-icon"
-                class="sidebar-text h-4 w-4 text-slate-400 dark:text-zinc-500 transform transition-transform duration-200 {{ request()->routeIs('mari.pengaturan-tarif.*', 'mari.pengaturan.*', 'mari.kelas-jabatan-perbup.*', 'mari.jabatan-mapping.*', 'mari.jabatan-default.*') ? 'rotate-180' : '' }}"
+                class="sidebar-text h-4 w-4 text-slate-400 dark:text-zinc-500 transform transition-transform duration-200 {{ request()->routeIs('mari.pengaturan-tarif.*', 'mari.pengaturan.*', 'mari.kelas-jabatan-perbup.*', 'mari.jabatan-mapping.*', 'mari.jabatan-default.*', 'mari.eselon-mapping.*') ? 'rotate-180' : '' }}"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        <div id="menu-pengaturan-content" class="{{ request()->routeIs('mari.pengaturan-tarif.*', 'mari.pengaturan.*', 'mari.kelas-jabatan-perbup.*', 'mari.jabatan-mapping.*', 'mari.jabatan-default.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
+        <div id="menu-pengaturan-content" class="{{ request()->routeIs('mari.pengaturan-tarif.*', 'mari.pengaturan.*', 'mari.kelas-jabatan-perbup.*', 'mari.jabatan-mapping.*', 'mari.jabatan-default.*', 'mari.eselon-mapping.*') ? '' : 'hidden' }} mt-2 space-y-2 pl-2 md:pl-0">
             <div class="p-2.5 rounded-xl bg-slate-50/80 dark:bg-zinc-800/30">
                 <div class="mt-2 mb-1 px-4 text-[11px] font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wide">
                     Data Master Tarif</div>
@@ -104,6 +100,10 @@
                 <a href="{{ route('mari.jabatan-default.index') }}"
                     class="block px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 hover:text-indigo-600 hover:translate-x-0.5 rounded-md transition-all duration-200 {{ request()->routeIs('mari.jabatan-default.*') ? 'text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50/60 dark:bg-indigo-500/10' : '' }}">
                     Kelas Jabatan Default
+                </a>
+                <a href="{{ route('mari.eselon-mapping.index') }}"
+                    class="block px-4 py-2.5 text-xs text-slate-600 dark:text-zinc-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 hover:text-indigo-600 hover:translate-x-0.5 rounded-md transition-all duration-200 {{ request()->routeIs('mari.eselon-mapping.*') ? 'text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50/60 dark:bg-indigo-500/10' : '' }}">
+                    Mapping Eselon
                 </a>
             </div>
         </div>

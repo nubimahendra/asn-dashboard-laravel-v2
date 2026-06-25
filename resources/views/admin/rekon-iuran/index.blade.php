@@ -125,7 +125,7 @@
                                 
                                 // Efektif
                                 $golEfektif = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsli;
-                                $eselEfektif = $isStruktural ? ($override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli) : '-';
+                                $eselEfektif = ($override && $override->override_eselon_key) ? $override->override_eselon_key : ($isStruktural ? $eselAsli : '-');
                                 
                                 $hasOverride = $override != null;
                             @endphp
@@ -149,9 +149,7 @@
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     <div class="text-xs">Gol: <span class="font-semibold">{{ $golAsli }}</span></div>
-                                    @if($isStruktural)
                                     <div class="text-xs">Esel: <span class="font-semibold">{{ $eselAsli }}</span></div>
-                                    @endif
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     @if($hasOverride)
@@ -168,9 +166,7 @@
                                     <div class="text-xs">OPD: <span class="font-bold text-orange-600">{{ $override->override_opd_nama }}</span></div>
                                     @endif
                                     <div class="text-xs">Gol: <span class="font-bold {{ $override && $override->override_golongan_key ? 'text-orange-600' : 'text-emerald-600' }}">{{ $golEfektif }}</span></div>
-                                    @if($isStruktural)
                                     <div class="text-xs">Esel: <span class="font-bold {{ $override && $override->override_eselon_key ? 'text-orange-600' : 'text-emerald-600' }}">{{ $eselEfektif }}</span></div>
-                                    @endif
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
@@ -333,7 +329,7 @@
                     </div>
                     
                     <div id="eselonContainer">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Override Eselon (Jika Struktural)</label>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Override Eselon</label>
                         <select id="inputEselon" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
                             <option value="">-- Kosongkan untuk pakai Asli (BKN) --</option>
                             @foreach($eselonKeys as $key => $label)
@@ -419,7 +415,7 @@
         document.getElementById('inputIsActive').value = isActiveOv;
         document.getElementById('inputAlasan').value = '';
         
-        document.getElementById('eselonContainer').style.display = isStruktural ? 'block' : 'none';
+        document.getElementById('eselonContainer').style.display = 'block';
         
         document.getElementById('overrideModal').classList.remove('hidden');
     }
