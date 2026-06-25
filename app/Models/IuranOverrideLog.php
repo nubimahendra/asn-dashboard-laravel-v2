@@ -22,6 +22,8 @@ class IuranOverrideLog extends Model
         'new_eselon_key',
         'old_opd_nama',
         'new_opd_nama',
+        'old_is_active',
+        'new_is_active',
         'alasan',
         'performed_by',
         'created_at',

@@ -159,6 +159,11 @@
                                             ⚠️ Override
                                         </span><br>
                                     @endif
+                                    @if($override && !$override->is_active)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mb-1" title="Iuran Dinonaktifkan">
+                                            Non Aktif
+                                        </span><br>
+                                    @endif
                                     @if($override && $override->override_opd_nama)
                                     <div class="text-xs">OPD: <span class="font-bold text-orange-600">{{ $override->override_opd_nama }}</span></div>
                                     @endif
@@ -169,7 +174,7 @@
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button type="button" onclick="openSingleModal({{ $pegawai->id }}, '{{ addslashes($pegawai->nama) }}', '{{ $golAsli }}', '{{ $eselAsli }}', '{{ addslashes($pegawai->unor->nama ?? '') }}', '{{ $override->override_golongan_key ?? '' }}', '{{ $override->override_eselon_key ?? '' }}', '{{ addslashes($override->override_opd_nama ?? '') }}', {{ $isStruktural ? 'true' : 'false' }})" class="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400" title="Edit Override">
+                                        <button type="button" onclick="openSingleModal({{ $pegawai->id }}, '{{ addslashes($pegawai->nama) }}', '{{ $golAsli }}', '{{ $eselAsli }}', '{{ addslashes($pegawai->unor->nama ?? '') }}', '{{ $override->override_golongan_key ?? '' }}', '{{ $override->override_eselon_key ?? '' }}', '{{ addslashes($override->override_opd_nama ?? '') }}', '{{ $override ? ($override->is_active ? "1" : "0") : "" }}', {{ $isStruktural ? 'true' : 'false' }})" class="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400" title="Edit Override">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         </button>
                                         @if($hasOverride)
@@ -336,6 +341,15 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Status Iuran</label>
+                        <select id="inputIsActive" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                            <option value="">-- Kosongkan untuk pakai Asli (BKN) --</option>
+                            <option value="1">Aktif</option>
+                            <option value="0">Non Aktif</option>
+                        </select>
+                    </div>
                     
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Alasan Perubahan</label>
@@ -387,13 +401,14 @@
         document.getElementById('inputGolongan').value = '';
         document.getElementById('inputEselon').value = '';
         document.getElementById('inputOpd').value = '';
+        document.getElementById('inputIsActive').value = '';
         document.getElementById('inputAlasan').value = '';
         document.getElementById('eselonContainer').style.display = 'block';
         
         document.getElementById('overrideModal').classList.remove('hidden');
     }
 
-    function openSingleModal(id, nama, golAsli, eselAsli, opdAsli, golOv, eselOv, opdOv, isStruktural) {
+    function openSingleModal(id, nama, golAsli, eselAsli, opdAsli, golOv, eselOv, opdOv, isActiveOv, isStruktural) {
         document.getElementById('formType').value = 'single';
         document.getElementById('singlePegawaiId').value = id;
         document.getElementById('modalTitle').innerText = 'Override Iuran';
@@ -401,6 +416,7 @@
         document.getElementById('inputGolongan').value = golOv;
         document.getElementById('inputEselon').value = eselOv;
         document.getElementById('inputOpd').value = opdOv;
+        document.getElementById('inputIsActive').value = isActiveOv;
         document.getElementById('inputAlasan').value = '';
         
         document.getElementById('eselonContainer').style.display = isStruktural ? 'block' : 'none';
@@ -424,6 +440,7 @@
             override_golongan_key: document.getElementById('inputGolongan').value,
             override_eselon_key: document.getElementById('inputEselon').value,
             override_opd_nama: document.getElementById('inputOpd').value,
+            is_active: document.getElementById('inputIsActive').value !== "" ? document.getElementById('inputIsActive').value : null,
             alasan: document.getElementById('inputAlasan').value,
             _token: '{{ csrf_token() }}',
             _method: 'PUT'

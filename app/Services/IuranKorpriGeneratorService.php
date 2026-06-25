@@ -18,13 +18,17 @@ class IuranKorpriGeneratorService
 
         try {
 
-            $pegawaiList = Pegawai::with('riwayatJabatanAktif')
+            $pegawaiList = Pegawai::with(['riwayatJabatanAktif', 'iuranOverride'])
                 ->whereHas('kedudukanHukum', function ($q) {
                     $q->where('wajib_iuran', true);
                 })
                 ->get();
 
             foreach ($pegawaiList as $pegawai) {
+                
+                if ($pegawai->iuranOverride && !$pegawai->iuranOverride->is_active) {
+                    continue; // Skip generation if iuran is deactivated
+                }
 
                 $riwayat = $pegawai->riwayatJabatanAktif;
 

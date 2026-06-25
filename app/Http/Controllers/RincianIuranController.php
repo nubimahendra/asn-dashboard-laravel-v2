@@ -99,6 +99,10 @@ class RincianIuranController extends Controller
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
             $override = $pegawai->iuranOverride;
 
+            if ($override && !$override->is_active) {
+                continue;
+            }
+
             if ($isStruktural && $pns) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
                 $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
@@ -143,7 +147,11 @@ class RincianIuranController extends Controller
                 $eselonKey = null;
                 $golonganKey = null;
 
-                if ($isStruktural && $pns) {
+                if ($override && !$override->is_active) {
+                    $besaran = 0;
+                    $eselonKey = $isStruktural ? ($eselonMappings[$pegawai->jabatan_id] ?? 'IV/b') : null;
+                    $golonganKey = $this->extractGolonganKey($pegawai->golongan_pppk);
+                } elseif ($isStruktural && $pns) {
                     $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
                     $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
                     $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
