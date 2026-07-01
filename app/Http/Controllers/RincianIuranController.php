@@ -27,6 +27,9 @@ class RincianIuranController extends Controller
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
+            ->when(auth()->user()->hasPdScope(), function ($q) {
+                $q->where('nama', auth()->user()->pd_scope);
+            })
             ->select('nama')
             ->distinct()
             ->orderBy('nama')
@@ -52,7 +55,7 @@ class RincianIuranController extends Controller
 
         $eselonMappings = RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor', 'iuranOverride']);
+        $query = Pegawai::aktif()->authorizedPd(auth()->user())->with(['golongan', 'unor', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])

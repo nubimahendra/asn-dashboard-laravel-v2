@@ -1,4 +1,4 @@
-@extends('layouts.masn')
+@extends('layouts.app', ['hideSidebar' => true])
 
 @section('content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -329,6 +329,15 @@
                 </table>
             </div>
             <div id="history-pagination" class="mt-4 flex justify-end"></div>
+        </div>
+        <!-- Back to Hub Button -->
+        <div class="mt-8 flex justify-center">
+            <a href="{{ route('hub') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 text-white font-medium rounded-xl shadow-sm transition-all duration-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Kembali ke Hub
+            </a>
         </div>
     </div>
 @endsection

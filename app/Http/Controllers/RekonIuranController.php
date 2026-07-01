@@ -37,6 +37,9 @@ class RekonIuranController extends Controller
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
+            ->when(auth()->user()->hasPdScope(), function ($q) {
+                $q->where('nama', auth()->user()->pd_scope);
+            })
             ->select('nama')
             ->distinct()
             ->orderBy('nama')
@@ -46,6 +49,9 @@ class RekonIuranController extends Controller
 
         $listUnor = RefUnor::whereNotNull('nama_opd')
             ->where('nama_opd', '!=', '')
+            ->when(auth()->user()->hasPdScope(), function ($q) {
+                $q->where('nama', auth()->user()->pd_scope);
+            })
             ->orderBy('nama_lengkap')
             ->get(['nama_opd', 'nama_lengkap']);
 
@@ -55,7 +61,7 @@ class RekonIuranController extends Controller
         $golonganKeys = IuranKorpri::orderBy('id')->pluck('label', 'golongan_key');
         $eselonKeys = RefIuranEselon::orderBy('id')->pluck('label', 'eselon_key');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
+        $query = Pegawai::aktif()->authorizedPd(auth()->user())->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
@@ -151,6 +157,21 @@ class RekonIuranController extends Controller
 
     private function processOverride($pegawaiIds, $overrideGolonganKey, $overrideEselonKey, $overrideOpdNama, $isActive, $alasan)
     {
+        $user = auth()->user();
+        if ($user->hasPdScope()) {
+            $scopedUnorIds = $user->getScopedUnorIds();
+            $unauthorizedCount = Pegawai::whereIn('id', $pegawaiIds)
+                ->whereNotIn('unor_id', $scopedUnorIds ?? [])
+                ->count();
+            
+            if ($unauthorizedCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses untuk mengubah data pegawai di luar scope Dinas Anda.'
+                ], 403);
+            }
+        }
+
         DB::beginTransaction();
         try {
             foreach ($pegawaiIds as $pegawai_id) {
@@ -231,6 +252,18 @@ class RekonIuranController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->user();
+        if ($user->hasPdScope()) {
+            $pegawai = Pegawai::find($id);
+            $scopedUnorIds = $user->getScopedUnorIds();
+            if ($pegawai && !in_array($pegawai->unor_id, $scopedUnorIds ?? [])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses untuk menghapus override pegawai di luar scope Dinas Anda.'
+                ], 403);
+            }
+        }
+
         DB::beginTransaction();
         try {
             $override = IuranOverride::where('pegawai_id', $id)->firstOrFail();
@@ -266,6 +299,21 @@ class RekonIuranController extends Controller
             'pegawai_ids' => 'required|array',
             'pegawai_ids.*' => 'exists:pegawai,id',
         ]);
+
+        $user = auth()->user();
+        if ($user->hasPdScope()) {
+            $scopedUnorIds = $user->getScopedUnorIds();
+            $unauthorizedCount = Pegawai::whereIn('id', $request->pegawai_ids)
+                ->whereNotIn('unor_id', $scopedUnorIds ?? [])
+                ->count();
+            
+            if ($unauthorizedCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses untuk mereset data pegawai di luar scope Dinas Anda.'
+                ], 403);
+            }
+        }
 
         DB::beginTransaction();
         try {

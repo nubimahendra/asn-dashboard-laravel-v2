@@ -22,7 +22,12 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create');
+        $listPd = \App\Models\RefUnor::whereNotNull('nama')
+            ->where('nama', '!=', '')
+            ->select('nama')->distinct()->orderBy('nama')
+            ->pluck('nama');
+
+        return view('admin.users.create', compact('listPd'));
     }
 
     /**
@@ -37,6 +42,7 @@ class UserController extends Controller
             'role' => 'required|in:admin,user',
             'modules' => 'nullable|array',
             'modules.*' => 'in:mari,masn,mesra',
+            'pd_scope' => 'nullable|string|max:255',
         ]);
 
         User::create([
@@ -45,6 +51,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'modules' => $request->modules ?? [],
+            'pd_scope' => $request->pd_scope,
         ]);
 
         return redirect()->route('masn.users.index')->with('success', 'User berhasil ditambahkan.');
@@ -63,7 +70,12 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $listPd = \App\Models\RefUnor::whereNotNull('nama')
+            ->where('nama', '!=', '')
+            ->select('nama')->distinct()->orderBy('nama')
+            ->pluck('nama');
+
+        return view('admin.users.edit', compact('user', 'listPd'));
     }
 
     /**
@@ -77,6 +89,7 @@ class UserController extends Controller
             'role' => 'required|in:admin,user',
             'modules' => 'nullable|array',
             'modules.*' => 'in:mari,masn,mesra',
+            'pd_scope' => 'nullable|string|max:255',
         ]);
 
         $data = [
@@ -84,6 +97,7 @@ class UserController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'modules' => $request->modules ?? [],
+            'pd_scope' => $request->pd_scope,
         ];
 
         if ($request->filled('password')) {

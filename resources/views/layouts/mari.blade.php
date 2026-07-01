@@ -55,7 +55,7 @@
     </div>
 </nav>
 
-@if(auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin')
+@if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
 <nav class="space-y-1 mt-2">
     <div>
         <button type="button" id="menu-pengaturan-toggle"

@@ -96,6 +96,14 @@
                 <h3 class="text-base font-bold text-gray-800 dark:text-white mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Input Data Usulan</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Buat usulan SLKS baru berdasarkan rekomendasi masa kerja otomatis.</p>
             </a>
+            
+            <a href="{{ route('siput.usul-slks.approve') }}" class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-base font-bold text-gray-800 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Approve Usulan</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Verifikasi dan kelola persetujuan usulan SLKS beserta nomor Keppres.</p>
+            </a>
         </div>
     </div>
 </div>

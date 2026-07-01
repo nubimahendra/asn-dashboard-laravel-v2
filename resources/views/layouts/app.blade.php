@@ -78,6 +78,7 @@
         class="fixed inset-0 z-40 bg-black/50 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
 
     <div id="wrapper" class="flex w-full items-stretch gap-0 md:gap-0 lg:gap-0">
+        @unless($hideSidebar ?? false)
         <aside id="main-sidebar"
             class="fixed md:sticky inset-y-0 left-0 z-50 md:z-20 w-64 bg-white dark:bg-zinc-900 shadow-xl shadow-slate-200/50 dark:shadow-zinc-950/50 flex-col h-screen flex-shrink-0 border-r border-slate-200/40 dark:border-zinc-800/40 flex transition-transform duration-300 -translate-x-full md:translate-x-0">
             <div
@@ -148,6 +149,7 @@
                 </form>
             </div>
         </aside>
+        @endunless
 
         <main id="main-content"
             class="flex-1 bg-slate-50 dark:bg-zinc-950 min-h-screen transition-all duration-300 w-full min-w-0">

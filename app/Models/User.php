@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'modules',
         'nip',
+        'pd_scope',
     ];
 
     /**
@@ -60,6 +61,29 @@ class User extends Authenticatable
         }
 
         return in_array($module, $this->modules ?? ['mari']);
+    }
+
+    /**
+     * Check if user is scoped to a specific PD (Perangkat Daerah).
+     */
+    public function hasPdScope(): bool
+    {
+        return !empty($this->pd_scope);
+    }
+
+    /**
+     * Get the list of unor_id (from ref_unor) that fall within this user's PD scope.
+     * Returns null if user has no PD scope (Super Admin).
+     */
+    public function getScopedUnorIds(): ?array
+    {
+        if (!$this->hasPdScope()) {
+            return null;
+        }
+
+        return \App\Models\RefUnor::where('nama', $this->pd_scope)
+            ->pluck('id')
+            ->toArray();
     }
     /**
      * Get the chat messages for the user.

@@ -50,13 +50,25 @@ class IuranKorpriController extends Controller
         }
         $allIuranRates = $filteredRates;
 
-        $listOpd = RefUnor::whereNotNull('nama')->where('nama', '!=', '')->select('nama')->distinct()->orderBy('nama')->pluck('nama');
+        $listOpd = RefUnor::whereNotNull('nama')
+            ->where('nama', '!=', '')
+            ->when(auth()->user()->hasPdScope(), function ($q) {
+                $q->where('nama', auth()->user()->pd_scope);
+            })
+            ->select('nama')
+            ->distinct()
+            ->orderBy('nama')
+            ->pluck('nama');
 
         $isArsip = false;
         $arsipDate = null;
         $arsipCreator = null;
 
-        $arsipList = \App\Models\RekapIuranBulanan::where('bulan', $bulan)->where('tahun', $tahun)->get();
+        $arsipQuery = \App\Models\RekapIuranBulanan::where('bulan', $bulan)->where('tahun', $tahun);
+        if (auth()->user()->hasPdScope()) {
+            $arsipQuery->where('nama_opd', auth()->user()->pd_scope);
+        }
+        $arsipList = $arsipQuery->get();
 
         if (!$hitungUlang && $arsipList->count() > 0) {
             $isArsip = true;
@@ -171,7 +183,7 @@ class IuranKorpriController extends Controller
         $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor', 'iuranOverride']);
+        $query = Pegawai::aktif()->authorizedPd(auth()->user())->with(['golongan', 'unor', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])->whereIn('status_cpns_pns', ['P','C']);
@@ -411,7 +423,7 @@ class IuranKorpriController extends Controller
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
         $allIuranRates = IuranKorpri::all()->keyBy('golongan_key');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
+        $query = Pegawai::aktif()->authorizedPd(auth()->user())->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])->whereIn('status_cpns_pns', ['P','C']);
@@ -540,7 +552,7 @@ class IuranKorpriController extends Controller
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
         $allIuranRates = IuranKorpri::all()->keyBy('golongan_key');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
+        $query = Pegawai::aktif()->authorizedPd(auth()->user())->with(['golongan', 'unor', 'jabatan', 'jenisJabatan', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])->whereIn('status_cpns_pns', ['P','C']);

@@ -23,12 +23,7 @@
                     <div class="font-semibold text-slate-100">{{ auth()->user()->name ?? 'User' }}</div>
                     <small class="text-slate-400 capitalize">{{ auth()->user()->role ?? 'Admin' }}</small>
                 </div>
-                <form action="{{ route('logout') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="btn btn-logout px-4 py-2 rounded-xl bg-white/5 hover:bg-red-500/10 text-white border border-white/10 hover:border-red-500/30 hover:text-red-400 transition-all duration-300 font-medium flex items-center gap-2">
-                        Logout 🚪
-                    </button>
-                </form>
+                @include('partials._user-dropdown')
             </div>
         </div>
 
@@ -48,7 +43,7 @@
                     <div class="card-header-custom bg-rose-900/80 backdrop-blur-sm text-white p-4 text-center font-bold text-lg tracking-wide border-b border-white/10">MASN</div>
                     <div class="card-body-custom p-8 text-center flex flex-col items-center">
                         <div class="module-icon text-5xl mb-5 text-emerald-400 group-hover:scale-110 transition-transform duration-500">📊</div>
-                        <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Manajemen ASN</h3>
+                        <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Statistik ASN</h3>
                         <p class="module-desc text-slate-400 text-sm leading-relaxed">Dashboard statistik ASN, master data pegawai, sinkronisasi data, dan snapshot laporan terkini.</p>
                         @if(!auth()->user()->hasModuleAccess('masn'))
                             <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>

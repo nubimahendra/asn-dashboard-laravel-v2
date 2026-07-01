@@ -31,6 +31,23 @@ class Pegawai extends Model
         });
     }
 
+    /**
+     * Scope: Filter pegawai berdasarkan PD scope user.
+     * Jika user punya pd_scope, filter pegawai yang unor_id-nya
+     * termasuk dalam daftar unor milik PD tersebut.
+     * Jika user Super Admin (pd_scope null), tidak ada filter.
+     */
+    public function scopeAuthorizedPd($query, User $user)
+    {
+        if (!$user->hasPdScope()) {
+            return $query; // Super Admin — no filter
+        }
+
+        $scopedUnorIds = $user->getScopedUnorIds();
+
+        return $query->whereIn('unor_id', $scopedUnorIds ?? []);
+    }
+
     protected $table = 'pegawai';
 
     protected $fillable = [
