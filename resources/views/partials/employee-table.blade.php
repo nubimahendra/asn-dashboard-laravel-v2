@@ -18,12 +18,15 @@
                         <td class="px-6 py-4">{{ optional($p->jabatan)->nama ?? '-' }}</td>
                         <td class="px-6 py-4">{{ optional($p->unor)->nama ?? optional($p->instansiKerja)->nama ?? '-' }}</td>
                         <td class="px-6 py-4">
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                            {{ optional($p->jenisPegawai)->nama && str_contains($p->jenisPegawai->nama, 'PNS') && !str_contains($p->jenisPegawai->nama, 'CPNS') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                (optional($p->jenisPegawai)->nama && str_contains($p->jenisPegawai->nama, 'PPPK') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                    (optional($p->jenisPegawai)->nama && str_contains($p->jenisPegawai->nama, 'CPNS') ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300')) }}">
-                                {{ optional($p->jenisPegawai)->nama ?? '-' }}
+                            @php
+                                $jenis = $p->jenisPegawai?->nama ?? '';
+                            @endphp
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {{ str_contains($jenis, 'PNS') && !str_contains($jenis, 'CPNS') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                (str_contains($jenis, 'PPPK') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                                (str_contains($jenis, 'CPNS') ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 
+                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300')) }}">
+                                {{ $jenis ?: '-' }}
                             </span>
                         </td>
                         <td class="px-6 py-4">{{ optional($p->tingkatPendidikan)->nama ?? '-' }}</td>
