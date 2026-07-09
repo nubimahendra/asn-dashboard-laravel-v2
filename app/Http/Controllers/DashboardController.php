@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pegawai;
+use App\Models\HistoryPegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -11,304 +12,234 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // 0. Filter Setup (pd = Perangkat Daerah / OPD)
-        // 0. Filter Setup (pd = Perangkat Daerah / OPD)
         $filterOpd = $request->input('opd');
+        $filterSnapshot = $request->input('snapshot_month');
 
-        // Fetch distinct nama from RefUnor directly for better performance (if needed for filtering)
         $listOpd = \App\Models\RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
             ->distinct()
             ->orderBy('nama')
             ->pluck('nama');
 
-        $query = Pegawai::aktif()->with([
-            'golongan',
-            'jabatan',
-            'tingkatPendidikan',
-            'unor',
-            'jenisPegawai',
-            'instansiKerja'
-        ]);
+        $historyMonths = HistoryPegawai::select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month_val"))
+            ->distinct()
+            ->orderBy('month_val', 'desc')
+            ->pluck('month_val');
 
-        if ($filterOpd) {
-            $query->whereHas('unor', function ($q) use ($filterOpd) {
-                // Filter by nama per user request
-                $q->where('nama', $filterOpd);
-            });
-        }
+        if ($filterSnapshot) {
+            $query = HistoryPegawai::where(DB::raw("DATE_FORMAT(created_at, '%Y-%m')"), $filterSnapshot);
 
-        // 1. Top Cards Metrics
-        // 1. Top Cards Metrics
-        // Note: Calculations need to check for specific string matches or just count
-        $totalPegawai = (clone $query)->count();
-
-        // jenis_kelamin from pegawai table: 'M' (Male) = Laki-laki, 'F' (Female) = Perempuan
-        $totalLaki = (clone $query)->where('jenis_kelamin', 'M')->count();
-        $totalPerempuan = (clone $query)->where('jenis_kelamin', 'F')->count();
-
-        // Status pegawai kombinasi kedudukan_hukum_id dan status_cpns_pns
-        // PNS: kedudukan_hukum_id IN (1,2,3,4,15) AND status_cpns_pns = 'P'
-        $totalPns = (clone $query)
-            ->where('status_cpns_pns', 'P')
-            ->where(function ($q) {
-                $q->whereIn('kedudukan_hukum_id', ['01', '02', '03', '04', '15'])
-                  ->orWhereNull('kedudukan_hukum_id');
-            })
-            ->count();
-
-        // CPNS: kedudukan_hukum_id IN (1,2,3,4,15) AND status_cpns_pns = 'C'
-        $totalCpns = (clone $query)
-            ->where('status_cpns_pns', 'C')
-            ->where(function ($q) {
-                $q->whereIn('kedudukan_hukum_id', ['01', '02', '03', '04', '15'])
-                  ->orWhereNull('kedudukan_hukum_id');
-            })
-            ->count();
-
-        // PPPK: kedudukan_hukum_id IN (71, 73) — tanpa fallback NULL/jenisPegawai
-        $totalPppk = (clone $query)
-            ->whereIn('kedudukan_hukum_id', ['71', '73'])
-            ->count();
-
-        // PPPK PW: kedudukan_hukum_id = 101 — tanpa fallback NULL/jenisPegawai
-        $totalPppkPw = (clone $query)
-            ->where('kedudukan_hukum_id', '101')
-            ->count();
-
-        // 2. Charts Data
-
-        // Chart 1: Jenis Kelamin (Pie)
-        $statsJenikel = [
-            'Laki-laki' => $totalLaki,
-            'Perempuan' => $totalPerempuan
-        ];
-
-        $chartJenikel = [
-            'labels' => array_keys($statsJenikel),
-            'series' => array_values($statsJenikel),
-        ];
-
-        // Chart 2: Status Pegawai (Pie) - CPNS, PNS, PPPK, PPPK PW
-        $statsStsPeg = [
-            'PNS' => $totalPns,
-            'CPNS' => $totalCpns,
-            'PPPK' => $totalPppk,
-            'PPPK PW' => $totalPppkPw,
-        ];
-
-        $chartStsPeg = [
-            'labels' => array_keys($statsStsPeg),
-            'series' => array_values($statsStsPeg),
-        ];
-
-        // Chart 3: Pendidikan (tingkat_pendidikan) (Bar)
-        $dataPendidikan = (clone $query)
-            ->whereHas('tingkatPendidikan')
-            ->with('tingkatPendidikan')
-            ->get()
-            ->groupBy(function ($item) {
-                return $item->tingkatPendidikan->nama ?? 'Tidak Diketahui';
-            })
-            ->map(function ($group) {
-                return $group->count();
-            })
-            ->sortDesc();
-
-        $chartPendidikan = [
-            'categories' => $dataPendidikan->keys()->toArray(),
-            'series' => $dataPendidikan->values()->toArray(),
-        ];
-
-        // Chart 4: Eselon (Bar) - Based on jenis_jabatan
-        $dataEselon = (clone $query)
-            ->whereHas('jenisJabatan')
-            ->with('jenisJabatan')
-            ->get()
-            ->groupBy(function ($item) {
-                return $item->jenisJabatan->nama ?? 'Tidak Diketahui';
-            })
-            ->map(function ($group) {
-                return $group->count();
-            })
-            ->sortKeys();
-
-        $chartEselon = [
-            'categories' => $dataEselon->keys()->toArray(),
-            'series' => $dataEselon->values()->toArray(),
-        ];
-
-        // Chart 5: Unit Kerja (Horizontal Bar - Top 10)
-        $dataOpd = (clone $query)
-            ->whereHas('unor')
-            ->with('unor')
-            ->get()
-            ->groupBy(function ($item) {
-                // Use nama per user request
-                return $item->unor->nama ?? 'Tidak Diketahui';
-            })
-            ->map(function ($group) {
-                return $group->count();
-            })
-            ->sortDesc()
-            ->take(10);
-
-        $chartOpd = [
-            'categories' => $dataOpd->keys()->toArray(),
-            'series' => $dataOpd->values()->toArray(),
-        ];
-
-        // Chart 6: Golongan (Bar)
-        // Group by pure golongan name to merge duplicate groups like 'III/a' 
-        // Then sort them properly by parsing their values
-        $dataGolongan = (clone $query)
-            ->with(['golongan', 'kedudukanHukum'])
-            ->get()
-            ->groupBy(function ($item) {
-                // Konversi golongan untuk PPPK Aktif otomatis dibantu Accessor model Pegawai
-                $namaGolongan = $item->golongan_pppk;
-
-                // Hardcode specific grouping request for III/a (jika ada pengecualian ID custom)
-                if (in_array($item->golongan_id, ['19.8', '21.9'])) {
-                    $namaGolongan = 'III/a';
-                }
-
-                if (empty($namaGolongan)) {
-                    $namaGolongan = 'Tidak Diketahui';
-                }
-
-                return $namaGolongan;
-            })
-            ->map(function ($group) {
-                return $group->count();
-            });
-
-        // Custom sort for Golongan (I, II, III, IV, V, VII, IX, X, XI)
-        $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
-            if ($key === 'Tidak Diketahui') return 999;
-            return \App\Helpers\GolonganHelper::parseRoman($key);
-        });
-
-        $chartGolongan = [
-            'categories' => $dataGolongan->keys()->toArray(),
-            'series' => $dataGolongan->values()->toArray(),
-        ];
-
-        // Chart 7: Generasi (Pie) - Based on tanggal_lahir
-        // Gen Z: 1997 - 2012
-        // Gen Y: 1981 - 1996
-        // Gen X: 1965 - 1980
-        // Baby Boomer: 1946 - 1964 (Using < 1965 as Others/Boomers)
-        $rawTglLahir = (clone $query)->select('tanggal_lahir')->whereNotNull('tanggal_lahir')->get();
-
-        $statsGenerasi = [
-            'Gen Z (1997-2012)' => 0,
-            'Gen Y (1981-1996)' => 0,
-            'Gen X (1965-1980)' => 0,
-            'Lainnya' => 0
-        ];
-
-        foreach ($rawTglLahir as $item) {
-            if (!$item->tanggal_lahir)
-                continue;
-
-            try {
-                $year = Carbon::parse($item->tanggal_lahir)->year;
-
-                if ($year >= 1997 && $year <= 2012) {
-                    $statsGenerasi['Gen Z (1997-2012)']++;
-                } elseif ($year >= 1981 && $year <= 1996) {
-                    $statsGenerasi['Gen Y (1981-1996)']++;
-                } elseif ($year >= 1965 && $year <= 1980) {
-                    $statsGenerasi['Gen X (1965-1980)']++;
-                } else {
-                    $statsGenerasi['Lainnya']++;
-                }
-            } catch (\Exception $e) {
-                // Ignore invalid dates
-                continue;
+            if ($filterOpd) {
+                $query->where('unor_nama', $filterOpd);
             }
-        }
 
-        $chartGenerasi = [
-            'labels' => array_keys($statsGenerasi),
-            'series' => array_values($statsGenerasi),
-        ];
-
-        // Chart 8: Kedudukan Hukum (Pie) - Pool PNS/CPNS aktif
-        $kdLabels = [
-            '01' => 'Aktif',
-            '02' => 'CLTN',
-            '03' => 'Tugas Belajar',
-            '04' => 'Pemberhentian Sementara',
-            '15' => 'Hukuman Disiplin',
-        ];
-        
-        $dataKedudukanHukum = collect();
-        foreach ($kdLabels as $id => $label) {
-            $count = (clone $query)
-                ->whereIn('status_cpns_pns', ['P', 'C'])
-                ->where('kedudukan_hukum_id', $id)
-                ->count();
-            if ($count > 0) {
-                $dataKedudukanHukum->put($label, $count);
-            }
-        }
-        
-        $countBlank = (clone $query)
-            ->whereIn('status_cpns_pns', ['P', 'C'])
-            ->whereNull('kedudukan_hukum_id')
-            ->count();
-        if ($countBlank > 0) {
-            $dataKedudukanHukum->put('Tidak Terdaftar', $countBlank);
-        }
-        
-        $chartKedudukanHukum = [
-            'labels' => $dataKedudukanHukum->keys()->toArray(),
-            'series' => $dataKedudukanHukum->values()->toArray(),
-        ];
-
-        // Chart 9: Jenis Jabatan Pegawai (Pie)
-        $allJenisJabatan = \App\Models\RefJenisJabatan::all()->keyBy('id');
-        $jjCategories = ['Struktural' => 0, 'Fungsional' => 0, 'Pelaksana' => 0];
-        
-        $jenisJabatanCounts = (clone $query)
-            ->whereNotNull('jenis_jabatan_id')
-            ->selectRaw('jenis_jabatan_id, COUNT(*) as total')
-            ->groupBy('jenis_jabatan_id')
-            ->pluck('total', 'jenis_jabatan_id');
+            $totalPegawai = (clone $query)->count();
             
-        foreach ($jenisJabatanCounts as $jjId => $count) {
-            $nama = strtolower($allJenisJabatan[$jjId]->nama ?? '');
-            if (str_contains($nama, 'struktural')) {
-                $jjCategories['Struktural'] += $count;
-            } elseif (str_contains($nama, 'fungsional')) {
-                $jjCategories['Fungsional'] += $count;
-            } else {
-                $jjCategories['Pelaksana'] += $count;
+            $totalLaki = (clone $query)->where('jenis_kelamin', 'M')->count();
+            $totalPerempuan = (clone $query)->where('jenis_kelamin', 'F')->count();
+
+            $totalPns = (clone $query)->where('sts_peg', 'PNS')->count();
+            $totalCpns = (clone $query)->where('sts_peg', 'CPNS')->count();
+            $totalPppk = (clone $query)->where('sts_peg', 'PPPK')->count();
+            $totalPppkPw = (clone $query)->where('sts_peg', 'PPPK PW')->count();
+
+            $statsJenikel = ['Laki-laki' => $totalLaki, 'Perempuan' => $totalPerempuan];
+            $chartJenikel = ['labels' => array_keys($statsJenikel), 'series' => array_values($statsJenikel)];
+
+            $statsStsPeg = ['PNS' => $totalPns, 'CPNS' => $totalCpns, 'PPPK' => $totalPppk, 'PPPK PW' => $totalPppkPw];
+            $chartStsPeg = ['labels' => array_keys($statsStsPeg), 'series' => array_values($statsStsPeg)];
+
+            $dataPendidikan = (clone $query)->select('tingkat_pendidikan', DB::raw('count(*) as total'))
+                ->groupBy('tingkat_pendidikan')->pluck('total', 'tingkat_pendidikan')->sortDesc();
+            if ($dataPendidikan->has('')) {
+                $val = $dataPendidikan->pull('');
+                $dataPendidikan['Tidak Diketahui'] = ($dataPendidikan['Tidak Diketahui'] ?? 0) + $val;
             }
+            $chartPendidikan = ['categories' => $dataPendidikan->keys()->toArray(), 'series' => $dataPendidikan->values()->toArray()];
+
+            $dataEselon = (clone $query)->select('jenis_jabatan', DB::raw('count(*) as total'))
+                ->groupBy('jenis_jabatan')->pluck('total', 'jenis_jabatan')->sortKeys();
+            if ($dataEselon->has('')) {
+                $val = $dataEselon->pull('');
+                $dataEselon['Tidak Diketahui'] = ($dataEselon['Tidak Diketahui'] ?? 0) + $val;
+            }
+            $chartEselon = ['categories' => $dataEselon->keys()->toArray(), 'series' => $dataEselon->values()->toArray()];
+
+            $dataOpd = (clone $query)->select('unor_nama', DB::raw('count(*) as total'))
+                ->groupBy('unor_nama')->pluck('total', 'unor_nama')->sortDesc()->take(10);
+            if ($dataOpd->has('')) {
+                $val = $dataOpd->pull('');
+                $dataOpd['Tidak Diketahui'] = ($dataOpd['Tidak Diketahui'] ?? 0) + $val;
+            }
+            $chartOpd = ['categories' => $dataOpd->keys()->toArray(), 'series' => $dataOpd->values()->toArray()];
+
+            $dataGolonganRaw = (clone $query)->select('golongan', DB::raw('count(*) as total'))
+                ->groupBy('golongan')->pluck('total', 'golongan');
+            $dataGolongan = collect();
+            foreach($dataGolonganRaw as $key => $val) {
+                $k = empty($key) ? 'Tidak Diketahui' : $key;
+                $dataGolongan[$k] = ($dataGolongan[$k] ?? 0) + $val;
+            }
+            $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
+                if ($key === 'Tidak Diketahui') return 999;
+                return \App\Helpers\GolonganHelper::parseRoman($key);
+            });
+            $chartGolongan = ['categories' => $dataGolongan->keys()->toArray(), 'series' => $dataGolongan->values()->toArray()];
+
+            $rawTglLahir = (clone $query)->select('tgl_lahir')->whereNotNull('tgl_lahir')->get();
+            $statsGenerasi = ['Gen Z (1997-2012)' => 0, 'Gen Y (1981-1996)' => 0, 'Gen X (1965-1980)' => 0, 'Lainnya' => 0];
+            foreach ($rawTglLahir as $item) {
+                try {
+                    $year = Carbon::parse($item->tgl_lahir)->year;
+                    if ($year >= 1997 && $year <= 2012) $statsGenerasi['Gen Z (1997-2012)']++;
+                    elseif ($year >= 1981 && $year <= 1996) $statsGenerasi['Gen Y (1981-1996)']++;
+                    elseif ($year >= 1965 && $year <= 1980) $statsGenerasi['Gen X (1965-1980)']++;
+                    else $statsGenerasi['Lainnya']++;
+                } catch (\Exception $e) {}
+            }
+            $chartGenerasi = ['labels' => array_keys($statsGenerasi), 'series' => array_values($statsGenerasi)];
+
+            $rawKdHukum = (clone $query)->whereIn('sts_peg', ['PNS', 'CPNS'])->select('kedudukan_hukum', DB::raw('count(*) as total'))->groupBy('kedudukan_hukum')->pluck('total', 'kedudukan_hukum');
+            $dataKedudukanHukum = collect();
+            foreach ($rawKdHukum as $k => $v) {
+                $key = empty($k) ? 'Tidak Terdaftar' : $k;
+                $dataKedudukanHukum[$key] = ($dataKedudukanHukum[$key] ?? 0) + $v;
+            }
+            $chartKedudukanHukum = ['labels' => $dataKedudukanHukum->keys()->toArray(), 'series' => $dataKedudukanHukum->values()->toArray()];
+
+            $jjCategories = ['Struktural' => 0, 'Fungsional' => 0, 'Pelaksana' => 0];
+            $rawJJ = (clone $query)->select('jenis_jabatan', DB::raw('count(*) as total'))->whereNotNull('jenis_jabatan')->groupBy('jenis_jabatan')->pluck('total', 'jenis_jabatan');
+            foreach ($rawJJ as $k => $count) {
+                $nama = strtolower($k);
+                if (str_contains($nama, 'struktural')) $jjCategories['Struktural'] += $count;
+                elseif (str_contains($nama, 'fungsional')) $jjCategories['Fungsional'] += $count;
+                else $jjCategories['Pelaksana'] += $count;
+            }
+            $jjCategories = array_filter($jjCategories, fn($v) => $v > 0);
+            $chartJenisJabatan = ['labels' => array_keys($jjCategories), 'series' => array_values($jjCategories)];
+
+            $pegawaiQuery = (clone $query);
+            if ($request->has('search') && !empty($request->search)) {
+                $pegawaiQuery->where('nama_pegawai', 'like', '%' . $request->search . '%');
+            }
+            $paginator = $pegawaiQuery->orderBy('nama_pegawai')->paginate(10)->withQueryString();
+            
+            $paginator->getCollection()->transform(function($item) {
+                return (object) [
+                    'nip_baru' => $item->nip_baru,
+                    'nama_lengkap' => $item->nama_pegawai,
+                    'unor' => (object) ['nama' => $item->unor_nama],
+                    'jabatan' => (object) ['nama' => $item->jabatan],
+                    'gol_akhir' => $item->golongan,
+                    'status_cpns_pns' => $item->status_cpns_pns,
+                ];
+            });
+            $pegawai = $paginator;
+            
+            $lastSyncRaw = HistoryPegawai::where(DB::raw("DATE_FORMAT(created_at, '%Y-%m')"), $filterSnapshot)->max('created_at');
+            $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw)->format('d M Y H:i') . ' (Snapshot)' : '-';
+
+        } else {
+            $query = Pegawai::aktif()->with([
+                'golongan', 'jabatan', 'tingkatPendidikan', 'unor', 'jenisPegawai', 'instansiKerja'
+            ]);
+
+            if ($filterOpd) {
+                $query->whereHas('unor', function ($q) use ($filterOpd) {
+                    $q->where('nama', $filterOpd);
+                });
+            }
+
+            $totalPegawai = (clone $query)->count();
+            $totalLaki = (clone $query)->where('jenis_kelamin', 'M')->count();
+            $totalPerempuan = (clone $query)->where('jenis_kelamin', 'F')->count();
+
+            $totalPns = (clone $query)->where('status_cpns_pns', 'P')
+                ->where(function ($q) { $q->whereIn('kedudukan_hukum_id', ['01', '02', '03', '04', '15'])->orWhereNull('kedudukan_hukum_id'); })->count();
+            $totalCpns = (clone $query)->where('status_cpns_pns', 'C')
+                ->where(function ($q) { $q->whereIn('kedudukan_hukum_id', ['01', '02', '03', '04', '15'])->orWhereNull('kedudukan_hukum_id'); })->count();
+            $totalPppk = (clone $query)->whereIn('kedudukan_hukum_id', ['71', '73'])->count();
+            $totalPppkPw = (clone $query)->where('kedudukan_hukum_id', '101')->count();
+
+            $statsJenikel = ['Laki-laki' => $totalLaki, 'Perempuan' => $totalPerempuan];
+            $chartJenikel = ['labels' => array_keys($statsJenikel), 'series' => array_values($statsJenikel)];
+
+            $statsStsPeg = ['PNS' => $totalPns, 'CPNS' => $totalCpns, 'PPPK' => $totalPppk, 'PPPK PW' => $totalPppkPw];
+            $chartStsPeg = ['labels' => array_keys($statsStsPeg), 'series' => array_values($statsStsPeg)];
+
+            $dataPendidikan = (clone $query)->whereHas('tingkatPendidikan')->with('tingkatPendidikan')->get()
+                ->groupBy(function ($item) { return $item->tingkatPendidikan->nama ?? 'Tidak Diketahui'; })
+                ->map(function ($group) { return $group->count(); })->sortDesc();
+            $chartPendidikan = ['categories' => $dataPendidikan->keys()->toArray(), 'series' => $dataPendidikan->values()->toArray()];
+
+            $dataEselon = (clone $query)->whereHas('jenisJabatan')->with('jenisJabatan')->get()
+                ->groupBy(function ($item) { return $item->jenisJabatan->nama ?? 'Tidak Diketahui'; })
+                ->map(function ($group) { return $group->count(); })->sortKeys();
+            $chartEselon = ['categories' => $dataEselon->keys()->toArray(), 'series' => $dataEselon->values()->toArray()];
+
+            $dataOpd = (clone $query)->whereHas('unor')->with('unor')->get()
+                ->groupBy(function ($item) { return $item->unor->nama ?? 'Tidak Diketahui'; })
+                ->map(function ($group) { return $group->count(); })->sortDesc()->take(10);
+            $chartOpd = ['categories' => $dataOpd->keys()->toArray(), 'series' => $dataOpd->values()->toArray()];
+
+            $dataGolongan = (clone $query)->with(['golongan', 'kedudukanHukum'])->get()
+                ->groupBy(function ($item) {
+                    $namaGolongan = $item->golongan_pppk;
+                    if (in_array($item->golongan_id, ['19.8', '21.9'])) { $namaGolongan = 'III/a'; }
+                    return empty($namaGolongan) ? 'Tidak Diketahui' : $namaGolongan;
+                })->map(function ($group) { return $group->count(); });
+            $dataGolongan = $dataGolongan->sortBy(function ($count, $key) {
+                if ($key === 'Tidak Diketahui') return 999;
+                return \App\Helpers\GolonganHelper::parseRoman($key);
+            });
+            $chartGolongan = ['categories' => $dataGolongan->keys()->toArray(), 'series' => $dataGolongan->values()->toArray()];
+
+            $rawTglLahir = (clone $query)->select('tanggal_lahir')->whereNotNull('tanggal_lahir')->get();
+            $statsGenerasi = ['Gen Z (1997-2012)' => 0, 'Gen Y (1981-1996)' => 0, 'Gen X (1965-1980)' => 0, 'Lainnya' => 0];
+            foreach ($rawTglLahir as $item) {
+                if (!$item->tanggal_lahir) continue;
+                try {
+                    $year = Carbon::parse($item->tanggal_lahir)->year;
+                    if ($year >= 1997 && $year <= 2012) $statsGenerasi['Gen Z (1997-2012)']++;
+                    elseif ($year >= 1981 && $year <= 1996) $statsGenerasi['Gen Y (1981-1996)']++;
+                    elseif ($year >= 1965 && $year <= 1980) $statsGenerasi['Gen X (1965-1980)']++;
+                    else $statsGenerasi['Lainnya']++;
+                } catch (\Exception $e) {}
+            }
+            $chartGenerasi = ['labels' => array_keys($statsGenerasi), 'series' => array_values($statsGenerasi)];
+
+            $kdLabels = ['01' => 'Aktif', '02' => 'CLTN', '03' => 'Tugas Belajar', '04' => 'Pemberhentian Sementara', '15' => 'Hukuman Disiplin'];
+            $dataKedudukanHukum = collect();
+            foreach ($kdLabels as $id => $label) {
+                $count = (clone $query)->whereIn('status_cpns_pns', ['P', 'C'])->where('kedudukan_hukum_id', $id)->count();
+                if ($count > 0) $dataKedudukanHukum->put($label, $count);
+            }
+            $countBlank = (clone $query)->whereIn('status_cpns_pns', ['P', 'C'])->whereNull('kedudukan_hukum_id')->count();
+            if ($countBlank > 0) $dataKedudukanHukum->put('Tidak Terdaftar', $countBlank);
+            $chartKedudukanHukum = ['labels' => $dataKedudukanHukum->keys()->toArray(), 'series' => $dataKedudukanHukum->values()->toArray()];
+
+            $allJenisJabatan = \App\Models\RefJenisJabatan::all()->keyBy('id');
+            $jjCategories = ['Struktural' => 0, 'Fungsional' => 0, 'Pelaksana' => 0];
+            $jenisJabatanCounts = (clone $query)->whereNotNull('jenis_jabatan_id')->selectRaw('jenis_jabatan_id, COUNT(*) as total')
+                ->groupBy('jenis_jabatan_id')->pluck('total', 'jenis_jabatan_id');
+            foreach ($jenisJabatanCounts as $jjId => $count) {
+                $nama = strtolower($allJenisJabatan[$jjId]->nama ?? '');
+                if (str_contains($nama, 'struktural')) $jjCategories['Struktural'] += $count;
+                elseif (str_contains($nama, 'fungsional')) $jjCategories['Fungsional'] += $count;
+                else $jjCategories['Pelaksana'] += $count;
+            }
+            $jjCategories = array_filter($jjCategories, fn($v) => $v > 0);
+            $chartJenisJabatan = ['labels' => array_keys($jjCategories), 'series' => array_values($jjCategories)];
+
+            $pegawaiQuery = (clone $query)->select('pegawai.*');
+            if ($request->has('search') && !empty($request->search)) {
+                $pegawaiQuery->where('nama', 'like', '%' . $request->search . '%');
+            }
+            $pegawai = $pegawaiQuery->orderBy('nama')->paginate(10)->withQueryString();
+
+            $lastSyncRaw = Pegawai::max('updated_at');
+            $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw)->format('d M Y H:i') : '-';
         }
-        
-        $jjCategories = array_filter($jjCategories, fn($v) => $v > 0);
-        $chartJenisJabatan = [
-            'labels' => array_keys($jjCategories),
-            'series' => array_values($jjCategories),
-        ];
-
-        // 6. Paginated Table Data
-        $pegawaiQuery = (clone $query)->select('pegawai.*');
-
-        if ($request->has('search') && !empty($request->search)) {
-            $pegawaiQuery->where('nama', 'like', '%' . $request->search . '%');
-        }
-
-        $pegawai = $pegawaiQuery->orderBy('nama')
-            ->paginate(10)
-            ->withQueryString();
-
-        // Last Sync Info
-        $lastSyncRaw = Pegawai::max('updated_at');
-        $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw)->format('d M Y H:i') : '-';
 
         if ($request->ajax()) {
             return view('partials.employee-table', compact('pegawai'));
@@ -317,6 +248,8 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'listOpd',
             'filterOpd',
+            'filterSnapshot',
+            'historyMonths',
             'totalPegawai',
             'totalLaki',
             'totalPerempuan',
