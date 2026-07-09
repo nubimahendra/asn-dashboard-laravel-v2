@@ -15,11 +15,11 @@
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="px-6 py-4">{{ $pegawai->firstItem() + $index }}</td>
                         <td class="px-6 py-4 font-medium text-gray-800 dark:text-gray-200">{{ $p->nama_lengkap }}</td>
-                        <td class="px-6 py-4">{{ optional($p->jabatan)->nama ?? '-' }}</td>
-                        <td class="px-6 py-4">{{ optional($p->unor)->nama ?? optional($p->instansiKerja)->nama ?? '-' }}</td>
+                        <td class="px-6 py-4">{{ $p->jabatan->nama ?? '-' }}</td>
+                        <td class="px-6 py-4">{{ $p->unor->nama ?? $p->instansiKerja->nama ?? '-' }}</td>
                         <td class="px-6 py-4">
                             @php
-                                $jenis = $p->jenisPegawai?->nama ?? '';
+                                $jenis = $p->jenisPegawai->nama ?? '';
                             @endphp
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                 {{ str_contains($jenis, 'PNS') && !str_contains($jenis, 'CPNS') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
@@ -29,7 +29,7 @@
                                 {{ $jenis ?: '-' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">{{ optional($p->tingkatPendidikan)->nama ?? '-' }}</td>
+                        <td class="px-6 py-4">{{ $p->tingkatPendidikan->nama ?? '-' }}</td>
                     </tr>
             @empty
                 <tr>
