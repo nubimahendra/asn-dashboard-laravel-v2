@@ -54,6 +54,11 @@ class MariDashboardController extends Controller
             if ($pegawai->kedudukan_hukum_id == '101') continue;
 
             $override = $pegawai->iuranOverride;
+
+            if ($override && !$override->is_active) {
+                continue;
+            }
+
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
             if (!isset($opdTotals[$opdName])) {
                 $opdTotals[$opdName] = 0;
@@ -76,6 +81,9 @@ class MariDashboardController extends Controller
 
         arsort($opdTotals);
         $chartTopOpdIuran = array_slice($opdTotals, 0, 10, true);
+        
+        // Membalik urutan agar nilai tertinggi tampil di paling atas pada chart horizontal ApexCharts
+        $chartTopOpdIuran = array_reverse($chartTopOpdIuran, true);
 
         return view('mari.dashboard', compact(
             'totalPegawaiAktif',

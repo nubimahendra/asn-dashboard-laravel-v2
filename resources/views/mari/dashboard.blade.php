@@ -54,7 +54,7 @@
 
     <!-- Chart Top 10 OPD -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Top 10 OPD Iuran Terbesar</h2>
+        <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Top 10 PD Iuran Terbesar</h2>
         <div id="chart-top-opd" class="w-full" style="height: 350px;"></div>
     </div>
 
