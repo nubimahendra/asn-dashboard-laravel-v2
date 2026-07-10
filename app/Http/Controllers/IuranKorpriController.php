@@ -222,6 +222,11 @@ class IuranKorpriController extends Controller
 
         foreach ($pegawaiData as $pegawai) {
             $override = $pegawai->iuranOverride;
+            
+            if ($override && !$override->is_active) {
+                continue;
+            }
+
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
 
@@ -459,6 +464,11 @@ class IuranKorpriController extends Controller
 
         foreach ($pegawaiData as $pegawai) {
             $override = $pegawai->iuranOverride;
+
+            if ($override && !$override->is_active) {
+                continue;
+            }
+
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
             
             // If we filter by OPD, ensure we only include the matching effective OPD
@@ -587,6 +597,11 @@ class IuranKorpriController extends Controller
 
         foreach ($pegawaiData as $pegawai) {
             $override = $pegawai->iuranOverride;
+
+            if ($override && !$override->is_active) {
+                continue;
+            }
+
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa PD');
             
             if ($filterOpd && $opdName !== $filterOpd) {
