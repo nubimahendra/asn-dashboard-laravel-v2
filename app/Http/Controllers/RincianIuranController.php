@@ -7,6 +7,7 @@ use App\Models\RefUnor;
 use App\Models\IuranKorpri;
 use App\Models\RefIuranEselon;
 use App\Models\RefEselonMapping;
+use App\Helpers\UptFilterHelper;
 use Illuminate\Http\Request;
 
 class RincianIuranController extends Controller
@@ -22,8 +23,13 @@ class RincianIuranController extends Controller
     public function index(Request $request)
     {
         $filterOpd = $request->input('opd');
+        $filterUpt = $request->input('upt');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
         $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
+
+        $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+        $uptGroups = $hasUptFilter ? UptFilterHelper::getUptListGrouped($filterOpd) : [];
+        \Illuminate\Support\Facades\Log::info("RincianIuran filterOpd: '{$filterOpd}', hasUptFilter: " . ($hasUptFilter ? 'true' : 'false'));
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
@@ -74,6 +80,13 @@ class RincianIuranController extends Controller
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
                 $q->where('nama', $filterOpd);
+            });
+        }
+
+        if ($filterUpt && $hasUptFilter) {
+            $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
+            $query->whereHas('unor', function ($q) use ($resolved) {
+                $q->where($resolved['column'], $resolved['operator'], $resolved['value']);
             });
         }
 
@@ -182,6 +195,7 @@ class RincianIuranController extends Controller
 
         return view('admin.rincian-iuran.index', compact(
             'listOpd', 'filterOpd', 'pns', 'pppk',
+            'hasUptFilter', 'uptGroups', 'filterUpt',
             'eselonBreakdown', 'golonganBreakdown', 'grandTotal',
             'showEselon', 'showGolonganPns', 'showGolonganPppk',
             'modePegawai', 'pegawaiDetail'

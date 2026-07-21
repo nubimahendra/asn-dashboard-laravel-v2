@@ -16,7 +16,12 @@
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-6 border border-gray-100 dark:border-gray-700">
             <form method="GET" action="{{ route('mari.rekon-iuran.index') }}" class="flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">OPD</label>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        OPD 
+                        @if(isset($isUptMode) && $isUptMode)
+                            <span class="ml-2 text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded shadow-sm">🔒 Mode UPT</span>
+                        @endif
+                    </label>
                     <select name="opd" class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
                         <option value="">Semua OPD</option>
                         @foreach($listOpd as $opd)
@@ -25,13 +30,30 @@
                     </select>
                 </div>
                 <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Unit Kerja (Unor)</label>
-                    <input type="text" name="unor" value="{{ $filterUnor }}" list="listUnor" placeholder="Ketik nama unit kerja..." class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onblur="this.form.submit()" onkeypress="if(event.keyCode==13) this.form.submit();">
-                    <datalist id="listUnor">
-                        @foreach($listUnor as $u)
-                            <option value="{{ $u->nama_opd }}">{{ $u->nama_lengkap }}</option>
-                        @endforeach
-                    </datalist>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {{ isset($isUptMode) && $isUptMode ? '🏫 Filter UPT' : 'Unit Kerja (Unor)' }}
+                    </label>
+                    
+                    @if(isset($isUptMode) && $isUptMode)
+                        <select name="unor" class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                            <option value="">Semua UPT</option>
+                            @foreach($uptGroups as $label => $group)
+                                <optgroup label="─── {{ $label }} ───">
+                                    <option value="__cat:{{ $label }}" {{ $filterUnor == '__cat:'.$label ? 'selected' : '' }}>Semua {{ $label }}</option>
+                                    @foreach($group['items'] as $uptName)
+                                        <option value="{{ $uptName }}" {{ $filterUnor == $uptName ? 'selected' : '' }}>{{ $uptName }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="text" name="unor" value="{{ $filterUnor }}" list="listUnor" placeholder="Ketik nama unit kerja..." class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onblur="this.form.submit()" onkeypress="if(event.keyCode==13) this.form.submit();">
+                        <datalist id="listUnor">
+                            @foreach($listUnor as $u)
+                                <option value="{{ $u->nama_opd }}">{{ $u->nama_lengkap }}</option>
+                            @endforeach
+                        </datalist>
+                    @endif
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Golongan</label>
@@ -297,14 +319,21 @@
                     
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Override Grup/OPD</label>
-                        <input type="text" id="inputOpd" list="listOpdModal" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="-- Kosongkan untuk pakai Asli (BKN) --">
-                        <datalist id="listOpdModal">
-                            @foreach($listOpd as $opd)
-                                @if($opd !== 'Tanpa OPD')
-                                <option value="{{ $opd }}">
-                                @endif
-                            @endforeach
-                        </datalist>
+                        <select id="inputOpd" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                            <option value="">-- Kosongkan untuk pakai Asli (BKN) --</option>
+                            <optgroup label="═══ Perangkat Daerah (PD) ═══">
+                                @foreach($listOpd as $opd)
+                                    @if($opd !== 'Tanpa OPD')
+                                    <option value="{{ $opd }}">{{ $opd }}</option>
+                                    @endif
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="═══ Unit Pelaksana Teknis (UPT) ═══">
+                                @foreach($listUpt as $upt)
+                                    <option value="{{ $upt }}">{{ $upt }}</option>
+                                @endforeach
+                            </optgroup>
+                        </select>
                     </div>
 
                     <div>

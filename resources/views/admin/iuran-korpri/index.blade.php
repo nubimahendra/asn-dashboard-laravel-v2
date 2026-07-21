@@ -3,23 +3,51 @@
 @section('content')
     <div class="container mx-auto px-10 py-8">
         <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div>
+        <div class="mb-8">
+            <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Laporan Iuran KORPRI per PD</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">
+                <p class="text-gray-500 dark:text-gray-400 mt-2 flex flex-wrap items-center gap-2">
                     @if($filterOpd)
-                        <span
-                            class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">FILTERED</span>
-                        {{ $filterOpd }}
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded">OPD</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ $filterOpd }}</span>
+                        @if($hasUptFilter && $filterUpt)
+                            <span class="text-gray-400">/</span>
+                            <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-semibold px-2.5 py-0.5 rounded">UPT</span>
+                            <span class="font-medium text-gray-700 dark:text-gray-300">
+                                @if(str_starts_with($filterUpt, '__cat:'))
+                                    {{ substr($filterUpt, 6) }}
+                                @else
+                                    {{ $filterUpt }}
+                                @endif
+                            </span>
+                        @endif
                     @else
-                        Dewan Pengurus KORPRI Kabupaten Blitar — Semua PD
+                        <span>Dewan Pengurus KORPRI Kabupaten Blitar — Semua PD</span>
                     @endif
                 </p>
             </div>
-            <div class="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
-                <form method="GET" action="{{ route('mari.iuran-korpri.index') }}" class="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mr-2 w-full md:w-auto" id="filterForm">
-                    @if($filterOpd)
-                        <input type="hidden" name="opd" value="{{ $filterOpd }}">
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <form method="GET" action="{{ route('mari.iuran-korpri.index') }}" class="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full xl:w-auto" id="filterForm">
+                    <select name="opd" class="w-full md:w-auto text-[14px] py-2 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                        <option value="">Semua OPD</option>
+                        @foreach($listOpd as $opdName)
+                            <option value="{{ $opdName }}" {{ $filterOpd == $opdName ? 'selected' : '' }}>{{ $opdName }}</option>
+                        @endforeach
+                    </select>
+                    
+                    @if($hasUptFilter)
+                    <select name="upt" class="w-full md:w-auto text-[14px] py-2 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                        <option value="">Semua UPT</option>
+                        @foreach($uptGroups as $label => $group)
+                            <optgroup label="─── {{ $label }} ───">
+                                <option value="__cat:{{ $label }}" {{ $filterUpt == '__cat:'.$label ? 'selected' : '' }}>Semua {{ $label }}</option>
+                                @foreach($group['items'] as $uptName)
+                                    <option value="{{ $uptName }}" {{ $filterUpt == $uptName ? 'selected' : '' }}>{{ $uptName }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
                     @endif
                     <input type="hidden" name="pns" value="0">
                     <input type="hidden" name="pppk" value="0">
@@ -47,23 +75,25 @@
                             <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">PPPK</span>
                         </label>
                     </div>
+                    
+                    <div class="flex items-center gap-2 border-t md:border-t-0 md:border-l border-gray-300 dark:border-gray-600 pt-3 md:pt-0 md:pl-3 md:ml-1 mt-2 md:mt-0 w-full md:w-auto">
+                        <button type="submit" form="filterForm" name="hitung_ulang" value="1" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition" title="Hitung Ulang">
+                            🔄
+                        </button>
+                        <a href="{{ route('mari.iuran-korpri.invoice-golongan', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd, 'upt' => $filterUpt]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice per Golongan">
+                            📋
+                        </a>
+                        <a href="{{ route('mari.iuran-korpri.invoice', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd, 'upt' => $filterUpt]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice per Pegawai">
+                            🧾
+                        </a>
+                        <button type="button" onclick="simpanIuran()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Simpan Iuran Bulan Ini">
+                            💾
+                        </button>
+                        @if($filterOpd)
+                            <a href="{{ route('mari.iuran-korpri.index') }}" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">Reset</a>
+                        @endif
+                    </div>
                 </form>
-                <button type="submit" form="filterForm" name="hitung_ulang" value="1" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition" title="Hitung Ulang">
-                    🔄
-                </button>
-                <a href="{{ route('mari.iuran-korpri.invoice-golongan', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice Golongan">
-                    📋
-                </a>
-                <a href="{{ route('mari.iuran-korpri.invoice', ['bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk, 'opd' => $filterOpd]) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Cetak Invoice Pegawai">
-                    🧾
-                </a>
-                <button type="button" onclick="simpanIuran()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm" title="Simpan Iuran Bulan Ini">
-                    💾
-                </button>
-                @if($filterOpd)
-                    <a href="{{ route('mari.iuran-korpri.index') }}"
-                        class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">Reset</a>
-                @endif
             </div>
         </div>
 
@@ -166,10 +196,10 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <a href="{{ route('mari.iuran-korpri.invoice-golongan', ['opd' => $opd['nama_opd'], 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors" title="Cetak Invoice Golongan">
+                                        <a href="{{ route('mari.iuran-korpri.invoice-golongan', ['opd' => $opd['nama_opd'], 'upt' => $filterUpt, 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors" title="Cetak Invoice Golongan">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                                         </a>
-                                        <a href="{{ route('mari.iuran-korpri.invoice', ['opd' => $opd['nama_opd'], 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors" title="Cetak Invoice Pegawai">
+                                        <a href="{{ route('mari.iuran-korpri.invoice', ['opd' => $opd['nama_opd'], 'upt' => $filterUpt, 'bulan' => $bulan, 'tahun' => $tahun, 'pns' => $pns, 'pppk' => $pppk]) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors" title="Cetak Invoice Pegawai">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                         </a>
                                     </div>

@@ -7,8 +7,17 @@
             <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Rincian Iuran Pegawai</h1>
             <p class="text-gray-500 dark:text-gray-400 mt-1">
                 @if($filterOpd)
-                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">FILTERED</span>
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">OPD</span>
                     {{ $filterOpd }}
+                    @if($hasUptFilter && $filterUpt)
+                        <span class="mx-2 text-gray-400">/</span>
+                        <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">UPT</span>
+                        @if(str_starts_with($filterUpt, '__cat:'))
+                            {{ substr($filterUpt, 6) }}
+                        @else
+                            {{ $filterUpt }}
+                        @endif
+                    @endif
                 @else
                     Semua OPD
                 @endif
@@ -23,13 +32,30 @@
             <input type="hidden" name="pppk" value="0">
             <div class="flex-1 min-w-0 w-full md:w-auto md:min-w-[300px]">
                 <label for="opd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih OPD</label>
-                <select name="opd" id="opd" class="w-full text-[14px] py-2.5 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+                <select name="opd" id="opd" class="w-full text-[14px] py-2.5 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-blue-500" onchange="document.getElementById('upt') ? document.getElementById('upt').value = '' : null; this.form.submit()">
                     <option value="">Semua OPD</option>
                     @foreach($listOpd as $opdName)
                         <option value="{{ $opdName }}" {{ $filterOpd == $opdName ? 'selected' : '' }}>{{ $opdName }}</option>
                     @endforeach
                 </select>
             </div>
+            
+            @if($hasUptFilter)
+            <div class="flex-1 min-w-0 w-full md:w-auto md:min-w-[250px]">
+                <label for="upt" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter UPT</label>
+                <select name="upt" id="upt" class="w-full text-[14px] py-2.5 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:border-purple-500 focus:ring-purple-500" onchange="this.form.submit()">
+                    <option value="">Semua UPT</option>
+                    @foreach($uptGroups as $label => $group)
+                        <optgroup label="─── {{ $label }} ───">
+                            <option value="__cat:{{ $label }}" {{ $filterUpt == '__cat:'.$label ? 'selected' : '' }}>Semua {{ $label }}</option>
+                            @foreach($group['items'] as $uptName)
+                                <option value="{{ $uptName }}" {{ $filterUpt == $uptName ? 'selected' : '' }}>{{ $uptName }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="flex flex-wrap gap-3 mt-2 md:mt-0">
                 <label class="inline-flex items-center cursor-pointer">
                     <input type="checkbox" name="pns" value="1" class="sr-only peer" {{ $pns ? 'checked' : '' }} onchange="this.form.submit()">
@@ -53,7 +79,11 @@
         </div>
         <div class="text-right">
             <div class="text-4xl font-bold mb-2">Rp {{ number_format($grandTotal['iuran'], 0, ',', '.') }}</div>
-            <div class="text-emerald-100">Dari {{ number_format($grandTotal['pegawai']) }} Pegawai</div>
+            <div class="text-emerald-100 mb-3">Dari {{ number_format($grandTotal['pegawai']) }} Pegawai</div>
+            
+            @if(isset($modePegawai) && $modePegawai)
+                <!-- Invoice buttons have been moved to Laporan Iuran -->
+            @endif
         </div>
     </div>
 

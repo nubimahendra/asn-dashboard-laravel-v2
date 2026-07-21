@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\IuranKorpri;
 use App\Models\Pegawai;
 use App\Models\RefUnor;
+use App\Helpers\UptFilterHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +24,10 @@ class IuranKorpriController extends Controller
     public function index(Request $request)
     {
         $filterOpd = $request->input('opd');
+        $filterUpt = $request->input('upt');
+        $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+        $uptGroups = $hasUptFilter ? UptFilterHelper::getUptListGrouped($filterOpd) : [];
+        
         $pns = $request->has('pns') ? $request->input('pns') : 1;
         $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
         
@@ -79,7 +84,7 @@ class IuranKorpriController extends Controller
             $opdBreakdown = $calcData['opdBreakdown'];
             $globalTotals = $calcData['globalTotals'];
         } else {
-            $calcData = $this->calculateRealtime($allIuranRates, $pns, $pppk, $filterOpd);
+            $calcData = $this->calculateRealtime($allIuranRates, $pns, $pppk, $filterOpd, $filterUpt);
             $opdBreakdown = $calcData['opdBreakdown'];
             $globalTotals = $calcData['globalTotals'];
         }
@@ -98,6 +103,7 @@ class IuranKorpriController extends Controller
 
         return view('admin.iuran-korpri.index', compact(
             'allIuranRates', 'listOpd', 'filterOpd',
+            'hasUptFilter', 'uptGroups', 'filterUpt',
             'globalTotals', 'opdBreakdown', 'pns', 'pppk', 'bulan', 'tahun', 'isArsip', 'arsipDate', 'arsipCreator'
         ));
     }
@@ -178,7 +184,7 @@ class IuranKorpriController extends Controller
         return redirect()->back()->with('success', 'Pengaturan invoice berhasil diperbarui.');
     }
 
-    private function calculateRealtime($allIuranRates, $pns, $pppk, $filterOpd = null)
+    private function calculateRealtime($allIuranRates, $pns, $pppk, $filterOpd = null, $filterUpt = null)
     {
         $allEselonRates = \App\Models\RefIuranEselon::all()->keyBy('eselon_key');
         $eselonMappings = \App\Models\RefEselonMapping::pluck('eselon_key', 'jabatan_id');
@@ -203,6 +209,13 @@ class IuranKorpriController extends Controller
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
                 $q->where('nama', $filterOpd);
+            });
+        }
+
+        if ($filterUpt && UptFilterHelper::hasUptFilter($filterOpd)) {
+            $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
+            $query->whereHas('unor', function ($q) use ($resolved) {
+                $q->where($resolved['column'], $resolved['operator'], $resolved['value']);
             });
         }
 
@@ -446,14 +459,25 @@ class IuranKorpriController extends Controller
         }
 
         if ($filterOpd) {
-            // Need to handle both unor->nama and override_opd_nama
-            $query->where(function($q) use ($filterOpd) {
-                $q->whereHas('unor', function ($q2) use ($filterOpd) {
-                    $q2->where('nama', $filterOpd);
-                })->orWhereHas('iuranOverride', function ($q2) use ($filterOpd) {
-                    $q2->where('override_opd_nama', $filterOpd);
+            $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+            $filterUpt = $request->input('upt');
+
+            if ($hasUptFilter && $filterUpt) {
+                // If UPT filter is active, use the exact resolved UPT condition
+                $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
+                $query->whereHas('unor', function ($q) use ($resolved) {
+                    $q->where($resolved['column'], $resolved['operator'], $resolved['value']);
                 });
-            });
+            } else {
+                // Original OPD filter logic
+                $query->where(function($q) use ($filterOpd) {
+                    $q->whereHas('unor', function ($q2) use ($filterOpd) {
+                        $q2->where('nama', $filterOpd);
+                    })->orWhereHas('iuranOverride', function ($q2) use ($filterOpd) {
+                        $q2->where('override_opd_nama', $filterOpd);
+                    });
+                });
+            }
         }
 
         $pegawaiData = $query->get();
@@ -471,9 +495,17 @@ class IuranKorpriController extends Controller
 
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
             
-            // If we filter by OPD, ensure we only include the matching effective OPD
-            if ($filterOpd && $opdName !== $filterOpd) {
-                continue;
+            if ($filterOpd) {
+                $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+                $filterUpt = $request->input('upt');
+                
+                if ($hasUptFilter && $filterUpt) {
+                    // For UPT mode, the effective OPD name is actually the UPT name (nama_opd)
+                    $opdName = $pegawai->unor->nama_opd ?? 'Tanpa UPT';
+                } else if ($opdName !== $filterOpd) {
+                    // Normal OPD filter
+                    continue;
+                }
             }
 
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
@@ -535,7 +567,11 @@ class IuranKorpriController extends Controller
             });
         }
 
+        $filterUpt = $request->input('upt');
         $invoiceTitle = $filterOpd ?: 'Seluruh PD';
+        if ($filterOpd && UptFilterHelper::hasUptFilter($filterOpd) && $filterUpt) {
+            $invoiceTitle = str_starts_with($filterUpt, '__cat:') ? substr($filterUpt, 6) : $filterUpt;
+        }
 
         $invoiceSettings = [
             'logo' => \App\Models\AppSetting::getValue('invoice_logo'),
@@ -580,13 +616,23 @@ class IuranKorpriController extends Controller
         }
 
         if ($filterOpd) {
-            $query->where(function($q) use ($filterOpd) {
-                $q->whereHas('unor', function ($q2) use ($filterOpd) {
-                    $q2->where('nama', $filterOpd);
-                })->orWhereHas('iuranOverride', function ($q2) use ($filterOpd) {
-                    $q2->where('override_opd_nama', $filterOpd);
+            $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+            $filterUpt = $request->input('upt');
+
+            if ($hasUptFilter && $filterUpt) {
+                $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
+                $query->whereHas('unor', function ($q) use ($resolved) {
+                    $q->where($resolved['column'], $resolved['operator'], $resolved['value']);
                 });
-            });
+            } else {
+                $query->where(function($q) use ($filterOpd) {
+                    $q->whereHas('unor', function ($q2) use ($filterOpd) {
+                        $q2->where('nama', $filterOpd);
+                    })->orWhereHas('iuranOverride', function ($q2) use ($filterOpd) {
+                        $q2->where('override_opd_nama', $filterOpd);
+                    });
+                });
+            }
         }
 
         $pegawaiData = $query->get();
@@ -604,8 +650,17 @@ class IuranKorpriController extends Controller
 
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa PD');
             
-            if ($filterOpd && $opdName !== $filterOpd) {
-                continue;
+            if ($filterOpd) {
+                $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+                $filterUpt = $request->input('upt');
+                
+                if ($hasUptFilter && $filterUpt) {
+                    // For UPT mode, the effective OPD name is actually the UPT name (nama_opd)
+                    $opdName = $pegawai->unor->nama_opd ?? 'Tanpa UPT';
+                } else if ($opdName !== $filterOpd) {
+                    // Normal OPD filter
+                    continue;
+                }
             }
 
             if (!isset($invoiceData[$opdName])) {
@@ -678,7 +733,11 @@ class IuranKorpriController extends Controller
             });
         }
 
+        $filterUpt = $request->input('upt');
         $invoiceTitle = $filterOpd ?: 'Seluruh PD';
+        if ($filterOpd && UptFilterHelper::hasUptFilter($filterOpd) && $filterUpt) {
+            $invoiceTitle = str_starts_with($filterUpt, '__cat:') ? substr($filterUpt, 6) : $filterUpt;
+        }
         
         $invoiceSettings = [
             'logo' => \App\Models\AppSetting::getValue('invoice_logo'),
