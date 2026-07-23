@@ -112,7 +112,7 @@
         @else
             <!-- Data Tables -->
             @foreach($invoiceData as $opdName => $pegawais)
-                @if($invoiceTitle === 'Seluruh PD')
+                @if($invoiceTitle === 'Seluruh PD' || in_array($invoiceTitle, ['Dinas Pendidikan', 'Dinas Kesehatan']))
                     <div class="mt-8 mb-3 bg-gray-100 p-2 font-bold text-gray-800 border-l-4 border-blue-600 print:bg-gray-200 print:border-black print-text-black">
                         {{ $opdName }}
                     </div>
@@ -157,7 +157,7 @@
                     <tfoot class="bg-gray-50 print:bg-gray-100 print-border print-text-black">
                         <tr>
                             <td colspan="5" class="py-3 px-3 border print-border text-right font-bold uppercase text-gray-700 print-text-black">
-                                Sub Total @if($invoiceTitle === 'Seluruh PD') {{ $opdName }} @endif
+                                Sub Total @if($invoiceTitle === 'Seluruh PD' || in_array($invoiceTitle, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {{ $opdName }} @endif
                             </td>
                             <td class="py-3 px-3 border print-border text-right font-bold text-gray-900 print-text-black">
                                 {{ number_format($opdTotal, 0, ',', '.') }}
@@ -168,7 +168,7 @@
             @endforeach
 
             <!-- Grand Total -->
-            @if($invoiceTitle === 'Seluruh PD')
+            @if($invoiceTitle === 'Seluruh PD' || in_array($invoiceTitle, ['Dinas Pendidikan', 'Dinas Kesehatan']))
             <div class="flex justify-end mt-4 print:mt-8">
                 <table class="w-72 print-border print-text-black">
                     <tr class="bg-blue-600 text-white print:bg-gray-300 print:text-black">

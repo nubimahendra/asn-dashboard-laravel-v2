@@ -138,6 +138,40 @@
             </div>
         </div>
 
+        @if(isset($subTotals) && count($subTotals) > 0)
+        <!-- Sub Totals Cards -->
+        <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Rincian Sub-Kategori Iuran</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            @foreach($subTotals as $index => $subTotal)
+            @php
+                $colorClasses = [
+                    0 => 'border-blue-500 from-blue-500 to-indigo-500',
+                    1 => 'border-amber-500 from-amber-500 to-orange-500',
+                    2 => 'border-purple-500 from-purple-500 to-pink-500',
+                    3 => 'border-cyan-500 from-cyan-500 to-blue-500',
+                ];
+                $color = $colorClasses[$index % count($colorClasses)];
+            @endphp
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 {{ explode(' ', $color)[0] }} overflow-hidden">
+                <div class="p-4">
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ $subTotal['label'] }}</p>
+                    <div class="flex justify-between items-end mt-2">
+                        <div>
+                            <p class="text-xs text-gray-400">Total Pegawai</p>
+                            <p class="text-lg font-bold text-gray-700 dark:text-gray-200">{{ number_format($subTotal['total_pegawai']) }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-400">Total Iuran</p>
+                            <p class="text-xl font-bold text-gray-800 dark:text-white">Rp {{ number_format($subTotal['total_iuran'], 0, ',', '.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-1 w-full bg-gradient-to-r {{ explode(' ', $color)[1] }} {{ explode(' ', $color)[2] }}"></div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
         <!-- Breakdown per OPD Table -->
         <div id="tabel-opd" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
             <div

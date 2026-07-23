@@ -83,10 +83,12 @@ class IuranKorpriController extends Controller
             $calcData = $this->formatArsipData($arsipList, $allIuranRates, $filterOpd);
             $opdBreakdown = $calcData['opdBreakdown'];
             $globalTotals = $calcData['globalTotals'];
+            $subTotals = $calcData['subTotals'] ?? null;
         } else {
             $calcData = $this->calculateRealtime($allIuranRates, $pns, $pppk, $filterOpd, $filterUpt);
             $opdBreakdown = $calcData['opdBreakdown'];
             $globalTotals = $calcData['globalTotals'];
+            $subTotals = $calcData['subTotals'] ?? null;
         }
 
         $page = $request->input('page', 1);
@@ -104,7 +106,7 @@ class IuranKorpriController extends Controller
         return view('admin.iuran-korpri.index', compact(
             'allIuranRates', 'listOpd', 'filterOpd',
             'hasUptFilter', 'uptGroups', 'filterUpt',
-            'globalTotals', 'opdBreakdown', 'pns', 'pppk', 'bulan', 'tahun', 'isArsip', 'arsipDate', 'arsipCreator'
+            'globalTotals', 'subTotals', 'opdBreakdown', 'pns', 'pppk', 'bulan', 'tahun', 'isArsip', 'arsipDate', 'arsipCreator'
         ));
     }
 
@@ -207,8 +209,12 @@ class IuranKorpriController extends Controller
         }
 
         if ($filterOpd) {
-            $query->whereHas('unor', function ($q) use ($filterOpd) {
-                $q->where('nama', $filterOpd);
+            $query->where(function($q) use ($filterOpd) {
+                $q->whereHas('unor', function ($q2) use ($filterOpd) {
+                    $q2->where('nama', $filterOpd);
+                })->orWhereHas('iuranOverride', function ($q2) use ($filterOpd) {
+                    $q2->where('override_opd_nama', $filterOpd);
+                });
             });
         }
 
@@ -227,6 +233,21 @@ class IuranKorpriController extends Controller
             'total_struktural' => 0, 'total_iuran' => 0, 'per_golongan' => [],
         ];
 
+        $subTotals = null;
+        $hasUptFilterActive = $filterUpt && UptFilterHelper::hasUptFilter($filterOpd);
+        if ($filterOpd && !$hasUptFilterActive && in_array($filterOpd, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {
+            $subTotals = [
+                'Induk' => ['label' => $filterOpd . ' (Induk)', 'total_pegawai' => 0, 'total_iuran' => 0],
+            ];
+            
+            if ($filterOpd === 'Dinas Pendidikan') {
+                $subTotals['UPT SD'] = ['label' => 'Semua UPT SD', 'total_pegawai' => 0, 'total_iuran' => 0];
+                $subTotals['UPT SMP'] = ['label' => 'Semua UPT SMP', 'total_pegawai' => 0, 'total_iuran' => 0];
+            } elseif ($filterOpd === 'Dinas Kesehatan') {
+                $subTotals['UPT Puskesmas'] = ['label' => 'Semua UPT Puskesmas', 'total_pegawai' => 0, 'total_iuran' => 0];
+            }
+        }
+
         foreach ($allIuranRates as $key => $rate) {
             $globalTotals['per_golongan'][$key] = [
                 'label' => $rate->label, 'count' => 0, 'besaran' => $rate->besaran, 'subtotal' => 0,
@@ -241,6 +262,30 @@ class IuranKorpriController extends Controller
             }
 
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
+
+            if (!$filterOpd && in_array($opdName, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {
+                $checkName = $opdName;
+                if (!$override && isset($pegawai->unor->nama_opd)) {
+                    $checkName = $pegawai->unor->nama_opd;
+                }
+                
+                if (str_starts_with($checkName, 'UPT SD')) {
+                    $opdName = 'Grup UPT SD';
+                } elseif (str_starts_with($checkName, 'UPT SMP')) {
+                    $opdName = 'Grup UPT SMP';
+                } elseif (str_starts_with($checkName, 'UPT Puskesmas')) {
+                    $opdName = 'Grup UPT Puskesmas';
+                }
+            }
+
+            if ($filterOpd) {
+                if ($hasUptFilterActive) {
+                    $opdName = $pegawai->unor->nama_opd ?? 'Tanpa UPT';
+                } else if ($opdName !== $filterOpd) {
+                    continue;
+                }
+            }
+
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
 
             if (!isset($opdBreakdown[$opdName])) {
@@ -292,12 +337,31 @@ class IuranKorpriController extends Controller
                     $opdBreakdown[$opdName]['total_non_golongan']++;
                 }
             }
+
+            if ($subTotals !== null && $besaran > 0) {
+                $checkName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama_opd ?? $opdName);
+                $subKey = 'Induk';
+                
+                if (str_starts_with($checkName, 'UPT SD')) {
+                    $subKey = 'UPT SD';
+                } elseif (str_starts_with($checkName, 'UPT SMP')) {
+                    $subKey = 'UPT SMP';
+                } elseif (str_starts_with($checkName, 'UPT Puskesmas')) {
+                    $subKey = 'UPT Puskesmas';
+                }
+                
+                if (isset($subTotals[$subKey])) {
+                    $subTotals[$subKey]['total_pegawai']++;
+                    $subTotals[$subKey]['total_iuran'] += $besaran;
+                }
+            }
         }
 
         ksort($opdBreakdown);
         return [
             'opdBreakdown' => array_values($opdBreakdown),
-            'globalTotals' => $globalTotals
+            'globalTotals' => $globalTotals,
+            'subTotals' => $subTotals ? array_values($subTotals) : null
         ];
     }
 
@@ -315,9 +379,37 @@ class IuranKorpriController extends Controller
             ];
         }
 
+        $subTotals = null;
+        if ($filterOpd && in_array($filterOpd, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {
+            $subTotals = [
+                'Induk' => ['label' => $filterOpd . ' (Induk)', 'total_pegawai' => 0, 'total_iuran' => 0],
+            ];
+            if ($filterOpd === 'Dinas Pendidikan') {
+                $subTotals['UPT SD'] = ['label' => 'Semua UPT SD', 'total_pegawai' => 0, 'total_iuran' => 0];
+                $subTotals['UPT SMP'] = ['label' => 'Semua UPT SMP', 'total_pegawai' => 0, 'total_iuran' => 0];
+            } elseif ($filterOpd === 'Dinas Kesehatan') {
+                $subTotals['UPT Puskesmas'] = ['label' => 'Semua UPT Puskesmas', 'total_pegawai' => 0, 'total_iuran' => 0];
+            }
+        }
+
         foreach ($arsipList as $arsip) {
-            if ($filterOpd && $arsip->nama_opd !== $filterOpd) {
-                continue;
+            if ($filterOpd) {
+                if (in_array($filterOpd, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {
+                    $isUptOfFilter = false;
+                    if ($filterOpd === 'Dinas Pendidikan') {
+                        $isUptOfFilter = in_array($arsip->nama_opd, ['Grup UPT SD', 'Grup UPT SMP']);
+                    } elseif ($filterOpd === 'Dinas Kesehatan') {
+                        $isUptOfFilter = $arsip->nama_opd === 'Grup UPT Puskesmas';
+                    }
+                    
+                    if ($arsip->nama_opd !== $filterOpd && !$isUptOfFilter) {
+                        continue;
+                    }
+                } else {
+                    if ($arsip->nama_opd !== $filterOpd) {
+                        continue;
+                    }
+                }
             }
 
             $breakdown = is_array($arsip->breakdown_golongan) ? $arsip->breakdown_golongan : (json_decode($arsip->breakdown_golongan, true) ?: []);
@@ -347,12 +439,29 @@ class IuranKorpriController extends Controller
             }
 
             $opdBreakdown[$arsip->nama_opd] = $opdArr;
+
+            if ($subTotals !== null) {
+                $subKey = 'Induk';
+                if ($arsip->nama_opd === 'Grup UPT SD') {
+                    $subKey = 'UPT SD';
+                } elseif ($arsip->nama_opd === 'Grup UPT SMP') {
+                    $subKey = 'UPT SMP';
+                } elseif ($arsip->nama_opd === 'Grup UPT Puskesmas') {
+                    $subKey = 'UPT Puskesmas';
+                }
+                
+                if (isset($subTotals[$subKey])) {
+                    $subTotals[$subKey]['total_pegawai'] += $arsip->total_pegawai;
+                    $subTotals[$subKey]['total_iuran'] += $arsip->total_iuran;
+                }
+            }
         }
 
         ksort($opdBreakdown);
         return [
             'opdBreakdown' => array_values($opdBreakdown),
-            'globalTotals' => $globalTotals
+            'globalTotals' => $globalTotals,
+            'subTotals' => $subTotals ? array_values($subTotals) : null
         ];
     }
 
@@ -462,7 +571,16 @@ class IuranKorpriController extends Controller
             $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
             $filterUpt = $request->input('upt');
 
-            if ($hasUptFilter && $filterUpt) {
+            if (in_array($filterOpd, ['Grup UPT SD', 'Grup UPT SMP', 'Grup UPT Puskesmas'])) {
+                $prefix = str_replace('Grup ', '', $filterOpd);
+                $query->where(function($q) use ($prefix) {
+                    $q->whereHas('unor', function ($q2) use ($prefix) {
+                        $q2->where('nama_opd', 'LIKE', $prefix . '%');
+                    })->orWhereHas('iuranOverride', function ($q2) use ($prefix) {
+                        $q2->where('override_opd_nama', 'LIKE', $prefix . '%');
+                    });
+                });
+            } elseif ($hasUptFilter && $filterUpt) {
                 // If UPT filter is active, use the exact resolved UPT condition
                 $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
                 $query->whereHas('unor', function ($q) use ($resolved) {
@@ -495,15 +613,41 @@ class IuranKorpriController extends Controller
 
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa OPD');
             
-            if ($filterOpd) {
-                $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
-                $filterUpt = $request->input('upt');
+            $hasUptFilter = $filterOpd ? UptFilterHelper::hasUptFilter($filterOpd) : false;
+            $filterUpt = $request->input('upt');
+
+            if (in_array($opdName, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {
+                $checkName = $opdName;
+                if (!$override && isset($pegawai->unor->nama_opd)) {
+                    $checkName = $pegawai->unor->nama_opd;
+                }
                 
+                $isSubCat = false;
+                if (str_starts_with($checkName, 'UPT SD')) {
+                    $opdName = 'Semua UPT SD';
+                    $isSubCat = true;
+                } elseif (str_starts_with($checkName, 'UPT SMP')) {
+                    $opdName = 'Semua UPT SMP';
+                    $isSubCat = true;
+                } elseif (str_starts_with($checkName, 'UPT Puskesmas')) {
+                    $opdName = 'Semua UPT Puskesmas';
+                    $isSubCat = true;
+                }
+                
+                if (!$isSubCat) {
+                    $opdName = $opdName . ' (Induk)';
+                }
+            }
+
+            if ($filterOpd) {
                 if ($hasUptFilter && $filterUpt) {
-                    // For UPT mode, the effective OPD name is actually the UPT name (nama_opd)
                     $opdName = $pegawai->unor->nama_opd ?? 'Tanpa UPT';
+                } else if ($hasUptFilter && empty($filterUpt)) {
+                    $validGroups = [$filterOpd . ' (Induk)', 'Semua UPT SD', 'Semua UPT SMP', 'Semua UPT Puskesmas'];
+                    if (!in_array($opdName, $validGroups)) {
+                        continue;
+                    }
                 } else if ($opdName !== $filterOpd) {
-                    // Normal OPD filter
                     continue;
                 }
             }
@@ -619,7 +763,16 @@ class IuranKorpriController extends Controller
             $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
             $filterUpt = $request->input('upt');
 
-            if ($hasUptFilter && $filterUpt) {
+            if (in_array($filterOpd, ['Grup UPT SD', 'Grup UPT SMP', 'Grup UPT Puskesmas'])) {
+                $prefix = str_replace('Grup ', '', $filterOpd);
+                $query->where(function($q) use ($prefix) {
+                    $q->whereHas('unor', function ($q2) use ($prefix) {
+                        $q2->where('nama_opd', 'LIKE', $prefix . '%');
+                    })->orWhereHas('iuranOverride', function ($q2) use ($prefix) {
+                        $q2->where('override_opd_nama', 'LIKE', $prefix . '%');
+                    });
+                });
+            } elseif ($hasUptFilter && $filterUpt) {
                 $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
                 $query->whereHas('unor', function ($q) use ($resolved) {
                     $q->where($resolved['column'], $resolved['operator'], $resolved['value']);
@@ -650,15 +803,41 @@ class IuranKorpriController extends Controller
 
             $opdName = ($override && $override->override_opd_nama) ? $override->override_opd_nama : ($pegawai->unor->nama ?? 'Tanpa PD');
             
-            if ($filterOpd) {
-                $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
-                $filterUpt = $request->input('upt');
+            $hasUptFilter = $filterOpd ? UptFilterHelper::hasUptFilter($filterOpd) : false;
+            $filterUpt = $request->input('upt');
+
+            if (in_array($opdName, ['Dinas Pendidikan', 'Dinas Kesehatan'])) {
+                $checkName = $opdName;
+                if (!$override && isset($pegawai->unor->nama_opd)) {
+                    $checkName = $pegawai->unor->nama_opd;
+                }
                 
+                $isSubCat = false;
+                if (str_starts_with($checkName, 'UPT SD')) {
+                    $opdName = 'Semua UPT SD';
+                    $isSubCat = true;
+                } elseif (str_starts_with($checkName, 'UPT SMP')) {
+                    $opdName = 'Semua UPT SMP';
+                    $isSubCat = true;
+                } elseif (str_starts_with($checkName, 'UPT Puskesmas')) {
+                    $opdName = 'Semua UPT Puskesmas';
+                    $isSubCat = true;
+                }
+                
+                if (!$isSubCat) {
+                    $opdName = $opdName . ' (Induk)';
+                }
+            }
+
+            if ($filterOpd) {
                 if ($hasUptFilter && $filterUpt) {
-                    // For UPT mode, the effective OPD name is actually the UPT name (nama_opd)
                     $opdName = $pegawai->unor->nama_opd ?? 'Tanpa UPT';
+                } else if ($hasUptFilter && empty($filterUpt)) {
+                    $validGroups = [$filterOpd . ' (Induk)', 'Semua UPT SD', 'Semua UPT SMP', 'Semua UPT Puskesmas'];
+                    if (!in_array($opdName, $validGroups)) {
+                        continue;
+                    }
                 } else if ($opdName !== $filterOpd) {
-                    // Normal OPD filter
                     continue;
                 }
             }
