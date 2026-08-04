@@ -57,12 +57,20 @@ class DashboardController extends Controller
             }
             $chartPendidikan = ['categories' => $dataPendidikan->keys()->toArray(), 'series' => $dataPendidikan->values()->toArray()];
 
-            $dataEselon = (clone $query)->select('jenis_jabatan', DB::raw('count(*) as total'))
-                ->groupBy('jenis_jabatan')->pluck('total', 'jenis_jabatan')->sortKeys();
-            if ($dataEselon->has('')) {
-                $val = $dataEselon->pull('');
-                $dataEselon['Tidak Diketahui'] = ($dataEselon['Tidak Diketahui'] ?? 0) + $val;
+            $rawEselon = (clone $query)->select('eselon', DB::raw('count(*) as total'))
+                ->groupBy('eselon')->pluck('total', 'eselon');
+            
+            $dataEselon = collect();
+            foreach ($rawEselon as $key => $val) {
+                $k = trim($key);
+                if (empty($k) || $k === '-' || strtoupper($k) === 'NON') {
+                    $k = 'Non-Eselon';
+                } else {
+                    $k = str_replace('.', '/', $k);
+                }
+                $dataEselon[$k] = ($dataEselon[$k] ?? 0) + $val;
             }
+            $dataEselon = $dataEselon->sortKeys();
             $chartEselon = ['categories' => $dataEselon->keys()->toArray(), 'series' => $dataEselon->values()->toArray()];
 
             $dataOpd = (clone $query)->select('unor_nama', DB::raw('count(*) as total'))
@@ -172,9 +180,20 @@ class DashboardController extends Controller
                 ->map(function ($group) { return $group->count(); })->sortDesc();
             $chartPendidikan = ['categories' => $dataPendidikan->keys()->toArray(), 'series' => $dataPendidikan->values()->toArray()];
 
-            $dataEselon = (clone $query)->whereHas('jenisJabatan')->with('jenisJabatan')->get()
-                ->groupBy(function ($item) { return $item->jenisJabatan->nama ?? 'Tidak Diketahui'; })
-                ->map(function ($group) { return $group->count(); })->sortKeys();
+            $rawEselon = (clone $query)->select('eselon', DB::raw('count(*) as total'))
+                ->groupBy('eselon')->pluck('total', 'eselon');
+            
+            $dataEselon = collect();
+            foreach ($rawEselon as $key => $val) {
+                $k = trim($key ?? '');
+                if (empty($k) || $k === '-' || strtoupper($k) === 'NON') {
+                    $k = 'Non-Eselon';
+                } else {
+                    $k = str_replace('.', '/', $k);
+                }
+                $dataEselon[$k] = ($dataEselon[$k] ?? 0) + $val;
+            }
+            $dataEselon = $dataEselon->sortKeys();
             $chartEselon = ['categories' => $dataEselon->keys()->toArray(), 'series' => $dataEselon->values()->toArray()];
 
             $dataOpd = (clone $query)->whereHas('unor')->with('unor')->get()

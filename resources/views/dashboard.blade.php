@@ -192,7 +192,7 @@
         var optionsPendidikan = { series: [{ name: 'Jumlah', data: @json($chartPendidikan['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartPendidikan['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: true } }, colors: ['#10B981'] };
         chartInstances.pendidikan = new ApexCharts(document.querySelector("#chart-pendidikan"), optionsPendidikan);
         chartInstances.pendidikan.render();
-        var optionsEselon = { series: [{ name: 'Jumlah', data: @json($chartEselon['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartEselon['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: false } }, colors: ['#F59E0B'] };
+        var optionsEselon = { series: [{ name: 'Jumlah', data: @json($chartEselon['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartEselon['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: true } }, colors: ['#F59E0B'] };
         chartInstances.eselon = new ApexCharts(document.querySelector("#chart-eselon"), optionsEselon);
         chartInstances.eselon.render();
         var optionsGolongan = { series: [{ name: 'Jumlah', data: @json($chartGolongan['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartGolongan['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: false } }, colors: ['#8B5CF6'] };
