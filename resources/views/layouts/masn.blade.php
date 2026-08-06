@@ -75,6 +75,7 @@
     </div>
 </nav>
 
+@if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
 <nav class="space-y-1 mt-2">
     <div>
         <button type="button" id="menu-pegawai-toggle"
@@ -138,6 +139,8 @@
         </div>
     </div>
 </nav>
+@endif
+
 
 
 <hr class="my-4 border-slate-200/60 dark:border-zinc-800/40 mx-3">

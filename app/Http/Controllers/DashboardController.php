@@ -107,7 +107,7 @@ class DashboardController extends Controller
             }
             $chartGenerasi = ['labels' => array_keys($statsGenerasi), 'series' => array_values($statsGenerasi)];
 
-            $rawKdHukum = (clone $query)->whereIn('sts_peg', ['PNS', 'CPNS'])->select('kedudukan_hukum', DB::raw('count(*) as total'))->groupBy('kedudukan_hukum')->pluck('total', 'kedudukan_hukum');
+            $rawKdHukum = (clone $query)->select('kedudukan_hukum', DB::raw('count(*) as total'))->groupBy('kedudukan_hukum')->pluck('total', 'kedudukan_hukum');
             $dataKedudukanHukum = collect();
             foreach ($rawKdHukum as $k => $v) {
                 $key = empty($k) ? 'Tidak Terdaftar' : $k;
@@ -126,23 +126,7 @@ class DashboardController extends Controller
             $jjCategories = array_filter($jjCategories, fn($v) => $v > 0);
             $chartJenisJabatan = ['labels' => array_keys($jjCategories), 'series' => array_values($jjCategories)];
 
-            $pegawaiQuery = (clone $query);
-            if ($request->has('search') && !empty($request->search)) {
-                $pegawaiQuery->where('nama_pegawai', 'like', '%' . $request->search . '%');
-            }
-            $paginator = $pegawaiQuery->orderBy('nama_pegawai')->paginate(10)->withQueryString();
-            
-            $paginator->getCollection()->transform(function($item) {
-                return (object) [
-                    'nip_baru' => $item->nip_baru,
-                    'nama_lengkap' => $item->nama_pegawai,
-                    'unor' => (object) ['nama' => $item->unor_nama],
-                    'jabatan' => (object) ['nama' => $item->jabatan],
-                    'gol_akhir' => $item->golongan,
-                    'status_cpns_pns' => $item->status_cpns_pns,
-                ];
-            });
-            $pegawai = $paginator;
+
             
             $lastSyncRaw = HistoryPegawai::where(DB::raw("DATE_FORMAT(created_at, '%Y-%m')"), $filterSnapshot)->max('created_at');
             $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw)->format('d M Y H:i') . ' (Snapshot)' : '-';
@@ -227,13 +211,22 @@ class DashboardController extends Controller
             }
             $chartGenerasi = ['labels' => array_keys($statsGenerasi), 'series' => array_values($statsGenerasi)];
 
-            $kdLabels = ['01' => 'Aktif', '02' => 'CLTN', '03' => 'Tugas Belajar', '04' => 'Pemberhentian Sementara', '15' => 'Hukuman Disiplin'];
+            $kdLabels = [
+                '01' => 'Aktif',
+                '02' => 'CLTN',
+                '03' => 'Tugas Belajar',
+                '04' => 'Pemberhentian Sementara',
+                '15' => 'Hukuman Disiplin',
+                '71' => 'PPPK Aktif',
+                '73' => 'PPPK Belum SK',
+                '101' => 'PPPK PW Aktif',
+            ];
             $dataKedudukanHukum = collect();
             foreach ($kdLabels as $id => $label) {
-                $count = (clone $query)->whereIn('status_cpns_pns', ['P', 'C'])->where('kedudukan_hukum_id', $id)->count();
+                $count = (clone $query)->where('kedudukan_hukum_id', $id)->count();
                 if ($count > 0) $dataKedudukanHukum->put($label, $count);
             }
-            $countBlank = (clone $query)->whereIn('status_cpns_pns', ['P', 'C'])->whereNull('kedudukan_hukum_id')->count();
+            $countBlank = (clone $query)->whereNull('kedudukan_hukum_id')->count();
             if ($countBlank > 0) $dataKedudukanHukum->put('Tidak Terdaftar', $countBlank);
             $chartKedudukanHukum = ['labels' => $dataKedudukanHukum->keys()->toArray(), 'series' => $dataKedudukanHukum->values()->toArray()];
 
@@ -250,18 +243,8 @@ class DashboardController extends Controller
             $jjCategories = array_filter($jjCategories, fn($v) => $v > 0);
             $chartJenisJabatan = ['labels' => array_keys($jjCategories), 'series' => array_values($jjCategories)];
 
-            $pegawaiQuery = (clone $query)->select('pegawai.*');
-            if ($request->has('search') && !empty($request->search)) {
-                $pegawaiQuery->where('nama', 'like', '%' . $request->search . '%');
-            }
-            $pegawai = $pegawaiQuery->orderBy('nama')->paginate(10)->withQueryString();
-
             $lastSyncRaw = Pegawai::max('updated_at');
             $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw)->format('d M Y H:i') : '-';
-        }
-
-        if ($request->ajax()) {
-            return view('partials.employee-table', compact('pegawai'));
         }
 
         return view('dashboard', compact(
@@ -285,7 +268,6 @@ class DashboardController extends Controller
             'chartGenerasi',
             'chartKedudukanHukum',
             'chartJenisJabatan',
-            'pegawai',
             'lastSync'
         ));
     }

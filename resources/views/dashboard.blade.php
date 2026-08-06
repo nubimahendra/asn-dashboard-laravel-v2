@@ -149,26 +149,7 @@
             </div>
         </div>
 
-        <!-- Employee Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
-            <div
-                class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Data Pegawai</h3>
-                <div class="relative w-full md:w-64">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg
-                            class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg></span>
-                    <input type="text" id="employee-search"
-                        class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Cari nama pegawai...">
-                </div>
-            </div>
-            <div id="employee-table-container">
-                @include('partials.employee-table')
-            </div>
-        </div>
+
     </div>
 @endsection
 

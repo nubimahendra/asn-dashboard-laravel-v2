@@ -28,3 +28,5 @@ implementation-fix-plan.md
 /.ai
 laravel-architecture.md
 /.understand-anything/
+.agents
+/graphify-out

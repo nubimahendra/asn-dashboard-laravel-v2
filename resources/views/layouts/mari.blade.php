@@ -13,6 +13,7 @@
     </div>
 </nav>
 
+@if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
 <nav class="space-y-1">
     <div>
         <button type="button" id="menu-iurankorpri-toggle"
@@ -54,6 +55,7 @@
         </div>
     </div>
 </nav>
+@endif
 
 @if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
 <nav class="space-y-1 mt-2">

@@ -58,7 +58,7 @@
 
             <!-- MARI Module -->
             <div class="col-md-4 w-full md:w-1/2 lg:w-1/4 px-4">
-                @if(auth()->user()->hasModuleAccess('mari'))
+                @if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
                 <a href="{{ route('mari.dashboard') }}" class="module-card group block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-white/20 hover:bg-white/10">
                 @else
                 <div class="module-card opacity-50 cursor-not-allowed block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden" title="Hubungi admin untuk akses modul ini">
@@ -68,11 +68,11 @@
                         <div class="module-icon mari text-5xl mb-5 text-amber-400 group-hover:scale-110 transition-transform duration-500">💰</div>
                         <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Manajemen Iuran</h3>
                         <p class="module-desc text-slate-400 text-sm leading-relaxed">Laporan iuran Korpri, manajemen kelas jabatan, mapping perbup, dan pengaturan tarif.</p>
-                        @if(!auth()->user()->hasModuleAccess('mari'))
+                        @if(!((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope()))
                             <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>
                         @endif
                     </div>
-                @if(auth()->user()->hasModuleAccess('mari'))
+                @if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
                 </a>
                 @else
                 </div>
@@ -81,7 +81,7 @@
 
             <!-- MESRA Module -->
             <div class="col-md-4 w-full md:w-1/2 lg:w-1/4 px-4">
-                @if(auth()->user()->hasModuleAccess('mesra'))
+                @if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
                 <a href="{{ route('mesra.dashboard') }}" class="module-card group block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-white/20 hover:bg-white/10">
                 @else
                 <div class="module-card opacity-50 cursor-not-allowed block h-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden" title="Hubungi admin untuk akses modul ini">
@@ -91,11 +91,11 @@
                         <div class="module-icon mesra text-5xl mb-5 text-blue-400 group-hover:scale-110 transition-transform duration-500">✉️</div>
                         <h3 class="module-title text-xl font-semibold mb-3 text-slate-100">Manajemen Surat</h3>
                         <p class="module-desc text-slate-400 text-sm leading-relaxed">Pengelolaan surat masuk (inbox), layanan pengajuan cerai, dan helpdesk chat interaktif.</p>
-                        @if(!auth()->user()->hasModuleAccess('mesra'))
+                        @if(!((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope()))
                             <span class="badge bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full mt-4 border border-white/10">Akses Terkunci</span>
                         @endif
                     </div>
-                @if(auth()->user()->hasModuleAccess('mesra'))
+                @if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
                 </a>
                 @else
                 </div>

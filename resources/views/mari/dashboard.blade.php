@@ -59,6 +59,7 @@
     </div>
 
     <!-- Quick Links -->
+    @if((auth()->user()->role === 'admin' || strtolower(auth()->user()->role) === 'admin') && !auth()->user()->hasPdScope())
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
         <div class="p-6 border-b border-gray-100 dark:border-gray-700">
             <h2 class="text-lg font-bold text-gray-800 dark:text-white">Layanan MARI</h2>
@@ -89,6 +90,7 @@
             </a>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 

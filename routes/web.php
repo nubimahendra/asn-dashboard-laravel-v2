@@ -67,22 +67,22 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [MariDashboardController::class, 'index'])->name('dashboard');
 
             // Iuran Korpri Routes
-            Route::get('/laporan/iuran-korpri', [App\Http\Controllers\IuranKorpriController::class, 'index'])->name('iuran-korpri.index');
-            Route::get('/laporan/iuran-korpri/invoice-golongan', [App\Http\Controllers\IuranKorpriController::class, 'invoiceGolongan'])->name('iuran-korpri.invoice-golongan');
-            Route::get('/laporan/iuran-korpri/invoice', [App\Http\Controllers\IuranKorpriController::class, 'invoice'])->name('iuran-korpri.invoice');
-            Route::post('/laporan/iuran-korpri/simpan', [App\Http\Controllers\IuranKorpriController::class, 'simpanRekap'])->name('iuran-korpri.simpan');
-            Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
-            
-            Route::get('/rincian-iuran', [App\Http\Controllers\RincianIuranController::class, 'index'])->name('rincian-iuran.index');
-            
-            Route::get('/rekon-iuran', [App\Http\Controllers\RekonIuranController::class, 'index'])->name('rekon-iuran.index');
-            Route::post('/rekon-iuran/generate-opd', [App\Http\Controllers\RekonIuranController::class, 'generateOpdRecommendation'])->name('rekon-iuran.generate-opd');
-            Route::put('/rekon-iuran/bulk-override', [App\Http\Controllers\RekonIuranController::class, 'bulkOverride'])->name('rekon-iuran.bulk-override');
-            Route::put('/rekon-iuran/single-override', [App\Http\Controllers\RekonIuranController::class, 'singleOverride'])->name('rekon-iuran.single-override');
-            Route::delete('/rekon-iuran/override/{id}', [App\Http\Controllers\RekonIuranController::class, 'destroy'])->name('rekon-iuran.destroy');
-            Route::post('/rekon-iuran/sync-reset', [App\Http\Controllers\RekonIuranController::class, 'syncReset'])->name('rekon-iuran.sync-reset');
-            
             Route::middleware(['admin'])->group(function () {
+                Route::get('/laporan/iuran-korpri', [App\Http\Controllers\IuranKorpriController::class, 'index'])->name('iuran-korpri.index');
+                Route::get('/laporan/iuran-korpri/invoice-golongan', [App\Http\Controllers\IuranKorpriController::class, 'invoiceGolongan'])->name('iuran-korpri.invoice-golongan');
+                Route::get('/laporan/iuran-korpri/invoice', [App\Http\Controllers\IuranKorpriController::class, 'invoice'])->name('iuran-korpri.invoice');
+                Route::post('/laporan/iuran-korpri/simpan', [App\Http\Controllers\IuranKorpriController::class, 'simpanRekap'])->name('iuran-korpri.simpan');
+                Route::put('/laporan/iuran-korpri/update', [App\Http\Controllers\IuranKorpriController::class, 'updateBesaran'])->name('iuran-korpri.update');
+                
+                Route::get('/rincian-iuran', [App\Http\Controllers\RincianIuranController::class, 'index'])->name('rincian-iuran.index');
+                
+                Route::get('/rekon-iuran', [App\Http\Controllers\RekonIuranController::class, 'index'])->name('rekon-iuran.index');
+                Route::post('/rekon-iuran/generate-opd', [App\Http\Controllers\RekonIuranController::class, 'generateOpdRecommendation'])->name('rekon-iuran.generate-opd');
+                Route::put('/rekon-iuran/bulk-override', [App\Http\Controllers\RekonIuranController::class, 'bulkOverride'])->name('rekon-iuran.bulk-override');
+                Route::put('/rekon-iuran/single-override', [App\Http\Controllers\RekonIuranController::class, 'singleOverride'])->name('rekon-iuran.single-override');
+                Route::delete('/rekon-iuran/override/{id}', [App\Http\Controllers\RekonIuranController::class, 'destroy'])->name('rekon-iuran.destroy');
+                Route::post('/rekon-iuran/sync-reset', [App\Http\Controllers\RekonIuranController::class, 'syncReset'])->name('rekon-iuran.sync-reset');
+
                 Route::get('/eselon-mapping', [App\Http\Controllers\EselonMappingController::class, 'index'])->name('eselon-mapping.index');
                 Route::post('/eselon-mapping/generate', [App\Http\Controllers\EselonMappingController::class, 'generate'])->name('eselon-mapping.generate');
                 Route::post('/eselon-mapping', [App\Http\Controllers\EselonMappingController::class, 'store'])->name('eselon-mapping.store');
