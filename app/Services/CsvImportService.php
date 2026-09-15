@@ -83,6 +83,10 @@ class CsvImportService
         'is_valid_nik' => 64,
         'nama_sekolah' => 65,
         'flag_ikd' => 66,
+        'created_at_csv' => 67,
+        'updated_at_csv' => 68,
+        'eselon_id' => 69,
+        'eselon_nama' => 70,
     ];
 
     /**
@@ -175,11 +179,13 @@ class CsvImportService
 
                 // 1. Header Validation (Row 1)
                 if ($rowNumber === 1) {
-                    if (count($row) !== $expectedCols) {
+                    $actualCols = count($row);
+                    if ($actualCols !== 67 && $actualCols !== 71) {
                         fclose($handle);
                         DB::rollBack();
-                        throw new \Exception("Header column mismatch. Expected {$expectedCols} columns, got " . count($row) . ". Ensure the file is pipe-delimited (|).");
+                        throw new \Exception("Header column mismatch. Expected 67 or 71 columns, got " . $actualCols . ". Ensure the file is pipe-delimited (|).");
                     }
+                    $expectedCols = $actualCols; // Override for data rows validation
                     continue; // Skip the header row
                 }
 
@@ -276,6 +282,8 @@ class CsvImportService
                     'no_hp' => ltrim($this->v($row, 'nomor_hp') ?? '', "'") !== '' ? ltrim($this->v($row, 'nomor_hp') ?? '', "'") : null,
                     'email' => $this->v($row, 'email'),
                     'flag_ikd' => $this->v($row, 'flag_ikd') !== '' ? (int) $this->v($row, 'flag_ikd') : null,
+                    'eselon_id' => $this->v($row, 'eselon_id') !== '' ? $this->v($row, 'eselon_id') : null,
+                    'eselon' => $this->v($row, 'eselon_nama'),
 
                     'source_file' => $filename,
                     'imported_at' => $now,

@@ -1,4 +1,4 @@
-@extends('layouts.masn')
+@extends('layouts.app', ['hideSidebar' => true])
 
 @section('content')
     <div class="container mx-auto px-10 py-8">
@@ -14,19 +14,7 @@
                       Actually, user requested "style yang sama". So topbar needs to be here. 
                  -->
 
-                <form action="{{ route('logout') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit"
-                        class="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
-                        title="Logout">
-                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                            </path>
-                        </svg>
-                    </button>
-                </form>
+
                 <a href="{{ route('masn.users.create') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors font-medium">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,6 +106,15 @@
                     {{ $users->links() }}
                 </div>
             @endif
+        </div>
+        <!-- Back to Hub Button -->
+        <div class="mt-8 flex justify-center">
+            <a href="{{ route('hub') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 text-white font-medium rounded-xl shadow-sm transition-all duration-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Kembali ke Hub
+            </a>
         </div>
     </div>
 @endsection

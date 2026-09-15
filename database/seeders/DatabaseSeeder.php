@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             IuranKorpriSeeder::class,
             UserSeeder::class,
             FaqsTableSeeder::class,
+            RefKodeWilayahSeeder::class,
         ]);
     }
 }

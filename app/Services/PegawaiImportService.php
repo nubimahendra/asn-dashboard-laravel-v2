@@ -131,6 +131,9 @@ class PegawaiImportService
                 'tmt_cpns' => $staging->tmt_cpns,
                 'tmt_pns' => $staging->tmt_pns,
 
+                'eselon_id' => $staging->eselon_id,
+                'eselon' => $staging->eselon,
+
                 'flag_ikd' => $staging->flag_ikd,
                 'data_hash' => $staging->data_hash,
 

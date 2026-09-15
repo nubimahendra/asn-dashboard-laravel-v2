@@ -7,6 +7,7 @@ use App\Models\RefUnor;
 use App\Models\IuranKorpri;
 use App\Models\RefIuranEselon;
 use App\Models\RefEselonMapping;
+use App\Helpers\UptFilterHelper;
 use Illuminate\Http\Request;
 
 class RincianIuranController extends Controller
@@ -22,11 +23,19 @@ class RincianIuranController extends Controller
     public function index(Request $request)
     {
         $filterOpd = $request->input('opd');
+        $filterUpt = $request->input('upt');
         $pns = $request->has('pns') ? $request->input('pns') : 1;
-        $pppk = $request->has('pppk') ? $request->input('pppk') : 1;
+        $pppk = $request->has('pppk') ? $request->input('pppk') : 0;
+
+        $hasUptFilter = UptFilterHelper::hasUptFilter($filterOpd);
+        $uptGroups = $hasUptFilter ? UptFilterHelper::getUptListGrouped($filterOpd) : [];
+        \Illuminate\Support\Facades\Log::info("RincianIuran filterOpd: '{$filterOpd}', hasUptFilter: " . ($hasUptFilter ? 'true' : 'false'));
 
         $listOpd = RefUnor::whereNotNull('nama')
             ->where('nama', '!=', '')
+            ->when(auth()->user()->hasPdScope(), function ($q) {
+                $q->where('nama', auth()->user()->pd_scope);
+            })
             ->select('nama')
             ->distinct()
             ->orderBy('nama')
@@ -52,7 +61,7 @@ class RincianIuranController extends Controller
 
         $eselonMappings = RefEselonMapping::pluck('eselon_key', 'jabatan_id');
 
-        $query = Pegawai::aktif()->with(['golongan', 'unor', 'iuranOverride']);
+        $query = Pegawai::aktif()->authorizedPd(auth()->user())->with(['golongan', 'unor', 'iuranOverride']);
 
         if ($pns && !$pppk) {
             $query->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
@@ -71,6 +80,13 @@ class RincianIuranController extends Controller
         if ($filterOpd) {
             $query->whereHas('unor', function ($q) use ($filterOpd) {
                 $q->where('nama', $filterOpd);
+            });
+        }
+
+        if ($filterUpt && $hasUptFilter) {
+            $resolved = UptFilterHelper::resolveUptFilter($filterUpt);
+            $query->whereHas('unor', function ($q) use ($resolved) {
+                $q->where($resolved['column'], $resolved['operator'], $resolved['value']);
             });
         }
 
@@ -99,9 +115,15 @@ class RincianIuranController extends Controller
             $isStruktural = $pegawai->jenis_jabatan_id == 1;
             $override = $pegawai->iuranOverride;
 
-            if ($isStruktural && $pns) {
+            if ($override && !$override->is_active) {
+                continue;
+            }
+
+            $hasEselonOverride = $override && $override->override_eselon_key;
+
+            if ($hasEselonOverride || ($isStruktural && $pns)) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                 
                 if (isset($eselonBreakdown[$eselonKey])) {
                     $eselonBreakdown[$eselonKey]['count']++;
@@ -109,8 +131,8 @@ class RincianIuranController extends Controller
                     $grandTotal['pegawai']++;
                     $grandTotal['iuran'] += $eselonBreakdown[$eselonKey]['tarif'];
                 }
-            } elseif (!$isStruktural || ($isStruktural && !$pns)) {
-                $golonganNama = $pegawai->gol_akhir;
+            } else {
+                $golonganNama = $pegawai->golongan_pppk;
                 $golAsliKey = $this->extractGolonganKey($golonganNama);
                 $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                 
@@ -143,12 +165,18 @@ class RincianIuranController extends Controller
                 $eselonKey = null;
                 $golonganKey = null;
 
-                if ($isStruktural && $pns) {
+                $hasEselonOverride = $override && $override->override_eselon_key;
+
+                if ($override && !$override->is_active) {
+                    $besaran = 0;
+                    $eselonKey = $hasEselonOverride ? $override->override_eselon_key : ($isStruktural ? ($eselonMappings[$pegawai->jabatan_id] ?? 'IV/b') : null);
+                    $golonganKey = $this->extractGolonganKey($pegawai->golongan_pppk);
+                } elseif ($hasEselonOverride || ($isStruktural && $pns)) {
                     $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
-                    $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
+                    $eselonKey = $hasEselonOverride ? $override->override_eselon_key : $eselAsli;
                     $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 } else {
-                    $golAsliKey = $this->extractGolonganKey($pegawai->gol_akhir);
+                    $golAsliKey = $this->extractGolonganKey($pegawai->golongan_pppk);
                     $golonganKey = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsliKey;
                     $besaran = $golonganKey && isset($allIuranRates[$golonganKey]) ? $allIuranRates[$golonganKey]->besaran : 0;
                 }
@@ -157,8 +185,8 @@ class RincianIuranController extends Controller
                     'nama' => $pegawai->nama_lengkap ?? $pegawai->nama,
                     'nip' => $pegawai->nip_baru,
                     'jenis' => $isStruktural ? 'Struktural' : 'Non-Struktural',
-                    'golongan' => $pegawai->gol_akhir,
-                    'eselon' => $isStruktural ? ($eselonKey ?? '-') : '-',
+                    'golongan' => $golonganKey ?? $pegawai->golongan_pppk ?? '-',
+                    'eselon' => ($hasEselonOverride || $isStruktural) ? ($eselonKey ?? '-') : '-',
                     'iuran' => $besaran,
                     'has_override' => $override !== null,
                 ];
@@ -167,6 +195,7 @@ class RincianIuranController extends Controller
 
         return view('admin.rincian-iuran.index', compact(
             'listOpd', 'filterOpd', 'pns', 'pppk',
+            'hasUptFilter', 'uptGroups', 'filterUpt',
             'eselonBreakdown', 'golonganBreakdown', 'grandTotal',
             'showEselon', 'showGolonganPns', 'showGolonganPppk',
             'modePegawai', 'pegawaiDetail'

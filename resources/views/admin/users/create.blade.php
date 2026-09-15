@@ -1,4 +1,4 @@
-@extends('layouts.masn')
+@extends('layouts.app', ['hideSidebar' => true])
 
 @section('content')
     <div class="container mx-auto px-10 py-8">
@@ -14,81 +14,99 @@
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Tambah User Baru</h1>
         </div>
 
-        <div class="max-w-2xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border-t-4 border-blue-500">
-
-            <form action="{{ route('masn.users.store') }}" method="POST" class="space-y-6">
-
+        <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border-t-4 border-blue-500">
+            <form action="{{ route('masn.users.store') }}" method="POST">
                 @csrf
 
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama
-                        Lengkap</label>
-                    <input type="text" id="name" name="name" value="{{ old('name') }}" required
-                        class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Kolom Kiri -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
+                            @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
 
-                    @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                        <div>
+                            <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                            <select id="role" name="role" required
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-all">
+                                <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
+                                <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                            </select>
+                            @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
 
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email
-                        Address</label>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                        class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
-                    @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
-                    <select id="role" name="role" required
-                        class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-all">
-                        <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
-                        <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                    </select>
-                    @error('role') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <!-- Modules (Hanya Berlaku untuk User) -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Akses Modul</label>
-                    <div class="flex flex-col gap-2">
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="modules[]" value="mari" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" checked>
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MARI (Manajemen Iuran)</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="modules[]" value="masn" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MASN (Manajemen ASN)</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="modules[]" value="mesra" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MESRA (Manajemen Surat)</span>
-                        </label>
+                        <!-- PD Scope -->
+                        <div>
+                            <label for="pd_scope" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Scope PD (Opsional)
+                            </label>
+                            <select id="pd_scope" name="pd_scope"
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 transition-all">
+                                <option value="">— Semua PD (Super Admin) —</option>
+                                @foreach($listPd as $pd)
+                                    <option value="{{ $pd }}" {{ old('pd_scope') === $pd ? 'selected' : '' }}>{{ $pd }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-gray-500 mt-2">
+                                * Kosongkan untuk akses semua PD. Pilih PD untuk membatasi akses hanya ke data di lingkup Dinas tersebut.
+                            </p>
+                            @error('pd_scope') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">* Role Admin otomatis memiliki akses ke semua modul terlepas dari pilihan di atas.</p>
-                    @error('modules') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+
+                    <!-- Kolom Kanan -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
+                            @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="password"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="password" name="password" required minlength="6"
+                                class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
+                            @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Modules (Hanya Berlaku untuk User) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Akses Modul</label>
+                            <div class="flex flex-col gap-2">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="modules[]" value="mari" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" checked>
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MARI (Manajemen Iuran)</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="modules[]" value="masn" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MASN (Manajemen ASN)</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="modules[]" value="mesra" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">MESRA (Manajemen Surat)</span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">* Role Admin otomatis memiliki akses ke semua modul terlepas dari pilihan di atas.</p>
+                            @error('modules') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="password"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                    <input type="password" id="password" name="password" required minlength="6"
-                        class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
-                    @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-6 mt-12 border-t border-gray-100 dark:border-gray-700">
-
+                <div class="flex items-center justify-end gap-3 pt-6 mt-8 border-t border-gray-100 dark:border-gray-700">
                     <a href="{{ route('masn.users.index') }}"
                         class="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-offset-1 focus:ring-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 transition-all">
                         Batal
                     </a>
-
                     <button type="submit"
                         class="px-6 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 transition-all transform">
                         Simpan User
                     </button>
                 </div>
-
             </form>
         </div>
     </div>

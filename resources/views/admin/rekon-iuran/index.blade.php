@@ -16,7 +16,12 @@
         <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-6 border border-gray-100 dark:border-gray-700">
             <form method="GET" action="{{ route('mari.rekon-iuran.index') }}" class="flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">OPD</label>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        OPD 
+                        @if(isset($isUptMode) && $isUptMode)
+                            <span class="ml-2 text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded shadow-sm">🔒 Mode UPT</span>
+                        @endif
+                    </label>
                     <select name="opd" class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
                         <option value="">Semua OPD</option>
                         @foreach($listOpd as $opd)
@@ -25,13 +30,30 @@
                     </select>
                 </div>
                 <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Unit Kerja (Unor)</label>
-                    <input type="text" name="unor" value="{{ $filterUnor }}" list="listUnor" placeholder="Ketik nama unit kerja..." class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onblur="this.form.submit()" onkeypress="if(event.keyCode==13) this.form.submit();">
-                    <datalist id="listUnor">
-                        @foreach($listUnor as $u)
-                            <option value="{{ $u->nama_opd }}">{{ $u->nama_lengkap }}</option>
-                        @endforeach
-                    </datalist>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {{ isset($isUptMode) && $isUptMode ? '🏫 Filter UPT' : 'Unit Kerja (Unor)' }}
+                    </label>
+                    
+                    @if(isset($isUptMode) && $isUptMode)
+                        <select name="unor" class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onchange="this.form.submit()">
+                            <option value="">Semua UPT</option>
+                            @foreach($uptGroups as $label => $group)
+                                <optgroup label="─── {{ $label }} ───">
+                                    <option value="__cat:{{ $label }}" {{ $filterUnor == '__cat:'.$label ? 'selected' : '' }}>Semua {{ $label }}</option>
+                                    @foreach($group['items'] as $uptName)
+                                        <option value="{{ $uptName }}" {{ $filterUnor == $uptName ? 'selected' : '' }}>{{ $uptName }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="text" name="unor" value="{{ $filterUnor }}" list="listUnor" placeholder="Ketik nama unit kerja..." class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200" onblur="this.form.submit()" onkeypress="if(event.keyCode==13) this.form.submit();">
+                        <datalist id="listUnor">
+                            @foreach($listUnor as $u)
+                                <option value="{{ $u->nama_opd }}">{{ $u->nama_lengkap }}</option>
+                            @endforeach
+                        </datalist>
+                    @endif
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Golongan</label>
@@ -80,6 +102,12 @@
                 <label for="selectAll" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"><span id="selectedCount">0</span> pegawai dipilih</label>
             </div>
             <div class="flex gap-2">
+                <button type="button" onclick="generateOpdRecommendation()" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 disabled:opacity-50" id="btnGenerate" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Generate
+                </button>
                 <button type="button" onclick="openBulkModal()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 disabled:opacity-50" id="btnBulkOverride" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     Ubah Terpilih
@@ -114,12 +142,12 @@
                                 $isStruktural = $pegawai->jenis_jabatan_id == 1;
                                 
                                 // Asli
-                                $golAsli = $pegawai->gol_akhir;
+                                $golAsli = $pegawai->golongan_pppk;
                                 $eselAsli = $isStruktural ? ($eselonMappings[$pegawai->jabatan_id] ?? 'IV/b') : '-';
                                 
                                 // Efektif
                                 $golEfektif = $override && $override->override_golongan_key ? $override->override_golongan_key : $golAsli;
-                                $eselEfektif = $isStruktural ? ($override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli) : '-';
+                                $eselEfektif = ($override && $override->override_eselon_key) ? $override->override_eselon_key : ($isStruktural ? $eselAsli : '-');
                                 
                                 $hasOverride = $override != null;
                             @endphp
@@ -143,9 +171,7 @@
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     <div class="text-xs">Gol: <span class="font-semibold">{{ $golAsli }}</span></div>
-                                    @if($isStruktural)
                                     <div class="text-xs">Esel: <span class="font-semibold">{{ $eselAsli }}</span></div>
-                                    @endif
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     @if($hasOverride)
@@ -153,17 +179,20 @@
                                             ⚠️ Override
                                         </span><br>
                                     @endif
+                                    @if($override && !$override->is_active)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mb-1" title="Iuran Dinonaktifkan">
+                                            Non Aktif
+                                        </span><br>
+                                    @endif
                                     @if($override && $override->override_opd_nama)
                                     <div class="text-xs">OPD: <span class="font-bold text-orange-600">{{ $override->override_opd_nama }}</span></div>
                                     @endif
                                     <div class="text-xs">Gol: <span class="font-bold {{ $override && $override->override_golongan_key ? 'text-orange-600' : 'text-emerald-600' }}">{{ $golEfektif }}</span></div>
-                                    @if($isStruktural)
                                     <div class="text-xs">Esel: <span class="font-bold {{ $override && $override->override_eselon_key ? 'text-orange-600' : 'text-emerald-600' }}">{{ $eselEfektif }}</span></div>
-                                    @endif
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button type="button" onclick="openSingleModal({{ $pegawai->id }}, '{{ addslashes($pegawai->nama) }}', '{{ $golAsli }}', '{{ $eselAsli }}', '{{ addslashes($pegawai->unor->nama ?? '') }}', '{{ $override->override_golongan_key ?? '' }}', '{{ $override->override_eselon_key ?? '' }}', '{{ addslashes($override->override_opd_nama ?? '') }}', {{ $isStruktural ? 'true' : 'false' }})" class="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400" title="Edit Override">
+                                        <button type="button" onclick="openSingleModal({{ $pegawai->id }}, '{{ addslashes($pegawai->nama) }}', '{{ $golAsli }}', '{{ $eselAsli }}', '{{ addslashes($pegawai->unor->nama ?? '') }}', '{{ $override->override_golongan_key ?? '' }}', '{{ $override->override_eselon_key ?? '' }}', '{{ addslashes($override->override_opd_nama ?? '') }}', '{{ $override ? ($override->is_active ? "1" : "0") : "" }}', {{ $isStruktural ? 'true' : 'false' }})" class="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400" title="Edit Override">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         </button>
                                         @if($hasOverride)
@@ -189,6 +218,76 @@
                     {{ $pegawaiList->links() }}
                 </div>
             @endif
+        </div>
+    </div>
+</div>
+
+<!-- Modal Generate OPD -->
+<div id="generateModal" tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-[60] hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full flex items-center justify-center bg-gray-900/50">
+    <div class="relative w-full max-w-4xl max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+            <!-- Modal header -->
+            <div class="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="generateModalTitle">
+                    Preview Rekomendasi Grup OPD
+                </h3>
+                <button type="button" onclick="closeGenerateModal()" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <div class="p-6 space-y-4">
+                <div id="generateSummary" class="text-sm text-gray-600 dark:text-gray-400 mb-4 bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                    <!-- Summary info -->
+                </div>
+                
+                <div class="overflow-x-auto max-h-96 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">Nama / NIP</th>
+                                <th scope="col" class="px-4 py-3">OPD Saat Ini</th>
+                                <th scope="col" class="px-4 py-3">Jabatan</th>
+                                <th scope="col" class="px-4 py-3">Rekomendasi OPD</th>
+                                <th scope="col" class="px-4 py-3">Sumber</th>
+                            </tr>
+                        </thead>
+                        <tbody id="generateTableBody">
+                            <!-- Rows go here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="generateSkippedContainer" class="hidden mt-4">
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Pegawai yang Dilewati (Skipped)</h4>
+                    <div class="overflow-x-auto max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600">
+                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-4 py-2">Nama</th>
+                                    <th scope="col" class="px-4 py-2">Alasan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="generateSkippedBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Alasan Override (opsional)</label>
+                    <input type="text" id="generateAlasan" value="Auto-generate dari sistem berdasarkan pola jabatan/unor" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                </div>
+            </div>
+            <!-- Modal footer -->
+            <div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600 justify-end">
+                <button type="button" onclick="closeGenerateModal()" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">Batal</button>
+                <button type="button" id="btnApplyGenerate" onclick="applyGeneratedRecommendations()" class="text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:focus:ring-emerald-800 disabled:opacity-50">Terapkan Semua Rekomendasi</button>
+            </div>
         </div>
     </div>
 </div>
@@ -220,14 +319,21 @@
                     
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Override Grup/OPD</label>
-                        <input type="text" id="inputOpd" list="listOpdModal" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="-- Kosongkan untuk pakai Asli (BKN) --">
-                        <datalist id="listOpdModal">
-                            @foreach($listOpd as $opd)
-                                @if($opd !== 'Tanpa OPD')
-                                <option value="{{ $opd }}">
-                                @endif
-                            @endforeach
-                        </datalist>
+                        <select id="inputOpd" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                            <option value="">-- Kosongkan untuk pakai Asli (BKN) --</option>
+                            <optgroup label="═══ Perangkat Daerah (PD) ═══">
+                                @foreach($listOpd as $opd)
+                                    @if($opd !== 'Tanpa OPD')
+                                    <option value="{{ $opd }}">{{ $opd }}</option>
+                                    @endif
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="═══ Unit Pelaksana Teknis (UPT) ═══">
+                                @foreach($listUpt as $upt)
+                                    <option value="{{ $upt }}">{{ $upt }}</option>
+                                @endforeach
+                            </optgroup>
+                        </select>
                     </div>
 
                     <div>
@@ -252,12 +358,21 @@
                     </div>
                     
                     <div id="eselonContainer">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Override Eselon (Jika Struktural)</label>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Override Eselon</label>
                         <select id="inputEselon" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
                             <option value="">-- Kosongkan untuk pakai Asli (BKN) --</option>
                             @foreach($eselonKeys as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-4">Status Iuran</label>
+                        <select id="inputIsActive" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                            <option value="">-- Kosongkan untuk pakai Asli (BKN) --</option>
+                            <option value="1">Aktif</option>
+                            <option value="0">Non Aktif</option>
                         </select>
                     </div>
                     
@@ -284,6 +399,7 @@
         const disabled = count === 0;
         document.getElementById('btnBulkOverride').disabled = disabled;
         document.getElementById('btnSyncReset').disabled = disabled;
+        if(document.getElementById('btnGenerate')) document.getElementById('btnGenerate').disabled = disabled;
     }
 
     document.getElementById('selectAll').addEventListener('change', function() {
@@ -310,13 +426,14 @@
         document.getElementById('inputGolongan').value = '';
         document.getElementById('inputEselon').value = '';
         document.getElementById('inputOpd').value = '';
+        document.getElementById('inputIsActive').value = '';
         document.getElementById('inputAlasan').value = '';
         document.getElementById('eselonContainer').style.display = 'block';
         
         document.getElementById('overrideModal').classList.remove('hidden');
     }
 
-    function openSingleModal(id, nama, golAsli, eselAsli, opdAsli, golOv, eselOv, opdOv, isStruktural) {
+    function openSingleModal(id, nama, golAsli, eselAsli, opdAsli, golOv, eselOv, opdOv, isActiveOv, isStruktural) {
         document.getElementById('formType').value = 'single';
         document.getElementById('singlePegawaiId').value = id;
         document.getElementById('modalTitle').innerText = 'Override Iuran';
@@ -324,9 +441,10 @@
         document.getElementById('inputGolongan').value = golOv;
         document.getElementById('inputEselon').value = eselOv;
         document.getElementById('inputOpd').value = opdOv;
+        document.getElementById('inputIsActive').value = isActiveOv;
         document.getElementById('inputAlasan').value = '';
         
-        document.getElementById('eselonContainer').style.display = isStruktural ? 'block' : 'none';
+        document.getElementById('eselonContainer').style.display = 'block';
         
         document.getElementById('overrideModal').classList.remove('hidden');
     }
@@ -347,6 +465,7 @@
             override_golongan_key: document.getElementById('inputGolongan').value,
             override_eselon_key: document.getElementById('inputEselon').value,
             override_opd_nama: document.getElementById('inputOpd').value,
+            is_active: document.getElementById('inputIsActive').value !== "" ? document.getElementById('inputIsActive').value : null,
             alasan: document.getElementById('inputAlasan').value,
             _token: '{{ csrf_token() }}',
             _method: 'PUT'
@@ -445,6 +564,158 @@
             console.error(err);
             alert('Error request ke server');
         });
+    }
+
+    let currentRecommendations = [];
+
+    function generateOpdRecommendation() {
+        const ids = getSelectedIds();
+        if(ids.length === 0) return;
+        
+        const btn = document.getElementById('btnGenerate');
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...`;
+
+        fetch('{{ route("mari.rekon-iuran.generate-opd") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                _token: '{{ csrf_token() }}',
+                pegawai_ids: ids
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                showGenerateModal(data);
+            } else {
+                alert(data.message || 'Terjadi kesalahan');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error request ke server');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Generate`;
+        });
+    }
+
+    function showGenerateModal(data) {
+        currentRecommendations = data.recommendations;
+        
+        document.getElementById('generateSummary').innerHTML = `
+            Ditemukan <strong class="text-emerald-600">${data.total_recommended}</strong> rekomendasi OPD dari <strong>${data.total_selected}</strong> pegawai yang dipilih. 
+            (<strong class="text-amber-600">${data.total_skipped}</strong> pegawai dilewati karena OPD sudah valid atau tidak ditemukan pola)
+        `;
+        
+        const tbody = document.getElementById('generateTableBody');
+        tbody.innerHTML = '';
+        
+        if (currentRecommendations.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Tidak ada rekomendasi yang dapat di-generate untuk pegawai terpilih.</td></tr>`;
+            document.getElementById('btnApplyGenerate').disabled = true;
+        } else {
+            currentRecommendations.forEach(rec => {
+                tbody.innerHTML += `
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                            ${rec.nama}<br><span class="text-xs text-gray-500">${rec.nip}</span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500">${rec.current_opd}</td>
+                        <td class="px-4 py-3 text-gray-600">${rec.jabatan}</td>
+                        <td class="px-4 py-3 font-bold text-emerald-600">${rec.recommended_opd}</td>
+                        <td class="px-4 py-3 text-xs text-gray-500">${rec.source}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('btnApplyGenerate').disabled = false;
+        }
+
+        const skippedContainer = document.getElementById('generateSkippedContainer');
+        const skippedBody = document.getElementById('generateSkippedBody');
+        skippedBody.innerHTML = '';
+        
+        if (data.skipped.length > 0) {
+            skippedContainer.classList.remove('hidden');
+            data.skipped.forEach(skip => {
+                skippedBody.innerHTML += `
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                        <td class="px-4 py-2 text-gray-900 dark:text-white">${skip.nama}</td>
+                        <td class="px-4 py-2 text-xs text-gray-500">${skip.reason}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            skippedContainer.classList.add('hidden');
+        }
+
+        document.getElementById('generateModal').classList.remove('hidden');
+    }
+
+    function closeGenerateModal() {
+        document.getElementById('generateModal').classList.add('hidden');
+    }
+
+    function applyGeneratedRecommendations() {
+        if(currentRecommendations.length === 0) return;
+        
+        const alasan = document.getElementById('generateAlasan').value;
+        if(alasan.trim() === '') {
+            alert('Alasan wajib diisi!');
+            return;
+        }
+        
+        const btn = document.getElementById('btnApplyGenerate');
+        btn.disabled = true;
+        btn.innerText = 'Menyimpan...';
+
+        const groupedByOpd = {};
+        currentRecommendations.forEach(rec => {
+            if (!groupedByOpd[rec.recommended_opd]) {
+                groupedByOpd[rec.recommended_opd] = [];
+            }
+            groupedByOpd[rec.recommended_opd].push(rec.id);
+        });
+
+        const promises = Object.keys(groupedByOpd).map(opdNama => {
+            return fetch('{{ route("mari.rekon-iuran.bulk-override") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    _token: '{{ csrf_token() }}',
+                    _method: 'PUT',
+                    pegawai_ids: groupedByOpd[opdNama],
+                    override_opd_nama: opdNama,
+                    alasan: alasan
+                })
+            }).then(res => res.json());
+        });
+
+        Promise.all(promises)
+            .then(results => {
+                const allSuccess = results.every(res => res.success);
+                if (allSuccess) {
+                    alert('Semua override berhasil disimpan!');
+                    window.location.reload();
+                } else {
+                    alert('Sebagian atau seluruh override gagal disimpan. Halaman akan dimuat ulang.');
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error request ke server');
+                btn.disabled = false;
+                btn.innerText = 'Terapkan Semua Rekomendasi';
+            });
     }
 </script>
 @endsection

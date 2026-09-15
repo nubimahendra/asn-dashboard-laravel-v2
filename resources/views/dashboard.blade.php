@@ -28,23 +28,37 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-
                 @if(isset($filterOpd) && $filterOpd)
-                    <a href="/"
-                        class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">Reset</a>
+                    <a href="{{ route('masn.dashboard', ['snapshot_month' => $filterSnapshot]) }}"
+                        class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">Reset OPD</a>
                 @endif
-                <form action="{{ route('logout') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit"
-                        class="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
-                        title="Logout">
-                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                            </path>
-                        </svg>
-                    </button>
+
+                <form method="GET" action="{{ route('masn.dashboard') }}" id="snapshot-filter-form" class="flex items-center">
+                    @if(isset($filterOpd) && $filterOpd)
+                        <input type="hidden" name="opd" value="{{ $filterOpd }}">
+                    @endif
+                    <div class="relative group">
+                        <select name="snapshot_month" id="snapshot_month" onchange="document.getElementById('snapshot-filter-form').submit()"
+                            class="appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-4 pr-10 py-2.5 shadow-sm transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <option value="">Data Saat Ini (Live)</option>
+                            @foreach($historyMonths as $month)
+                                @php
+                                    $carbonDate = \Carbon\Carbon::createFromFormat('Y-m', $month);
+                                    $bulanIndo = [
+                                        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                                    ];
+                                @endphp
+                                <option value="{{ $month }}" {{ isset($filterSnapshot) && $filterSnapshot == $month ? 'selected' : '' }}>
+                                    Snapshot: {{ $bulanIndo[$carbonDate->month] }} {{ $carbonDate->year }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 dark:text-gray-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -96,65 +110,46 @@
 
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Pegawai per Jenis Kelamin</h3>
                 <div id="chart-jenikel"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Jenis Pegawai</h3>
                 <div id="chart-sts-peg"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Kedudukan Hukum</h3>
                 <div id="chart-kedudukan-hukum"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Jenis Jabatan Pegawai</h3>
                 <div id="chart-jenis-jabatan"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Pegawai per Pendidikan</h3>
                 <div id="chart-pendidikan"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Pegawai per Eselon</h3>
                 <div id="chart-eselon"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Pegawai per Golongan</h3>
                 <div id="chart-golongan"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Pegawai per Generasi</h3>
                 <div id="chart-generasi"></div>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 lg:col-span-2">
                 <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4"> @if(isset($filterOpd) && $filterOpd)
                 Statistik Unit Kerja Ini @else Top 10 Unit Kerja / OPD @endif </h3>
                 <div id="chart-opd"></div>
             </div>
         </div>
 
-        <!-- Employee Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
-            <div
-                class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">Data Pegawai</h3>
-                <div class="relative w-full md:w-64">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg
-                            class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg></span>
-                    <input type="text" id="employee-search"
-                        class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Cari nama pegawai...">
-                </div>
-            </div>
-            <div id="employee-table-container">
-                @include('partials.employee-table')
-            </div>
-        </div>
+
     </div>
 @endsection
 
@@ -178,8 +173,7 @@
         var optionsPendidikan = { series: [{ name: 'Jumlah', data: @json($chartPendidikan['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartPendidikan['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: true } }, colors: ['#10B981'] };
         chartInstances.pendidikan = new ApexCharts(document.querySelector("#chart-pendidikan"), optionsPendidikan);
         chartInstances.pendidikan.render();
-        var optionsEselon = { series: [{ name: 'Jumlah', data: @json($chartEselon['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartEselon['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: false } }, colors: ['#F59E0B'] };
-        chartInstances.eselon = new ApexCharts(document.querySelector("#chart-eselon"), optionsEselon);
+        var optionsEselon = { series: [{ name: 'Jumlah', data: @json($chartEselon['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartEselon['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: true } }, colors: ['#F59E0B'] };
         chartInstances.eselon = new ApexCharts(document.querySelector("#chart-eselon"), optionsEselon);
         chartInstances.eselon.render();
         var optionsGolongan = { series: [{ name: 'Jumlah', data: @json($chartGolongan['series']) }], chart: { type: 'bar', height: 350, ...getChartColors().chart }, theme: getChartColors().theme, xaxis: { categories: @json($chartGolongan['categories']) }, plotOptions: { bar: { borderRadius: 4, horizontal: false } }, colors: ['#8B5CF6'] };

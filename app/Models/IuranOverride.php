@@ -16,6 +16,7 @@ class IuranOverride extends Model
         'override_golongan_key',
         'override_eselon_key',
         'override_opd_nama',
+        'is_active',
         'alasan',
         'updated_by',
     ];
