@@ -64,8 +64,10 @@ class RekonIuranController extends Controller
             $query->where('id', '<', 0);
         } else {
             $query->where(function($q) {
-                $q->where('kedudukan_hukum_id', '!=', '101')
-                  ->orWhereNull('kedudukan_hukum_id');
+                $q->where(function($qPns) {
+                    $qPns->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
+                         ->whereIn('status_cpns_pns', ['P','C']);
+                })->orWhereIn('kedudukan_hukum_id', ['71','73']);
             });
         }
 
@@ -134,9 +136,20 @@ class RekonIuranController extends Controller
             return response()->json(['success' => false, 'message' => 'Pilih minimal salah satu (Golongan/Eselon/OPD) untuk diubah.']);
         }
 
+        return $this->processOverride(
+            $request->pegawai_ids,
+            $request->override_golongan_key,
+            $request->override_eselon_key,
+            $request->override_opd_nama,
+            $request->alasan
+        );
+    }
+
+    private function processOverride($pegawaiIds, $overrideGolonganKey, $overrideEselonKey, $overrideOpdNama, $alasan)
+    {
         DB::beginTransaction();
         try {
-            foreach ($request->pegawai_ids as $pegawai_id) {
+            foreach ($pegawaiIds as $pegawai_id) {
                 $pegawai = Pegawai::with('iuranOverride')->find($pegawai_id);
                 $override = $pegawai->iuranOverride;
                 
@@ -146,9 +159,9 @@ class RekonIuranController extends Controller
                 
                 $action = $override ? 'update' : 'create';
 
-                $newGolongan = $request->override_golongan_key ?: $oldGolongan;
-                $newEselon = $request->override_eselon_key ?: $oldEselon;
-                $newOpd = $request->override_opd_nama ?: $oldOpd;
+                $newGolongan = $overrideGolonganKey ?: $oldGolongan;
+                $newEselon = $overrideEselonKey ?: $oldEselon;
+                $newOpd = $overrideOpdNama ?: $oldOpd;
 
                 IuranOverride::updateOrCreate(
                     ['pegawai_id' => $pegawai_id],
@@ -156,7 +169,7 @@ class RekonIuranController extends Controller
                         'override_golongan_key' => $newGolongan,
                         'override_eselon_key' => $newEselon,
                         'override_opd_nama' => $newOpd,
-                        'alasan' => $request->alasan,
+                        'alasan' => $alasan,
                         'updated_by' => 'Admin' // Assuming auth()->user()->name in a real app
                     ]
                 );
@@ -170,7 +183,7 @@ class RekonIuranController extends Controller
                     'new_eselon_key' => $newEselon,
                     'old_opd_nama' => $oldOpd,
                     'new_opd_nama' => $newOpd,
-                    'alasan' => $request->alasan,
+                    'alasan' => $alasan,
                     'performed_by' => 'Admin'
                 ]);
             }
@@ -192,9 +205,17 @@ class RekonIuranController extends Controller
             'alasan' => 'required|string|max:255',
         ]);
 
-        return $this->bulkOverride(new Request(array_merge($request->all(), [
-            'pegawai_ids' => [$request->pegawai_id]
-        ])));
+        if (empty($request->override_golongan_key) && empty($request->override_eselon_key) && empty($request->override_opd_nama)) {
+            return response()->json(['success' => false, 'message' => 'Pilih minimal salah satu (Golongan/Eselon/OPD) untuk diubah.']);
+        }
+
+        return $this->processOverride(
+            [$request->pegawai_id],
+            $request->override_golongan_key,
+            $request->override_eselon_key,
+            $request->override_opd_nama,
+            $request->alasan
+        );
     }
 
     public function destroy($id)

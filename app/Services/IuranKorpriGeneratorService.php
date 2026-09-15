@@ -29,6 +29,7 @@ class IuranKorpriGeneratorService
                 $riwayat = $pegawai->riwayatJabatanAktif;
 
                 if (!$riwayat) {
+                    \Illuminate\Support\Facades\Log::warning("Employee ID {$pegawai->id} skipped: no active jabatan riwayat");
                     continue;
                 }
 

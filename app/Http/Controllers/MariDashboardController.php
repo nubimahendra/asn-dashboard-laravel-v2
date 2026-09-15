@@ -59,8 +59,6 @@ class MariDashboardController extends Controller
                 $opdTotals[$opdName] = 0;
             }
 
-            $override = $pegawai->iuranOverride;
-
             if ($pegawai->jenis_jabatan_id == 1) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
                 $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;

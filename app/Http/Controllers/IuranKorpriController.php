@@ -7,20 +7,9 @@ use App\Models\Pegawai;
 use App\Models\RefUnor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\IuranKorpriGeneratorService;
 
 class IuranKorpriController extends Controller
 {
-    public function generateIuran(Request $request)
-    {
-        $bulan = $request->bulan ?? date('n');
-        $tahun = $request->tahun ?? date('Y');
-
-        app(IuranKorpriGeneratorService::class)->generate($bulan, $tahun);
-
-        return back()->with('success', "Iuran bulan $bulan tahun $tahun berhasil digenerate.");
-    }
-    
     private function extractGolonganKey(?string $namaGolongan): ?string
     {
         if (empty($namaGolongan)) {
@@ -40,12 +29,7 @@ class IuranKorpriController extends Controller
         $hitungUlang = $request->has('hitung_ulang');
 
         $ratesSorted = IuranKorpri::all()->sortBy(function ($rate) {
-            $romanOrder = ['I' => 1, 'II' => 2, 'III' => 3, 'IV' => 4, 'V' => 5, 'VI' => 6, 'VII' => 7, 'VIII' => 8, 'IX' => 9, 'X' => 10, 'XI' => 11, 'XII' => 12];
-            $parts = explode('/', $rate->golongan_key);
-            $base = trim($parts[0]);
-            $baseValue = $romanOrder[$base] ?? 99;
-            $subValue = isset($parts[1]) ? ord(strtolower($parts[1])) / 1000 : 0;
-            return $baseValue + $subValue;
+            return \App\Helpers\GolonganHelper::parseRoman($rate->golongan_key);
         });
 
         $allIuranRates = $ratesSorted->keyBy('golongan_key');
@@ -107,12 +91,7 @@ class IuranKorpriController extends Controller
     public function pengaturanTarifGolongan(Request $request)
     {
         $ratesSorted = IuranKorpri::all()->sortBy(function ($rate) {
-            $romanOrder = ['I' => 1, 'II' => 2, 'III' => 3, 'IV' => 4, 'V' => 5, 'VI' => 6, 'VII' => 7, 'VIII' => 8, 'IX' => 9, 'X' => 10, 'XI' => 11, 'XII' => 12];
-            $parts = explode('/', $rate->golongan_key);
-            $base = trim($parts[0]);
-            $baseValue = $romanOrder[$base] ?? 99;
-            $subValue = isset($parts[1]) ? ord(strtolower($parts[1])) / 1000 : 0;
-            return $baseValue + $subValue;
+            return \App\Helpers\GolonganHelper::parseRoman($rate->golongan_key);
         });
 
         // We need global totals just for the count per golongan to show in the table
@@ -153,7 +132,10 @@ class IuranKorpriController extends Controller
             $query->where('id', '<', 0);
         } else {
             $query->where(function($q) {
-                $q->where('kedudukan_hukum_id', '!=', '101')->orWhereNull('kedudukan_hukum_id');
+                $q->where(function($qPns) {
+                    $qPns->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
+                         ->whereIn('status_cpns_pns', ['P','C']);
+                })->orWhereIn('kedudukan_hukum_id', ['71','73']);
             });
         }
 
@@ -188,7 +170,7 @@ class IuranKorpriController extends Controller
                     'total_non_golongan' => 0, 'total_struktural' => 0, 'total_iuran' => 0, 'per_golongan' => [],
                 ];
                 foreach ($allIuranRates as $key => $rate) {
-                    $opdBreakdown[$opdName]['per_golongan'][$key] = 0;
+                    $opdBreakdown[$opdName]['per_golongan'][$key] = ['count' => 0, 'subtotal' => 0];
                 }
             }
 
@@ -197,6 +179,9 @@ class IuranKorpriController extends Controller
 
             if ($isStruktural && $pns) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                if (!isset($eselonMappings[$pegawai->jabatan_id])) {
+                    \Illuminate\Support\Facades\Log::warning("Jabatan ID {$pegawai->jabatan_id} unmapped to eselon, defaulting to IV/b for Iuran Korpri");
+                }
                 $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 
@@ -218,7 +203,8 @@ class IuranKorpriController extends Controller
                     $globalTotals['total_iuran'] += $besaran;
 
                     $opdBreakdown[$opdName]['total_ber_golongan']++;
-                    $opdBreakdown[$opdName]['per_golongan'][$golonganKey] += $besaran;
+                    $opdBreakdown[$opdName]['per_golongan'][$golonganKey]['count']++;
+                    $opdBreakdown[$opdName]['per_golongan'][$golonganKey]['subtotal'] += $besaran;
                     $opdBreakdown[$opdName]['total_iuran'] += $besaran;
                 } else {
                     $globalTotals['total_non_golongan']++;
@@ -273,7 +259,7 @@ class IuranKorpriController extends Controller
             foreach ($allIuranRates as $key => $rate) {
                 $subtotal = $breakdown[$key]['subtotal'] ?? 0;
                 $count = $breakdown[$key]['count'] ?? 0;
-                $opdArr['per_golongan'][$key] = $subtotal;
+                $opdArr['per_golongan'][$key] = ['count' => $count, 'subtotal' => $subtotal];
 
                 $globalTotals['per_golongan'][$key]['count'] += $count;
                 $globalTotals['per_golongan'][$key]['subtotal'] += $subtotal;
@@ -305,8 +291,8 @@ class IuranKorpriController extends Controller
                 // Format breakdown
                 $breakdown = [];
                 foreach ($ratesSorted as $key => $rate) {
-                    $sub = $opd['per_golongan'][$key] ?? 0;
-                    $count = $sub > 0 && $rate->besaran > 0 ? $sub / $rate->besaran : 0;
+                    $sub = $opd['per_golongan'][$key]['subtotal'] ?? 0;
+                    $count = $opd['per_golongan'][$key]['count'] ?? 0;
                     $breakdown[$key] = [
                         'count' => $count,
                         'besaran' => $rate->besaran,
@@ -384,7 +370,10 @@ class IuranKorpriController extends Controller
             $query->where('id', '<', 0);
         } else {
             $query->where(function($q) {
-                $q->where('kedudukan_hukum_id', '!=', '101')->orWhereNull('kedudukan_hukum_id');
+                $q->where(function($qPns) {
+                    $qPns->whereIn('kedudukan_hukum_id', ['01','02','03','04','15'])
+                         ->whereIn('status_cpns_pns', ['P','C']);
+                })->orWhereIn('kedudukan_hukum_id', ['71','73']);
             });
         }
 
@@ -421,6 +410,9 @@ class IuranKorpriController extends Controller
 
             if ($isStruktural && $pns) {
                 $eselAsli = $eselonMappings[$pegawai->jabatan_id] ?? 'IV/b';
+                if (!isset($eselonMappings[$pegawai->jabatan_id])) {
+                    \Illuminate\Support\Facades\Log::warning("Jabatan ID {$pegawai->jabatan_id} unmapped to eselon, defaulting to IV/b for Iuran Korpri Invoice");
+                }
                 $eselonKey = $override && $override->override_eselon_key ? $override->override_eselon_key : $eselAsli;
                 $besaran = isset($allEselonRates[$eselonKey]) ? $allEselonRates[$eselonKey]->besaran : 0;
                 $dasarIuran = 'Eselon';

@@ -85,7 +85,7 @@ return new class extends Migration {
             $table->string('flag_ikd')->nullable();
 
             $table->timestamps();
-            $table->softDeletes();
+            $table->softDeletes(); // Unused, superseded by kedudukan_hukum_id = 17
         });
     }
 
