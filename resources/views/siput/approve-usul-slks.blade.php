@@ -103,6 +103,25 @@
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Tanggal Keppres</label>
                         <input type="date" name="tanggal_kepres" id="form_tanggal_kepres" class="col-span-2 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" disabled>
                     </div>
+
+                    <!-- Riwayat SLKS (Dinamis) -->
+                    <div id="riwayat-container" class="hidden mt-6">
+                        <h3 class="text-md font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">Riwayat SLKS yang sudah diperoleh</h3>
+                        <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left font-medium">Slks</th>
+                                        <th class="px-4 py-2 text-left font-medium">Nokeppres</th>
+                                        <th class="px-4 py-2 text-left font-medium">Tglkeppres</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="riwayat-body" class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                                    <!-- Diisi oleh JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -231,6 +250,9 @@
                     document.getElementById('form_no_kepres').disabled = false;
                     document.getElementById('form_tanggal_kepres').disabled = false;
                     document.getElementById('submit-btn').disabled = false;
+                    
+                    // Render Riwayat
+                    renderRiwayat(data.riwayat);
                 } else {
                     document.getElementById('nip-message').classList.remove('hidden');
                     clearFormDetails();
@@ -256,6 +278,37 @@
         document.getElementById('form_tanggal_kepres').disabled = true;
         document.getElementById('submit-btn').disabled = true;
         document.getElementById('mainForm').action = '';
+        
+        document.getElementById('riwayat-container').classList.add('hidden');
+    }
+
+    function renderRiwayat(riwayatList) {
+        const container = document.getElementById('riwayat-container');
+        const tbody = document.getElementById('riwayat-body');
+        
+        if (riwayatList && riwayatList.length > 0) {
+            tbody.innerHTML = '';
+            riwayatList.forEach(item => {
+                // Format tgl_slks
+                let tglSlksStr = '-';
+                if(item.tgl_slks) {
+                    const d = new Date(item.tgl_slks);
+                    tglSlksStr = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+                }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-2 py-1">${item.usul_slks || '-'}</td>
+                    <td class="px-2 py-1">${item.no_slks || '-'}</td>
+                    <td class="px-2 py-1">${tglSlksStr}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+            tbody.innerHTML = '';
+        }
     }
 
     function clearForm() {

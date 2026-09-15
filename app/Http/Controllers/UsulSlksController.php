@@ -274,6 +274,11 @@ class UsulSlksController extends Controller
             return response()->json(['found' => false]);
         }
 
+        // Cari riwayat SLKS yang sudah pernah diusulkan untuk NIP ini
+        $riwayat = UsulSlks::where('nip', $usulan->nip)
+            ->orderBy('created_at', 'desc')
+            ->get(['usul_slks', 'no_slks', 'tgl_slks', 'status', 'tahunp']);
+
         return response()->json([
             'found' => true,
             'id' => $usulan->id,
@@ -287,6 +292,7 @@ class UsulSlksController extends Controller
             'masa_kerja_tahun' => $usulan->masa_kerja_tahun,
             'masa_kerja_bulan' => $usulan->masa_kerja_bulan,
             'kedudukan_hukum_id' => $usulan->kedudukan_hukum_id,
+            'riwayat' => $riwayat,
         ]);
     }
 

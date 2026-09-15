@@ -182,14 +182,14 @@
                         <div class="grid grid-cols-3 items-center gap-4">
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 col-span-1">Bulan/Tahunp</label>
                             <div class="col-span-2 grid grid-cols-2 gap-2">
-                                @php $bulanp = old('bulanp', $usulSlks->bulanp ?? date('m')); @endphp
-                                <select name="bulanp" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    @for($i=1; $i<=12; $i++)
-                                        <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ $bulanp == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}</option>
-                                    @endfor
+                                @php $bulanp = old('bulanp', $usulSlks->bulanp ?? '08'); @endphp
+                                <select name="bulanp" id="form_bulanp" onchange="calculateMasaKerjaFromNip(); validateForm()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    @foreach(['08', '11'] as $m)
+                                        <option value="{{ $m }}" {{ $bulanp == $m ? 'selected' : '' }}>{{ $m }}</option>
+                                    @endforeach
                                 </select>
                                 @php $tahunp = old('tahunp', $usulSlks->tahunp ?? date('Y')); @endphp
-                                <select name="tahunp" id="form_tahunp" onchange="validateForm()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <select name="tahunp" id="form_tahunp" onchange="calculateMasaKerjaFromNip(); validateForm()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     @for($y=date('Y')-1; $y<=date('Y')+1; $y++)
                                         <option value="{{ $y }}" {{ $tahunp == $y ? 'selected' : '' }}>{{ $y }}</option>
                                     @endfor
@@ -253,10 +253,49 @@
 <script>
     window.pegawaiRiwayat = [];
     window.masaKerjaTahun = 0;
+    window.isFetchingNip = false;
     @if(isset($usulSlks) && $usulSlks->masa_kerja_tahun !== null)
         window.masaKerjaTahun = {{ $usulSlks->masa_kerja_tahun }};
     @endif
     window.currentUsulId = {{ isset($usulSlks) ? $usulSlks->id : 'null' }};
+
+    function calculateMasaKerjaFromNip() {
+        const nip = document.getElementById('form_nip').value.trim();
+        if (nip.length < 14) return;
+
+        const bulanpStr = document.getElementById('form_bulanp').value;
+        const tahunpStr = document.getElementById('form_tahunp').value;
+
+        const bulanp = parseInt(bulanpStr, 10);
+        const tahunp = parseInt(tahunpStr, 10);
+        
+        const tahunCpns = parseInt(nip.substring(8, 12), 10);
+        const bulanCpns = parseInt(nip.substring(12, 14), 10);
+        
+        if (isNaN(tahunCpns) || isNaN(bulanCpns) || isNaN(bulanp) || isNaN(tahunp)) return;
+        
+        let mkTahun = tahunp - tahunCpns;
+        let mkBulan = bulanp - bulanCpns;
+        
+        if (mkBulan < 0) {
+            mkTahun--;
+            mkBulan += 12;
+        }
+        
+        window.masaKerjaTahun = mkTahun;
+        document.getElementById('form_mk_tahun').value = Math.max(0, mkTahun);
+        document.getElementById('form_mk_bulan').value = Math.max(0, mkBulan);
+        document.getElementById('form_mk_display').value = mkTahun > 0 || mkBulan > 0 ? `${Math.max(0, mkTahun)} Thn ${Math.max(0, mkBulan)} Bln` : '';
+        
+        // Auto select SLKS Usul based on masa kerja (only if we are fetching new NIP, to not overwrite user selection when they just change the month/year)
+        if (window.isFetchingNip) {
+            let usulSlks = '';
+            if (mkTahun >= 30) usulSlks = '30 Tahun';
+            else if (mkTahun >= 20) usulSlks = '20 Tahun';
+            else if (mkTahun >= 10) usulSlks = '10 Tahun';
+            document.getElementById('form_usul_slks').value = usulSlks;
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         const nipInput = document.getElementById('form_nip');
@@ -300,13 +339,11 @@
                     document.getElementById('form_pangkat').value = data.pangkat;
                     document.getElementById('form_jabatan').value = data.jabatan;
                     
-                    // Isi MK display dan hidden inputs
-                    const mkTahun = data.mk_tahun ?? 0;
-                    const mkBulan = data.mk_bulan ?? 0;
-                    document.getElementById('form_mk_display').value =
-                        mkTahun > 0 || mkBulan > 0 ? `${mkTahun} Thn ${mkBulan} Bln` : '';
-                    document.getElementById('form_mk_tahun').value = mkTahun;
-                    document.getElementById('form_mk_bulan').value = mkBulan;
+                    // Isi MK display dan hidden inputs via JS calculation
+                    window.isFetchingNip = true;
+                    calculateMasaKerjaFromNip();
+                    window.isFetchingNip = false;
+                    const mkTahun = window.masaKerjaTahun;
 
                     // Isi Kedudukan Hukum
                     const kdhId   = data.kedudukan_hukum_id ?? '';
@@ -318,13 +355,6 @@
 
                     // Isi jenis pegawai
                     document.getElementById('form_jenis_pegawai').value = data.jenis_pegawai ?? '';
-
-                    // Auto select SLKS Usul based on masa kerja
-                    let usulSlks = '';
-                    if (mkTahun >= 30) usulSlks = '30 Tahun';
-                    else if (mkTahun >= 20) usulSlks = '20 Tahun';
-                    else if (mkTahun >= 10) usulSlks = '10 Tahun';
-                    document.getElementById('form_usul_slks').value = usulSlks;
                     
                     // Render Riwayat
                     window.pegawaiRiwayat = data.riwayat || [];
