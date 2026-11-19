@@ -364,7 +364,9 @@
                     // Validate after loading
                     validateForm();
                 } else {
-                    document.getElementById('nip-message').classList.remove('hidden');
+                    const nipMessage = document.getElementById('nip-message');
+                    nipMessage.textContent = data.message || 'NIP tidak ditemukan.';
+                    nipMessage.classList.remove('hidden');
                     // Kosongkan semua field yang diisi otomatis
                     document.getElementById('form_nama').value = '';
                     document.getElementById('form_pangkat').value = '';

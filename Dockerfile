@@ -21,12 +21,15 @@ RUN apk add --no-cache \
     zlib-dev \
     libzip-dev \
     oniguruma-dev \
+    postgresql-dev \
     linux-headers
 
 # Install PHP extensions
 RUN docker-php-ext-install \
     intl \
     pdo_mysql \
+    pgsql \
+    pdo_pgsql \
     mbstring \
     pcntl \
     bcmath \

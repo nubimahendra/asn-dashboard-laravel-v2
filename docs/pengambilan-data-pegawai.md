@@ -73,3 +73,95 @@ lewat halaman Sync Data.
 Migrasi `2026_11_05_220716_add_unor_id_to_snapshot_pegawai_table` menambahkan kolom
 `unor_id` (string, nullable) ke `snapshot_pegawai`. Sebelum migrasi ini, service sync
 sudah menulis `unor_id` sehingga sync gagal dengan error SQL.
+
+## 6. Pencarian pegawai SLKS on-demand dari database intranet Penataran
+
+Bagian ini menambahkan **jalur ketiga** yang khusus dipakai oleh pencarian NIP di modul
+SIPUT (form Usul SLKS). Jalur CSV dan `snapshot:sync-pegawai` pada bagian 1–5 tetap ada
+untuk kebutuhan lain; yang diganti hanyalah **cara pencarian pegawai SLKS mencari data**.
+
+### 6.1 Keputusan: satu rantai data
+
+Urusan ke BKN adalah urusan **penataran-api** saja — dialah yang memegang whitelist IP
+dan token ketat ke BKN. Rantainya:
+
+```
+BKN  →  penataran-api  →  db_penataran.pegawai (PostgreSQL)  →  aplikasi hilir
+```
+
+Aplikasi hilir (si-mantap, ASN Dashboard) **tidak** memanggil BKN dan **tidak** memanggil
+HTTP penataran-api. Aplikasi hilir hanya membaca data pegawai yang sudah disinkronkan
+penataran-api ke database intranet Penataran (`db_penataran`, tabel `pegawai`),
+**read-only**, per NIP.
+
+Konsekuensinya: kesegaran data = kesegaran sync Penataran. Pegawai yang belum pernah
+disinkronkan Penataran ke `db_penataran.pegawai` tidak akan ketemu di ASN Dashboard, dan
+ASN Dashboard **tidak** memicu sync BKN. Itu memang desain satu rantai ini.
+
+### 6.2 Alur pencarian SLKS (`UsulSlksController::searchPegawai`)
+
+1. **Snapshot dulu.** Cari di `snapshot_pegawai` berdasarkan `nip_baru`. Bila ketemu,
+   respons disusun dari snapshot (`source: snapshot`): nama lengkap =
+   `gelar_depan` + `nama_pegawai` + `gelar_belakang`, pangkat =
+   `getPangkatFromGolongan(golongan)`, kedudukan dari kolom `kedudukan_hukum_*`.
+2. **Belum ada → tarik on-demand.** Panggil `PegawaiIntranetSyncService::syncByNip()`
+   yang membaca satu baris `db_penataran.pegawai` lalu menulis ke `snapshot_pegawai`
+   (`source: intranet_penataran`). Bila berhasil, respons disusun dari hasil simpan itu.
+3. **NIP tidak ada di intranet** → `found: false`, `reason: not_found`, tidak ada baris
+   baru.
+4. **Sumber gagal** (belum terkonfigurasi / tidak terjangkau / permission denied) →
+   `found: false`, `reason: source_error`, disertai `message` ramah. Ini dibedakan dari
+   NIP yang memang tidak ditemukan.
+5. **Filter kedudukan aktif.** Bila `kedudukan_hukum_id` ada dan tidak termasuk
+   `Pegawai::ACTIVE_KEDUDUKAN_HUKUM` (`01, 02, 03, 04, 101, 15, 71, 73`) →
+   `found: false`, `reason: not_active`.
+6. **Fallback transisi.** Bila langkah 2 gagal dan baris lama masih ada di
+   `stg_pegawai_import`, baris lama itu dipakai (`source: stg_fallback`). Fallback ini
+   bersifat sementara dan akan dicabut pada paket berikutnya.
+
+Kolom `riwayat` tetap diambil dari tabel `usul_slks` seperti sebelumnya.
+
+### 6.3 Peta kolom intranet → snapshot
+
+| snapshot_pegawai      | db_penataran.pegawai                          |
+|-----------------------|-----------------------------------------------|
+| `nip_baru`            | `nip_baru` (fallback `nip`)                   |
+| `nama_pegawai`        | `nama` (fallback `nama_lengkap` tanpa gelar)  |
+| `gelar_depan`         | `gelar_depan`                                 |
+| `gelar_belakang`      | `gelar_belakang`                              |
+| `golongan`            | `gol_ruang_akhir`                             |
+| `jabatan`             | `jabatan_nama`                                |
+| `eselon`              | `eselon`                                      |
+| `pd`                  | `unor_induk_nama`                             |
+| `sub_pd`              | `unor_nama`                                   |
+| `jenikel`             | `jenis_kelamin`                               |
+| `sts_peg`             | `status_pegawai`                              |
+| `tk_pend`             | `tk_pendidikan_terakhir`                      |
+| `tgl_lahir`           | `tgl_lahir`                                   |
+| `no_hp`               | `no_hp`                                       |
+| `unor_id`             | `unor_id`                                     |
+| `mk_tahun`            | `mk_tahun`                                    |
+| `mk_bulan`            | `mk_bulan`                                    |
+| `kedudukan_hukum_id`  | `kedudukan_pns_id`                            |
+| `kedudukan_hukum`     | `kedudukan_pns_nama`                          |
+| `jenis_pegawai`       | `jenis_pegawai_nama`                          |
+| `sumber`              | diisi tetap `intranet_penataran`              |
+
+`IntranetKepegawaianService` bersifat **READ-ONLY mutlak** — tidak pernah menulis ke
+koneksi `intranet_db`.
+
+### 6.4 Syarat produksi
+
+- VPS aplikasi berada di jaringan Kominfo sehingga bisa menjangkau host DB intranet
+  (default `192.168.117.5:5432`).
+- User DB **read-only** (`user_read_only`) dan punya `GRANT SELECT` pada tabel `pegawai`.
+- Env `INTRANET_DB_*` diisi di `.env` server (host, port, database, username, password,
+  schema, sslmode, table).
+- Ekstensi PHP **`pgsql` + `pdo_pgsql`** tersedia di image aplikasi (Dockerfile sudah
+  menambahkannya; image perlu di-rebuild).
+
+### 6.5 Catatan skema
+
+Migrasi `2026_11_19_000000_add_intranet_fields_to_snapshot_pegawai_table` menambahkan
+kolom `gelar_depan`, `gelar_belakang`, `mk_tahun`, `mk_bulan`, `kedudukan_hukum_id`,
+`kedudukan_hukum`, `jenis_pegawai`, dan `sumber` ke `snapshot_pegawai`.

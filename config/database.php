@@ -118,6 +118,20 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'intranet_db' => [
+            'driver' => 'pgsql',
+            'host' => env('INTRANET_DB_HOST', '192.168.117.5'),
+            'port' => env('INTRANET_DB_PORT', '5432'),
+            'database' => env('INTRANET_DB_DATABASE', 'db_penataran'),
+            'username' => env('INTRANET_DB_USERNAME', 'user_read_only'),
+            'password' => env('INTRANET_DB_PASSWORD', ''),
+            'charset' => env('INTRANET_DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => env('INTRANET_DB_SCHEMA', 'public'),
+            'sslmode' => env('INTRANET_DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

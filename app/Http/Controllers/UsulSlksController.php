@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\StgPegawaiImport;
+use App\Models\SnapshotPegawai;
 use App\Models\Pegawai;
 use App\Models\UsulSlks;
+use App\Services\PegawaiIntranetSyncService;
 use Illuminate\Support\Facades\DB;
 
 class UsulSlksController extends Controller
@@ -101,43 +103,133 @@ class UsulSlksController extends Controller
         }
     }
     
-    public function searchPegawai(Request $request)
+    public function searchPegawai(Request $request, PegawaiIntranetSyncService $syncService)
     {
         $nip = $request->query('nip');
+
+        // a. Cari dulu di snapshot lokal
+        $snapshot = SnapshotPegawai::where('nip_baru', $nip)->first();
+
+        if ($snapshot) {
+            if (!$this->kedudukanAktif($snapshot->kedudukan_hukum_id)) {
+                return response()->json(['found' => false, 'reason' => 'not_active']);
+            }
+
+            return $this->susunResponsSnapshot($snapshot, $nip, 'snapshot');
+        }
+
+        // b. Tidak ada di snapshot → tarik on-demand dari intranet
+        try {
+            $snapshot = $syncService->syncByNip($nip);
+            $syncError = null;
+        } catch (\Throwable $e) {
+            $snapshot = null;
+            $syncError = $e;
+        }
+
+        if ($snapshot) {
+            if (!$this->kedudukanAktif($snapshot->kedudukan_hukum_id)) {
+                return response()->json(['found' => false, 'reason' => 'not_active']);
+            }
+
+            return $this->susunResponsSnapshot($snapshot, $nip, 'intranet_penataran');
+        }
+
+        // e. fallback transisi stg — dicabut pada paket berikutnya
         $pegawai = StgPegawaiImport::where('nip_baru', $nip)
             ->whereIn('kedudukan_hukum_id', Pegawai::ACTIVE_KEDUDUKAN_HUKUM)
             ->first();
 
-        if (!$pegawai) {
-            return response()->json(['found' => false]);
+        if ($pegawai) {
+            return $this->susunResponsStg($pegawai, $nip);
         }
 
-        // Cari riwayat SLKS yang sudah pernah diusulkan untuk NIP ini
-        $riwayat = UsulSlks::where('nip', $nip)
+        // c. Gagal karena sumber tidak terjangkau / belum terkonfigurasi
+        if ($syncError !== null) {
+            return response()->json([
+                'found'   => false,
+                'reason'  => 'source_error',
+                'message' => 'Sumber data intranet tidak terjangkau. Silakan coba beberapa saat lagi atau hubungi admin.',
+            ]);
+        }
+
+        // NIP memang tidak ada di sumber
+        return response()->json(['found' => false, 'reason' => 'not_found']);
+    }
+
+    /**
+     * Apakah kedudukan hukum termasuk yang aktif.
+     * Null/kosong dianggap tidak difilter (lolos).
+     */
+    private function kedudukanAktif(?string $kedudukanHukumId): bool
+    {
+        if ($kedudukanHukumId === null || $kedudukanHukumId === '') {
+            return true;
+        }
+
+        return in_array((string) $kedudukanHukumId, Pegawai::ACTIVE_KEDUDUKAN_HUKUM, true);
+    }
+
+    private function riwayatSlks(string $nip)
+    {
+        return UsulSlks::where('nip', $nip)
             ->orderBy('created_at', 'desc')
             ->get(['usul_slks', 'no_slks', 'tgl_slks', 'status', 'tahunp']);
+    }
 
-        // Susun nama lengkap beserta gelar
-        $fullName = $pegawai->nama;
-        if (!empty($pegawai->gelar_depan)) {
-            $fullName = trim($pegawai->gelar_depan) . ' ' . $fullName;
-        }
-        if (!empty($pegawai->gelar_belakang)) {
-            $fullName = $fullName . ', ' . trim($pegawai->gelar_belakang);
-        }
-
+    private function susunResponsSnapshot(SnapshotPegawai $snapshot, string $nip, string $source)
+    {
         return response()->json([
             'found'               => true,
-            'nama'                => $fullName,
+            'nama'                => $this->namaLengkapDenganGelar(
+                $snapshot->nama_pegawai,
+                $snapshot->gelar_depan,
+                $snapshot->gelar_belakang
+            ),
+            'pangkat'             => $this->getPangkatFromGolongan($snapshot->golongan),
+            'jabatan'             => $snapshot->jabatan,
+            'mk_tahun'            => $snapshot->mk_tahun,
+            'mk_bulan'            => $snapshot->mk_bulan,
+            'kedudukan_hukum_id'  => $snapshot->kedudukan_hukum_id,
+            'kedudukan_hukum'     => $snapshot->kedudukan_hukum,
+            'jenis_pegawai'       => $snapshot->jenis_pegawai,
+            'riwayat'             => $this->riwayatSlks($nip),
+            'source'              => $source,
+        ]);
+    }
+
+    private function susunResponsStg(StgPegawaiImport $pegawai, string $nip)
+    {
+        return response()->json([
+            'found'               => true,
+            'nama'                => $this->namaLengkapDenganGelar(
+                $pegawai->nama,
+                $pegawai->gelar_depan,
+                $pegawai->gelar_belakang
+            ),
             'pangkat'             => $this->getPangkatFromGolongan($pegawai->gol_akhir),
             'jabatan'             => $pegawai->jabatan,
             'mk_tahun'            => $pegawai->mk_tahun,
             'mk_bulan'            => $pegawai->mk_bulan,
             'kedudukan_hukum_id'  => $pegawai->kedudukan_hukum_id,
-            'kedudukan_hukum'     => $pegawai->kedudukan_hukum,  // nama teks untuk display
+            'kedudukan_hukum'     => $pegawai->kedudukan_hukum,
             'jenis_pegawai'       => $pegawai->jenis_pegawai,
-            'riwayat'             => $riwayat,
+            'riwayat'             => $this->riwayatSlks($nip),
+            'source'              => 'stg_fallback',
         ]);
+    }
+
+    private function namaLengkapDenganGelar(?string $nama, ?string $gelarDepan, ?string $gelarBelakang): string
+    {
+        $fullName = (string) $nama;
+        if (!empty($gelarDepan)) {
+            $fullName = trim($gelarDepan) . ' ' . $fullName;
+        }
+        if (!empty($gelarBelakang)) {
+            $fullName = $fullName . ', ' . trim($gelarBelakang);
+        }
+
+        return $fullName;
     }
 
     public function manage()
