@@ -30,3 +30,5 @@ laravel-architecture.md
 /.understand-anything/
 .agents
 /graphify-out
+backup.sh
+restore.sh
